@@ -1,0 +1,44 @@
+---
+// Write your component code in this file!
+export interface Props {
+  now: string
+  others: Array<string>
+}
+---
+
+<ul class="text-3xl">
+  <li
+    class="pointer-events-none px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600"
+  >
+    {Astro.props.now}
+  </li>
+  {
+    Astro.props.others.map((item) => {
+      if (item.toLowerCase().trim() == "home") {
+        return (
+          <a href="/">
+            <li class="p-2 m-2 hover:shadow-md rounded-full text-center border-purple-600 hover:bg-purple-600 hover:text-white">
+              {item}
+            </li>
+          </a>
+        )
+      } else if (item.toLowerCase().trim() == "portfolio") {
+        return (
+          <a href="https://jazzypants.dev">
+            <li class="p-2 m-2 hover:shadow-md rounded-full text-center border-purple-600 hover:bg-purple-600 hover:text-white">
+              {item}
+            </li>
+          </a>
+        )
+      } else {
+        return (
+          <a href={`/${item.toLowerCase()}`}>
+            <li class="p-2 m-1 hover:shadow-md rounded-full text-center hover:bg-purple-600 hover:text-white">
+              {item}
+            </li>
+          </a>
+        )
+      }
+    })
+  }
+</ul>

@@ -1,0 +1,45 @@
+---
+export interface Props {
+  title?: string
+  now: string
+  others: Array<string>
+}
+
+import Nav from "../components/Nav.astro"
+
+import logo from "./public/default.png"
+
+const { title = "Jessedit", now, others } = Astro.props
+---
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Antonio:wght@300;400;500;600&display=swap"
+  rel="stylesheet"
+/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="generator" content={Astro.generator} />
+<title>{title}</title>
+
+<body
+  class="block bg-purple-200 text-purple-900 antialiased transition-all duration-500 ease-linear text-lg tracking-wide"
+>
+  <nav
+    class="shadow-slate-500 shadow-2xl fixed overflow-hidden mt-0 flex-col items-center justify-between flex-wrap rounded-b-3xl border-b-2 bg-purple-400 p-4 m-4 w-min h-16 z-10 hover:h-max border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-none"
+  >
+    <Nav now={now} others={others} />
+  </nav>
+  <img src="./default.png" class="w-32 h-32 block ml-auto mr-4 pt-2" />
+
+  <slot />
+  <footer
+    class="flex flex-row justify-center items-center mt-10 h-10 bg-purple-400 text-purple-900 rounded-t-3xl animate-fade-in-up"
+  >
+    <p class="text-center text-purple-900">Jovial Penguin, LLC © 2023</p>
+
+    <style></style>
+  </footer>
+</body>
