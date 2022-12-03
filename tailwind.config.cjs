@@ -26,12 +26,12 @@ module.exports = {
       keyframes: {
         "fade-in-down": {
           "0%": {
-            opacity: "0",
+            opacity: "0.1",
             transform: "translateY(-10px)",
           },
           "100%": {
             opacity: "1",
-            transform: "translateY(0)",
+            transform: "translateY(10)",
           },
         },
         "fade-in-up": {

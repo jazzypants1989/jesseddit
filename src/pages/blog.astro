@@ -1,8 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro"
+import prisma from "../utils/db"
 let others = ["Home", "About", "Contact", "Portfolio"]
-const response = await fetch("http://localhost:1337/api/posts/author/8")
-const posts = await response.json()
+
+const fetchData = async () => {
+  const posts = await prisma.post.findMany()
+  return posts
+}
+
+const posts = await fetchData()
 ---
 
 <Layout title="My words are important." now="Blog" others={others}>
@@ -15,19 +21,15 @@ const posts = await response.json()
       >
     </h1>
     <div>
-      {
-        posts.map((post) => {
-          return (
-            <div class="flex flex-col items-center">
-              <h2 class="text-2xl font-bold text-purple-900 animate-fade-in-down">
-                {post.title}
-              </h2>
-              <p class="text-purple-900 animate-fade-in-down">{post.content}</p>
-              <p>{post.author.name}</p>
-            </div>
-          )
-        })
-      }
+      <ul>
+        {
+          posts.map((post) => (
+            <li>
+              <a href={`/blog/${post.permalink}`}>{post.title}</a>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </main>
 </Layout>

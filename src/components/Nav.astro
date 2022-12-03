@@ -6,6 +6,34 @@ export interface Props {
 }
 ---
 
+<script>
+  import flamethrower from "flamethrower-router"
+
+  const router = flamethrower({
+    prefetch: "visible",
+    log: true,
+    pageTransitions: true,
+  })
+
+  document.querySelectorAll(".Link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault()
+      router.go(link.getAttribute("href"))
+    })
+  })
+  window.addEventListener(
+    "flamethrower:router:fetch-progress",
+    ({ detail }: any) => {
+      const Loader = document.querySelector("#loader")
+      if (detail.progress === 1) {
+        Loader.classList.add("hidden")
+      } else {
+        Loader.classList.remove("hidden")
+      }
+    }
+  )
+</script>
+
 <ul class="text-3xl">
   <li
     class="pointer-events-none px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600"
@@ -17,7 +45,7 @@ export interface Props {
       if (item.toLowerCase().trim() == "home") {
         return (
           <a href="/">
-            <li class="p-2 m-2 hover:shadow-md rounded-full text-center border-purple-600 hover:bg-purple-600 hover:text-white">
+            <li class="p-2 m-2 hover:shadow-md rounded-full text-center border-purple-600 hover:bg-purple-600 hover:text-white Link">
               {item}
             </li>
           </a>

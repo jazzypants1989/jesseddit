@@ -1,0 +1,56 @@
+---
+import prisma from "../../utils/db"
+
+let others = ["Home", "Blog", "Contact", "Portfolio"]
+
+const permalink = Astro.params.permalink.toString()
+
+async function getPost() {
+  const post = await prisma.post.findUnique({
+    where: {
+      permalink,
+    },
+    include: {
+      Comment: true,
+    },
+  })
+  return post
+}
+
+const post = await getPost()
+
+if (post) {
+  console.log(post)
+} else {
+  console.log("No post found")
+}
+
+const { title, body, likes, createdAt, updatedAt, Comment } = post
+import Layout from "../../layouts/Layout.astro"
+---
+
+<Layout now="About" others={others}>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-8">
+        <h1>{title}</h1>
+        <p>{body}</p>
+        <p>{likes}</p>
+        <p>{createdAt}</p>
+        <p>{updatedAt}</p>
+      </div>
+      <div class="col-md-4">
+        <h1>Comments</h1>
+        {
+          Comment.map((comment) => (
+            <div>
+              <p>{comment.body}</p>
+              <p>{comment.createdAt}</p>
+              <p>{comment.updatedAt}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</Layout>

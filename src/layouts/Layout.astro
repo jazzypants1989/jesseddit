@@ -5,11 +5,13 @@ export interface Props {
   others: Array<string>
 }
 
+import Loader from "../components/Loader.astro"
+
 import Nav from "../components/Nav.astro"
 
-import logo from "./public/default.png"
-
 const { title = "Jessedit", now, others } = Astro.props
+
+const redirect = Astro.redirect("/api/auth")
 ---
 
 <meta charset="UTF-8" />
@@ -21,25 +23,47 @@ const { title = "Jessedit", now, others } = Astro.props
   rel="stylesheet"
 />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<script>
+  const login = document.getElementById("login")
+  login.addEventListener("click", () => {
+    window.location.href = "/api/auth"
+  })
+</script>
 <meta name="generator" content={Astro.generator} />
 <title>{title}</title>
-
 <body
-  class="block bg-purple-200 text-purple-900 antialiased transition-all duration-500 ease-linear text-lg tracking-wide"
+  class="bg-purple-200 text-purple-900 antialiased transition-all duration-500 ease-linear text-lg tracking-wide"
 >
   <nav
     class="shadow-slate-500 shadow-2xl fixed overflow-hidden mt-0 flex-col items-center justify-between flex-wrap rounded-b-3xl border-b-2 bg-purple-400 p-4 m-4 w-min h-16 z-10 hover:h-max border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-none"
   >
     <Nav now={now} others={others} />
   </nav>
-  <img src="./default.png" class="w-32 h-32 block ml-auto mr-4 pt-2" />
-
+  <img src="/default.png" class="w-32 h-32 block ml-auto mr-4 pt-2" />
+  <Loader />
   <slot />
+  <button
+    id="login"
+    class="fixed bottom-0 right-0 m-4 p-2 rounded-full bg-purple-400 hover:bg-purple-500 text-purple-900 hover:text-purple-100 shadow-slate-500 shadow-2xl border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-none"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-8 w-8"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+    </svg>
+  </button>
   <footer
-    class="flex flex-row justify-center items-center mt-10 h-10 bg-purple-400 text-purple-900 rounded-t-3xl animate-fade-in-up"
+    class="animate-fade-in-up fixed bottom-4 left-2 transform p-4 rounded-full bg-purple-400 text-purple-900 hover:text-purple-100 tracking-wide shadow-slate-500 shadow-2xl border-transparent hover:border-solid hover:border-4 border-blue-800 animate-float-slow transition-all duration-1000 ease-in-out hover:scale-90 hover:shadow-inner"
   >
     <p class="text-center text-purple-900">Jovial Penguin, LLC © 2023</p>
-
     <style></style>
   </footer>
 </body>
