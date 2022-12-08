@@ -17,11 +17,11 @@
     "@astrojs/vercel": "^2.3.4",
     "@prisma/client": "^4.7.1",
     "astro": "^1.6.12",
-    "prisma": "^4.7.1",
     "solid-js": "^1.6.1",
     "tailwindcss": "^3.2.1"
   },
   "devDependencies": {
-    "@solid-primitives/range": "^0.1.4"
+    "@solid-primitives/range": "^0.1.4",
+    "prisma": "^4.7.1"
   }
 }
