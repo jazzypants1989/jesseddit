@@ -10,8 +10,6 @@ import Loader from "../components/Loader.astro"
 import Nav from "../components/Nav.astro"
 
 const { title = "Jessedit", now, others } = Astro.props
-
-const redirect = Astro.redirect("/api/auth")
 ---
 
 <meta charset="UTF-8" />
@@ -19,51 +17,69 @@ const redirect = Astro.redirect("/api/auth")
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
-  href="https://fonts.googleapis.com/css2?family=Antonio:wght@300;400;500;600&display=swap"
+  href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600&display=swap"
   rel="stylesheet"
 />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <script>
-  const login = document.getElementById("login")
-  login.addEventListener("click", () => {
-    window.location.href = "/api/auth"
-  })
+  // const login = document.getElementById("login")
+  // login.addEventListener("click", () => {
+  //   console.log("clicked")
+  //   window.location.href = "/api/auth"
+  // })
+  const theme = localStorage.getItem("theme")
+  const themeToggle = document.getElementById("theme-toggle")
+  themeToggle.addEventListener("click", toggleTheme)
+
+  if (
+    theme === "dark" ||
+    (!("theme" in localStorage) &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches)
+  ) {
+    document.documentElement.classList.add("dark")
+    themeToggle.textContent = "🌞"
+    themeToggle.setAttribute("aria-label", "Switch to light mode")
+  } else {
+    document.documentElement.classList.remove("dark")
+    themeToggle.textContent = "🌙"
+    themeToggle.setAttribute("aria-label", "Switch to dark mode")
+  }
+
+  function toggleTheme() {
+    if (document.documentElement.classList.contains("dark")) {
+      localStorage.setItem("theme", "light")
+      document.documentElement.classList.remove("dark")
+      themeToggle.innerHTML = "🌙"
+      themeToggle.setAttribute("aria-label", "Switch to dark mode")
+    } else {
+      localStorage.setItem("theme", "dark")
+      document.documentElement.classList.add("dark")
+      themeToggle.innerHTML = "🌞"
+      themeToggle.setAttribute("aria-label", "Switch to light mode")
+    }
+  }
 </script>
 <meta name="generator" content={Astro.generator} />
 <title>{title}</title>
 <body
-  class="bg-purple-200 text-purple-900 antialiased transition-all duration-500 ease-linear text-lg tracking-wide"
+  class="bg-purple-300 text-purple-900 antialiased transition-all duration-500 ease-linear text-lg tracking-wide dark:bg-purple-800 dark:text-purple-200 scroll-behavior-smooth"
 >
   <nav
-    class="shadow-slate-500 shadow-2xl fixed overflow-hidden mt-0 flex-col items-center justify-between flex-wrap rounded-b-3xl border-b-2 bg-purple-400 p-4 m-4 w-min h-16 z-10 hover:h-max border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-none"
+    class="shadow-slate-500 shadow-2xl fixed overflow-hidden mt-0 flex-col items-center justify-between flex-wrap rounded-b-3xl border-b-2 bg-purple-400 p-4 m-4 w-min h-16 z-10 hover:h-max border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-non opacity-40 hover:opacity-100 transition-all duration-500"
   >
     <Nav now={now} others={others} />
   </nav>
-  <img src="/default.png" class="w-32 h-32 block ml-auto mr-4 pt-2" />
+  <img src="/default.png" class="w-24 h-24 block ml-auto mr-4 pt-2" />
   <Loader />
   <slot />
   <button
-    id="login"
-    class="fixed bottom-0 right-0 m-4 p-2 rounded-full bg-purple-400 hover:bg-purple-500 text-purple-900 hover:text-purple-100 shadow-slate-500 shadow-2xl border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-none"
+    id="theme-toggle"
+    class="fixed bottom-0 right-0 m-4 p-2 rounded-full bg-purple-400 hover:bg-purple-500 text-purple-900 hover:text-purple-100 shadow-slate-500 shadow-2xl border-purple-800 border-transparent hover:border-solid animate-float-slow hover:animate-nudge-y tracking-wide focus:outline-none opacity-30 hover:opacity-100 transition-all duration-500"
   >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="h-8 w-8"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-    </svg>
   </button>
   <footer
-    class="animate-fade-in-up fixed bottom-4 left-2 transform p-4 rounded-full bg-purple-400 text-purple-900 hover:text-purple-100 tracking-wide shadow-slate-500 shadow-2xl border-transparent hover:border-solid hover:border-4 border-blue-800 animate-float-slow transition-all duration-1000 ease-in-out hover:scale-90 hover:shadow-inner"
+    class="animate-fade-in-up fixed bottom-4 left-2 text-sm transform p-2 cursor-crosshair rounded-full bg-purple-400 text-purple-900 hover:text-purple-100 tracking-wide shadow-slate-500 shadow-2xl border-transparent hover:border-solid hover:border-4 border-blue-800 animate-float-slow transition-all duration-1000 ease-in-out hover:scale-90 opacity-30 hover:opacity-100"
   >
     <p class="text-center text-purple-900">Jovial Penguin, LLC © 2023</p>
-    <style></style>
   </footer>
 </body>

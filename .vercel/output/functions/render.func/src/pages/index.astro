@@ -1,0 +1,23 @@
+---
+import Layout from "../layouts/Layout.astro"
+import Cat from "../components/Cat"
+import { adjectives, randomAdjective } from "../components/Adjective.astro"
+let others = ["Blog", "About", "Contact", "Portfolio"]
+---
+
+<Layout now="Home" others={others}>
+  <main class="min-h-screen">
+    <h1
+      class="text-4xl pt-4 font-bold text-center text-purple-900 animate-fade-in-down"
+    >
+      Jesse is the <span class="text-blue-500 animate-pulse"
+        >{randomAdjective(adjectives)}
+      </span>developer in the world.
+      <div
+        class="flex items-center justify-center mt-10 animate-bounce hover:animate-fade-out-up"
+      >
+        <Cat />
+      </div>
+    </h1>
+  </main>
+</Layout>

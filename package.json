@@ -11,20 +11,15 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/image": "^0.11.1",
     "@astrojs/mdx": "^0.11.5",
-    "@astrojs/node": "^2.0.2",
     "@astrojs/solid-js": "^1.2.2",
     "@astrojs/tailwind": "^2.1.1",
+    "@astrojs/vercel": "^2.3.4",
     "@motionone/solid": "^10.14.3",
     "@prisma/client": "^4.7.1",
-    "astro": "^1.6.0",
+    "astro": "^1.6.12",
     "astro-compress": "^1.1.1",
-    "astro-imagetools": "^0.2.7",
-    "flamethrower-router": "^0.0.0-meme.12",
-    "jsonwebtoken": "^8.5.1",
     "prisma": "^4.7.1",
-    "sharp": "^0.31.1",
     "solid-js": "^1.6.1",
     "tailwindcss": "^3.2.1"
   },

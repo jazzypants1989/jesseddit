@@ -1,0 +1,13 @@
+---
+import Layout from "./Layout.astro"
+
+let others = ["Home", "About", "Contact", "Portfolio"]
+---
+
+<Layout now="Blog" others={others}>
+  <div
+    class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blue-200 rounded-lg shadow-2xl dark:bg-gray-800"
+  >
+    <slot />
+  </div>
+</Layout>

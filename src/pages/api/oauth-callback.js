@@ -1,7 +1,6 @@
-import { AstroComponent } from "astro/dist/runtime/server/render/astro"
 import prisma from "../../utils/db"
 
-export async function get({ params, request, redirect }) {
+export async function get({ request, redirect, cookies }) {
   let code = request.url.split("=")[1]
   const { GITHUB_ID, GITHUB_SECRET } = import.meta.env
   const data = await fetch(
@@ -50,12 +49,6 @@ export async function get({ params, request, redirect }) {
       },
     })
   }
-
-  AstroComponent.cookies.set("user", JSON.stringify(user), {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: true,
-  })
 
   return redirect("/")
 }

@@ -1,0 +1,71 @@
+---
+title: "Introduction"
+slug: "introduction"
+nextLink: "./a-brief-history-of-client-side-routing"
+---
+
+import Cat from "../../Cat.tsx"
+
+<Cat />
+
+<br />
+
+Hey there! Welcome to my client-side manifesto! This first chapter is just a general overview of myself and the project. The second chapter includes a brief history of client-side routing and the concepts behind it before we get our hands dirty. [Click here if you want to jump to the history](./a-brief-history-of-client-side-routing). No worries if you want to skip even that and get right to the meat of the project. [Just click here, and we'll start building.](./the-router)
+
+<br />
+
+![A photo of our intrepid reporter taken with an extremely expensive phone. Like a whole hundred dollars.](https://res.cloudinary.com/jovial-penguin/image/upload/c_crop,g_auto,h_219,q_auto:good,w_218,y_0/v1670159872/IMG_20220908_151602277_HDR_n4pib4.jpg)
+
+<br />
+
+I started learning Javascript with #100Devs in March, and it has absolutely consumed my life since then. What started as a fickle thought of a new career has fully blossomed into an obsession, and I'm learning more every day. I learned Node and Express over the summer, and I created a few small server-side apps using templating languages like EJS. But, ever since I started playing with React in August, I have been completely consumed with the differences between client-side and server-side rendering and routing.
+
+<br />
+
+I felt like I had a bearing on how classic server rendering worked, but that understanding only further bewildered me when I tried to apply it to the client side. I understood the basic idea of a React app on a page, but the fact that it could load different data based on the url was too much for me to comprehend.
+
+<br />
+
+So, in order to gain a better understanding, I decided to do a deep dive on the topic by porting the same app with a few interesting features to several different routers. But, the APIs have gotten so good at this point that much of the work is abstracted away and I didn't learn much about how it really worked. So, I went the extra mile, and I built a client-side router myself. It was hard and I made a lot of mistakes, but I want to share what I learned with the world.
+
+<br />
+
+One thing that I want to point out is what this series of articles is not. This is not intended to be a tutorial of best practices. While some of this code may prove to be useful as you determine what routing method to choose for your project, I want to stress that I am very much a beginner. Part of the reason that I have [a comments section on this website](../../blog/client-side-routing-1) is because I want to learn from the readers just as much as I want to inform anyone, so feel free to point out my unfortunate errors that are certain to exist throughout this piece.
+
+<br />
+
+Also, I know there's a lot of crazy jargon in this field. I'm only defining what is necessary, but I'll be attempting to sprinkle the entire piece with links to better resources when I reference obscure topics. If you see this[^1], you can assume I'm paraphrasing someone who knows better than me, and you can just follow the foot note to know more. This article is really just a summation of my understanding of a complex topic, but I have spent quite some time working on these projects for the sake of my own understanding. I personally had some difficulty tying together all of the disparate resources, but I did manage to find a few that were especially good that I will be highlighting– especially the Remix Router docs page [here](https://reactrouter.com/en/main/start/concepts)[^2] and Ryan Florence's personal writings [here](https://ryanflorence.dev/p/everything-i-know-about-client-side-routing)[^3]
+
+<br />
+
+So, I built a small shop app that has a few products that it calls from a fake database hosted right in the public folder. It uses the database to dynamically create individual pages for each item based on the route parameters and the database ID. This is usually the trickiest aspect of routing, and I wanted to see how each approach differed. It has a few other features to demonstrate client-side routing. One that you might not expect was a reactive search bar that filters the products on the page based on the URL in the address bar. This helps show how state and routing are intertwined in a client-side app.
+
+<br />
+
+Another interesting routing feature I wanted to explore was how to handle 404 errors. You might think this is a silly aspect to focus on, but it's actually pretty important. When you really think about it, the amount of things that a user can type into the URL bar is pretty much infinite. So, if you're not handling 404 errors in an efficient manner, you're going to have a lot of broken links and an overall bad time.
+
+<br />
+
+I also wanted to see how the different methods handled little things like layouts/outlets and redirects. These are features that are common to most modern websites, so I felt like I would be remiss to leave this out. There has been a lot of exciting work in the framework community around nested layouts, so I figured it would be interesting to see how we have progressed in that direction.
+
+<br />
+
+The last thing that I focused on was if the routing method included any kind of native asynchronous data loading solution. This seems to be the direction things are leading in the routing world, as almost every library is starting to include something for this. This can be seen as testament to one of the major flaws with React that they are seemingly attempting to fix with the introduction of the Use hook.
+
+<br />
+
+One can assume that much of this will change over the course of the next few years. React Router apparently shook the community when it switched away from config files to component based routing from v3 to v4. The first React Router version of my app uses this component style, only for my final RR version to use a config object just like v3– although with greatly expanded features.
+
+<br />
+
+Like everything else, these things seem to go in cycles of popularity and development, and server-side rendering of JavaScript is quickly improving with the introduction of things like Island Architecture and Server Components. So, the way we think about client-side rendering is rapidly changing. Indeed, client-side routing may become a dying art altogether as we move towards a more dynamic web. But, for now, I hope that this article will help you understand the current state of the art and help you decide which method is best for your project.
+
+<br />
+
+[So, join me as I travel through the history of client-side routing.](./a-brief-history-of-client-side-routing)
+
+<br />
+[^1]: This is the footnote....
+
+[^2]: [This part of the React Docs is a great resource for understanding the concepts behind client-side routing.](https://reactrouter.com/en/main/start/concepts)
+[^3]: [Ryan Florence is a React Router maintainer and has written a lot of great articles on the subject.](https://ryanflorence.dev/p/everything-i-know-about-client-side-routing)
