@@ -48,11 +48,11 @@ Routing on the client side is not a new concept. While it's much easier today th
 
 <br />
 
-*"It is the the duty of a Webmaster to allocate URIs which you will be able to stand by in 2 years, in 20 years, in 200 years. This needs thought, and organization, and commitment."*
+_"It is the the duty of a Webmaster to allocate URIs which you will be able to stand by in 2 years, in 20 years, in 200 years. This needs thought, and organization, and commitment."_
 
 -- Tim Berners-Lee, Cool URIs Don't Change, 1998 [^1]
-<br />
 
+<br />
 
 Traditionally, since the dawn of the internet, dynamic routing has been done on the server side. Today, we take it for granted, but it's actually quite an amazing process. So, a user **requests** a web page from within their browser by using the address bar or by clicking a link. The request travels through their browser, their computer, their router, whatever method connects them to their ISP, their internet provider's DNS server, and finally to the requested page's server. The server then matches the requested URL to a particular **response**, determines if it requires any processing, does whatever needs to happen if so, and finally sends the response back to the user. The user's browser then receives the data, parses it, and displays it to the user.[^2]
 
@@ -70,7 +70,7 @@ This is generally not a problem for simple web pages, but it's a huge problem fo
 
 <br />
 
-*"JS does not need to become Java, or C#, or any other language."*
+_"JS does not need to become Java, or C#, or any other language."_
 
 --Brendan Eich, JavaScript 1, 2, and In Between, 2005/06/13 [^4]
 
@@ -88,13 +88,13 @@ Soon, a group called ECMA International decided to bring order to this wild west
 
 <br />
 
-*"The DOM originated as a specification to allow JavaScript scripts and Java programs to be portable among Web browsers."*[^6].
+_"The DOM originated as a specification to allow JavaScript scripts and Java programs to be portable among Web browsers."_[^6].
 
 --DOM Level 1 specification, October 1998, W3C
 
 <br />
 
-While not exclusive to JavaScript, the concepts of the DOM and the BOM are also essential to understanding how client-side routing works. In fact, these ideas define the structure of the user's experience on the web. The DOM stands for *Document Object Model*, and it's a way of representing HTML documents as objects. While the DOM is published as a living standard, the essential structure was first introduced in the DOM Level 1 specification in October 1998 released by the World Wide Web Consortium (W3C).
+While not exclusive to JavaScript, the concepts of the DOM and the BOM are also essential to understanding how client-side routing works. In fact, these ideas define the structure of the user's experience on the web. The DOM stands for _Document Object Model_, and it's a way of representing HTML documents as objects. While the DOM is published as a living standard, the essential structure was first introduced in the DOM Level 1 specification in October 1998 released by the World Wide Web Consortium (W3C).
 
 <br />
 
@@ -122,7 +122,7 @@ element.innerHTML = "Hello World"
 
 <br />
 
-The BOM is a similar tree-like structure. It represents the browser itself, and it's a way of defining the browser's windows and tabs as objects. Thus, as you can guess, the BOM stands for *Browser Object Model*. This is important because it allows us to write code like this today:
+The BOM is a similar tree-like structure. It represents the browser itself, and it's a way of defining the browser's windows and tabs as objects. Thus, as you can guess, the BOM stands for _Browser Object Model_. This is important because it allows us to write code like this today:
 
 <br />
 
@@ -162,7 +162,7 @@ There are many objects in the BOM, but the most important one for our purposes i
 
 <br />
 
-*"As websites become more and more like traditional applications, the call-response-reload model used in HTTP transactions becomes increasingly cumbersome."*
+_"As websites become more and more like traditional applications, the call-response-reload model used in HTTP transactions becomes increasingly cumbersome."_
 
 --Apple Developers Blog, ~2002[^8]
 
@@ -188,13 +188,13 @@ For instance, another problem was that the browser's back and forward buttons di
 
 <br />
 
-*"Ajax gives interaction designers more flexibility. However, the more power we have, the more caution we must use in exercising it. We must be careful to use Ajax to enhance the user experience of our applications, not degrade it."*
+_"Ajax gives interaction designers more flexibility. However, the more power we have, the more caution we must use in exercising it. We must be careful to use Ajax to enhance the user experience of our applications, not degrade it."_
 
 --Jesse James Garrett, Ajax: A New Approach to Web Applications, 2005/02/18 [^9]
 
 <br />
 
-Google shocked the world when it introduced Google Maps in 2004. Few people had seen such an impressive symphony of user interactions and server responses on a single web page without using the external technologies previously mentioned. Instead, Google showed that simple JavaScript could do much more than previously thought when combined with asynchronous data requests. At the time, they used XMLHttpRequest for these requests, and soon the term "AJAX" (Asynchronous Javascript And XML) was coined by Jesse James Garrett to describe this new way of building web applications. 
+Google shocked the world when it introduced Google Maps in 2004. Few people had seen such an impressive symphony of user interactions and server responses on a single web page without using the external technologies previously mentioned. Instead, Google showed that simple JavaScript could do much more than previously thought when combined with asynchronous data requests. At the time, they used XMLHttpRequest for these requests, and soon the term "AJAX" (Asynchronous Javascript And XML) was coined by Jesse James Garrett to describe this new way of building web applications.
 
 <br />
 
@@ -210,7 +210,7 @@ Soon, others copied these techniques with varying level of success. Companies li
 
 <br />
 
-"*There is no piece of dynamic AJAXy magic that requires beating the Web to a bloody pulp with a sharp-edged hashbang. Please stop doing it.*"
+"_There is no piece of dynamic AJAXy magic that requires beating the Web to a bloody pulp with a sharp-edged hashbang. Please stop doing it._"
 
 --Tim Bray, Broken Links, 2011/02/11[^12]
 
@@ -244,13 +244,13 @@ To fix this, Google and the development community came up with a silly thing cal
 
 <br />
 
-*"Despite the usual browser inconsistencies and other gotchas, we're pretty happy with the HTML 5 History API."*
+_"Despite the usual browser inconsistencies and other gotchas, we're pretty happy with the HTML 5 History API."_
 
 -- Todd Kloots, "Implementing pushState for twitter.com", 2012/12/7 [^14]
 
 <br />
 
-The *History API*, standardized in 2008 as part of the HTML5 specification, was developed to help solve some of these issues with state-based navigation. Fundamentally, navigation using the History API is based around an included `state object`-- a JavaScript object that can be used to store any serializable data. This data can be used to represent the state of the application at any given moment. For example, a state object containing the user, the current page, and the current time might look like this:
+The _History API_, standardized in 2008 as part of the HTML5 specification, was developed to help solve some of these issues with state-based navigation. Fundamentally, navigation using the History API is based around an included `state object`-- a JavaScript object that can be used to store any serializable data. This data can be used to represent the state of the application at any given moment. For example, a state object containing the user, the current page, and the current time might look like this:
 
 <br />
 
@@ -289,7 +289,7 @@ Finally, developers knew that their code would work as expected in all major, ne
 
 <br />
 
-*"The most common thing you would do was include jQuery, throw together some scripts for a few UI widgets, and call it a day."*
+_"The most common thing you would do was include jQuery, throw together some scripts for a few UI widgets, and call it a day."_
 
 --Chris Garrett, Four Eras of JavaScript Frameworks, 2022/04/22 [^15]
 
@@ -311,12 +311,11 @@ But, out of this first wave, there arose a new champion and her name was jQuery.
 
 <br />
 
-*"While the ideal case can lead to a nice, clean separation of concerns, inevitably some bits of application logic or view logic end up duplicated between client and server, often in different languages."*
+_"While the ideal case can lead to a nice, clean separation of concerns, inevitably some bits of application logic or view logic end up duplicated between client and server, often in different languages."_
 
 --Spike Brehm, "Isomorphic JavaScript: The Future of Web Apps", 2013/11/11 [^17]
 
 <br />
-
 
 Before we segue into the modern era, it is important to understand a few more details about dynamic server-side rendering. As we learned in the introduction, this traditionally consisted of a server with a database that processes specific requests into appropriate responses before sending them back to the user. To simplify this, design models such as MVC (Model-View-Controller) were adapted to the web. These models were made to separate the concerns of the server into distinct parts to make it easier to build complex applications. MVC, for instance, includes three parts: the model, the view, and the controller.
 
@@ -334,12 +333,16 @@ After AJAX and early libraries gave developers the ability to create complex sin
 
 <br />
 
-*" I'd rather see developers build kick-ass apps that are well-designed and follow separation of concerns, than see them waste time arguing about MV* nonsense. And for this reason, I hereby declare AngularJS to be MVW framework - Model-View-Whatever. Where Whatever stands for "whatever works for you".*
---Igor Minar, Google Plus, 2012/07/09 [^18] 
+_" I'd rather see developers build kick-ass apps that are well-designed and follow separation of concerns, than see them waste time arguing about MV_ nonsense. And for this reason, I hereby declare AngularJS to be MVW framework - Model-View-Whatever. Where Whatever stands for "whatever works for you".\*
+--Igor Minar, Google Plus, 2012/07/09 [^18]
 
 <br />
 
-You may have wondered why I wrote that with an asterisk. The first of these, Knockout.js, was released in July 2010 by Steve Sanderson, and it took an interesting client-side spin on the MVC architecture. Instead of the controller being stuck on a server far away, MVVM(Model, View, ViewModel) brought about the concept of two-way data bindings-- explicitly tying the view to the model. This introduced state primitives like observables that could be used to represent and update the state of the application at any given moment-- an early version of something like useState in React, only more fine-grained.
+You may have wondered why I wrote that with an asterisk. The first of these, Knockout.js, was released in July 2010 by Steve Sanderson, and it took an interesting client-side spin on the MVC architecture. Due to the web being inherently stateless, the key challenge here was translating this design model to fit a stateful environment.
+
+<br />
+
+Instead of the controller being stuck on a server far away, MVVM(Model, View, ViewModel) brought about the concept of two-way data bindings-- explicitly tying the view to the model. This introduced state primitives like observables that could be used to represent and update the application at any given moment. This was an early version of something like useState in React, but with one key difference that we will explore later.
 
 <br />
 
@@ -367,16 +370,16 @@ In addition, even using tricks like the hashbang, SEO was still a problem. To ov
 
 <br />
 
-*Yeah. I think where Node has shined [is], weirdly, on the client side. So, doing kind of scripting around building websites... So, you can have all this server-side processing of client-side JavaScript.*
+_Yeah. I think where Node has shined [is], weirdly, on the client side. So, doing kind of scripting around building websites... So, you can have all this server-side processing of client-side JavaScript._
 -- Ryan Dahl, interview with Andrey Okhotnikov, June 8, 2018 [^19]
 
 <br />
 
-Node.js was released in 2009 by Ryan Dahl. Node.js is a server-side JavaScript runtime built on Chrome's V8 JavaScript engine. It has non-blocking I/O (input/output) based around an event loop. Node.js is also asynchronous, which means that it can handle multiple requests at the same time. This is in contrast to traditional synchronous server-side languages like PHP and Ruby. 
+Node.js was released in 2009 by Ryan Dahl. Node.js is a server-side JavaScript runtime built on Chrome's V8 JavaScript engine. It has non-blocking I/O (input/output) based around an event loop. Node.js is also asynchronous, which means that it can handle multiple requests at the same time. This is in contrast to traditional synchronous server-side languages like PHP and Ruby.
 
 <br />
 
-Suddenly, JavaScript was no longer just a client-side language. You could write code once, and it would work both on the client and the server. Charlie Robbins coined this as *Isomorphic JavaScript* (Isomorphic simply meaning multiple things with the same shape and concepts) [^20]
+Suddenly, JavaScript was no longer just a client-side language. You could write code once, and it would work both on the client and the server. Charlie Robbins coined this as _Isomorphic JavaScript_ (Isomorphic simply meaning multiple things with the same shape and concepts) [^20]
 
 <br />
 
@@ -419,7 +422,7 @@ console.log("This page kind of sucks on port 3000")
 
 <br />
 
-So, as you can see, we can render an initial basic version of each page on the server and send it via the traditional routes to clients that do not have JavaScript enabled. This is called **server-side rendering**. And, although it was extremely difficult at the time, one could also use this to render the initial page on the client and progressively enhance it with JavaScript when it gets there in a process known as **hydration**. 
+So, as you can see, we can render an initial basic version of each page on the server and send it via the traditional routes to clients that do not have JavaScript enabled. This is called **server-side rendering**. And, although it was extremely difficult at the time, one could also use this to render the initial page on the client and progressively enhance it with JavaScript when it gets there in a process known as **hydration**.
 
 <br />
 
@@ -561,7 +564,7 @@ Between ideas like **island architecture**, **streaming**, and **resumability**[
 
 <br />
 
-The key is in developing a solid base experience and adding more to it when you can. Coming from the opposite direction is Astro. This very website is built with it, and I have been really impressed at the DX and everything it can do. React, Preact, Solid, and Svelte components can live in harmony inside island architecture. It's **great**. While it's an MPA framework, it's easy enough to hide that from the user and make it feel like a SPA. 
+The key is in developing a solid base experience and adding more to it when you can. Coming from the opposite direction is Astro. This very website is built with it, and I have been really impressed at the DX and everything it can do. React, Preact, Solid, and Svelte components can live in harmony inside island architecture. It's **great**. While it's an MPA framework, it's easy enough to hide that from the user and make it feel like a SPA.
 
 <br />
 
@@ -573,7 +576,7 @@ The technology isn't all the way there yet, but it feels inevitable that we will
 
 <br />
 
-Wow. That was a lot. I felt like I put too much in there, but there was so much I edited out-- TypeScript, TanStack Router, SolidStart and more! It hurt cutting out things that I love, but I wanted people to actually read the whole thing. If you're still with me, I hope you enjoyed this "brief" history of client-side routing. Lots of research went into it, and I'm really sorry if I misrepresented anything or anyone. I'm sure I made a few mistakes. Just let me know and I'll fix it. 
+Wow. That was a lot. I felt like I put too much in there, but there was so much I edited out-- TypeScript, TanStack Router, SolidStart and more! It hurt cutting out things that I love, but I wanted people to actually read the whole thing. If you're still with me, I hope you enjoyed this "brief" history of client-side routing. Lots of research went into it, and I'm really sorry if I misrepresented anything or anyone. I'm sure I made a few mistakes. Just let me know and I'll fix it.
 
 <br />
 

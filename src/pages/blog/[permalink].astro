@@ -34,7 +34,6 @@ console.log(tocLink)
 import { articleMatcher } from "../../components/md/toc"
 
 let toc = articleMatcher(tocLink)
-
 let titles = Object.keys(toc)
 let links = Object.values(toc)
 
@@ -45,6 +44,22 @@ const articles = await Astro.glob("../../components/md/csr/*.mdx")
 let cookieSetter = Astro.cookies.set(`liked-${permalink}`, "true", {
   maxAge: 60 * 60 * 24 * 7,
 })
+
+// const comment = await prisma.comment.create({
+//   data: {
+//     body: "Goodbye World!",
+//     Post: {
+//       connect: {
+//         permalink,
+//       },
+//     },
+//     user: {
+//       connect: {
+//         id: 102560332,
+//       },
+//     },
+//   },
+// })
 ---
 
 <Layout now="Blog" others={others}>
