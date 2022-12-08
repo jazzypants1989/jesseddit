@@ -1,0 +1,138 @@
+---
+import prisma from "../../utils/db"
+import Layout from "../../layouts/Layout.astro"
+
+let others = ["Home", "About", "Contact", "Portfolio"]
+
+const permalink = Astro.params.permalink.toString()
+
+let likedCookie = Astro.cookies.get(`liked-${permalink}`)
+
+async function getPost() {
+  const post = await prisma.post.findUnique({
+    where: {
+      permalink,
+    },
+    include: {
+      Comment: true,
+    },
+  })
+  return post
+}
+
+const post = await getPost()
+
+if (!post) {
+  Astro.redirect("/")
+}
+
+let { title, body, likes, createdAt, updatedAt, Comment } = post
+
+let tocLink = Astro.url.pathname.split("/")[2]
+console.log(tocLink)
+
+import { articleMatcher } from "../../components/md/toc"
+
+let toc = articleMatcher(tocLink)
+
+let titles = Object.keys(toc)
+let links = Object.values(toc)
+
+let articleURL = Astro.url.origin + "/articles/" + tocLink + "/"
+
+const articles = await Astro.glob("../../components/md/csr/*.mdx")
+
+let cookieSetter = Astro.cookies.set(`liked-${permalink}`, "true", {
+  maxAge: 60 * 60 * 24 * 7,
+})
+---
+
+<Layout now="Blog" others={others}>
+  <div class="flex justify-center items-center max-w-2xl mx-auto">
+    <div
+      class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-blue-200 rounded-lg shadow-md dark:bg-gray-800"
+    >
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{title}</h1>
+      <p class="mt-2 text-xl text-gray-600 dark:text-gray-400">{body}</p>
+      <span
+        id="likes"
+        class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+        onclick={cookieSetter}
+      >
+        👍: {likes}
+      </span>
+      <span
+        id="createdAt"
+        class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+      >
+        Created: {new Date(createdAt).toLocaleString()}
+      </span>
+      {
+        updatedAt !== createdAt && (
+          <span
+            id="updatedAt"
+            class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+          >
+            Updated: {new Date(updatedAt).toLocaleString()}
+          </span>
+        )
+      }
+
+      <div
+        class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-slate-200 rounded-lg shadow-md dark:bg-gray-800"
+      >
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-white">
+          Table of Contents
+        </h2>
+        <ul class="mt-2 text-xl text-gray-600 dark:text-gray-400">
+          {
+            titles.map((title, index) => (
+              <li>
+                <a href={articleURL + links[index]}>{title}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <h3 class="mt-4 text-2xl font-bold text-gray-800 dark:text-white">
+        Comments
+      </h3>
+      {
+        Comment.map((comment) => (
+          <div class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-slate-200 rounded-lg shadow-md dark:bg-gray-800">
+            <p class="mt-2 text-md text-gray-600 dark:text-gray-400">
+              {comment.body}
+            </p>
+            <span
+              id="createdAt"
+              class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+            >
+              Created: {new Date(comment.createdAt).toLocaleString()}
+            </span>
+            {comment.updatedAt !== comment.createdAt && (
+              <span
+                id="updatedAt"
+                class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+              >
+                Updated: {new Date(comment.updatedAt).toLocaleString()}
+              </span>
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</Layout>
+<script defer>
+  let likes = document.getElementById("likes")
+  likes.style.cursor = "pointer"
+  let likedCookie = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("liked-"))
+  if (likedCookie) {
+    likes.style.backgroundColor = "red"
+    likes.style.borderRadius = "5px"
+    likes.style.padding = "5px"
+    likes.style.cursor = "not-allowed"
+  }
+</script>
