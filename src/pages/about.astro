@@ -56,19 +56,3 @@ let others = ["Home", "Blog", "Contact", "Portfolio"]
     display: none;
   }
 </style>
-
-<script defer>
-  function Clock() {
-    const [time, setTime] = useState(0)
-    useEffect(() => {
-      const timer = setInterval(() => {
-        setTime((prevTime) => prevTime + 1)
-      }, 1000)
-      return () => clearInterval(timer)
-    }, [])
-
-    return <div>Seconds: {time}</div>
-  }
-
-  document.getElementById.innerHTML = Clock()
-</script>
