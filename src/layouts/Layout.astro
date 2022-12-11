@@ -69,7 +69,10 @@ const { title = "Jessedit", now, others } = Astro.props
   >
     <Nav now={now} others={others} />
   </nav>
-  <img src="/default.png" class="w-24 h-24 block ml-auto mr-4 pt-2" />
+  <img
+    src="/default.png"
+    class="w-24 h-24 block ml-auto mr-4 px-2 bg-purple-300 rounded-full shadow-blue-500 shadow-2xl border-transparent hover:border-solid hover:animate-pulse tracking-wide focus:outline-none opacity-30 hover:opacity-100 transition-all duration-500"
+  />
   <Loader />
   <slot />
   <button
