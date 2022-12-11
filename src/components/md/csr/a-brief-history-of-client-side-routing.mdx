@@ -39,7 +39,7 @@ by Jesse Pence
 <a href="#nested-routes">Nested Routes</a>
 <a href="#data-loading">Data Loading</a>
 <a href="#meta-frameworks">Meta-Frameworks</a>
-<a href="#transitional apps">Transitional Apps</a>
+<a href="#transitional-apps">Transitional Apps</a>
 <a href="#the-future">The Future</a>
 <a href="#conclusion">Conclusion</a>
 
@@ -233,15 +233,15 @@ Soon, others copied these techniques with varying level of success. Companies li
 
 <br />
 
-This solution goes all the way back to the old days of Flash websites. It involves using the hash symbol (#) in the URL to represent the current state of the application. For example, if you wanted to represent a user's profile, you might use the URL `https://example.com/#jazzypants/profile`. This is called **hash routing**.
+This solution goes all the way back to the old days of Flash websites. It involves using the hash symbol (#) in the URL to represent the current state of the application. For example, if you wanted to represent a user's profile, you might use the URL https://example.com/#user/profile. This is called **hash routing**.
 
 <br />
 
-This works because the hash symbol was originally intended to be used for in-page navigation. For example, if you wanted to link to a specific section of a page, you could use the hash symbol to represent that section's ID. So, when the browser sees that the URL has changed in this way, it doesn't reload the page. Instead, it simply scrolls to the section with the matching ID. So, if you wanted to link to a section at the bottom of that same page with the ID `contact`, you would use the URL `https://example.com/#contact`.
+This works because the hash symbol was originally intended to be used for in-page navigation. For example, if you wanted to link to a specific section of a page, you could use the hash symbol to represent that section's ID. So, when the browser sees that the URL has changed in this way, it doesn't reload the page. Instead, it simply scrolls to the section with the matching ID. So, if you wanted to link to a section at the bottom of that same page with the ID `contact`, you would use the URL https://example.com/#contact.
 
 <br />
 
-This means that the browser will load the same page only in different places for both `https://example.com/#/profile` and `https://example.com/#/contact`. The only difference is that the JavaScript can read the text that comes after the hash symbol, and it can use that to determine what to render on the page. Crucially, these can be stored in the browser's history object, which meant that the browser's back and forward buttons would work as expected. And, while you couldn't store much state in a string, something was better than nothing.
+This means that the browser will load the same page only in different places for both https://example.com/#/profile and https://example.com/#/contact. The only difference is that the JavaScript can read the text that comes after the hash symbol, and it can use that to determine what to render on the page. Crucially, these can be stored in the browser's history object, which meant that the browser's back and forward buttons would work as expected. And, while you couldn't store much state in a string, something was better than nothing.
 
 <br />
 
@@ -253,7 +253,7 @@ In addition, it was awful for Search Engine Optimization (SEO). The hash symbol 
 
 <br />
 
-To fix this, Google and the development community came up with a silly thing called the HashBang. This involved adding an exclamation point (!) after the hash symbol, like so: `https://example.com/#!/profile`, to indicate to search engines that the site was using client-side routing. Luckily, around this time, the History API was introduced which allowed us to use the browser's history object without using the hash symbol-- although you may have noticed that the web development community is still struggling with many of the problems mentioned above.
+To fix this, Google and the development community came up with a silly thing called the HashBang. This involved adding an exclamation point (!) after the hash symbol, like so: https://example.com/#!/profile, to indicate to search engines that the site was using client-side routing. Luckily, around this time, the History API was introduced which allowed us to use the browser's history object without using the hash symbol-- although you may have noticed that the web development community is still struggling with many of the problems mentioned above.
 
 <br />
 
