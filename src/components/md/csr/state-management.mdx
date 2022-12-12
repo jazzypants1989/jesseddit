@@ -1,0 +1,366 @@
+---
+title: "Introduction to State Management"
+slug: "state-management"
+nextLink: "./the-window-object"
+---
+
+import Cat from "../../Cat.tsx"
+
+by Jesse Pence
+
+<Cat />
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  id="ytplayer"
+/>
+
+<br />
+
+## **Table of Contents**
+
+<br />
+
+<a href="#introduction">Introduction</a>
+<a href="#first-example">First Example</a>
+<a href="#second-example">Second Example</a>
+<a href="#conclusion">Conclusion</a>
+
+<br />
+
+## **Introduction**
+
+<br />
+
+So, I'm sure you've heard of state and how difficult it can be to manage in single page applications. But, what is it? State is one of those concepts that is hard to define without using the word itself. I like thinking of it as the current representation of changeable data. Every time the user interacts with something on a web page without loading a new one, the state of the page changes.
+
+<br />
+
+On multi-page applications where every interaction goes through the server, this is not a problem. If something changes in the database as a result of the user's request, the server can update the UI for future responses. However, single page applications do not have this benefit. The server is only responsible for sending the initial page, nothing more. I could go on forever, but let's get a couple examples under our belt instead.
+
+<br />
+
+## **First Example**
+
+<br />
+
+I bet you thought we were going to do a counter? Nope, that's every other state tutorial! Let's just set up a little page with some boiler-plate and a button to help us understand how things will work from this point forward. This is what our index.html file looks like now:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+index.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't a SPA</title>
+  </head>
+  <script>
+    let App = document.querySelector(".App") // Let's just define this first
+    let button = document.querySelector("#btn") // Nothing could go wrong here
+
+    button.addEventListener("click", () => {
+      App.innerHTML = "My state has changed. I live in California now."
+    })
+
+  </script>
+  <body>
+    <button id="btn">Click Me</button>
+    <div class="App"></div>
+  </body>
+</html>
+```
+
+</div>
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch4/brokenstate"
+  id="demo"
+/>
+
+<br />
+
+Simple enough, let's go test it out! Hmm... It doesn't work? The keen-eyed among you may have already noticed it. The way the browser works is that it scans the file from top to bottom, putting things into place as it goes along. The script tag is at the top of the file, but the button and the div are at the bottom.
+
+<br />
+
+The browser sees our script tag, and tries to do what it says, but the query selectors are looking for HTML tags that simply don't exist yet. A whole two lines of code separates the Javascript and the HTML, but that's enough. This means that the script runs before the button and div are even on the page.
+
+<br />
+
+How do we fix this? Simple, just move the script tag to the end! Like most coding insights, it really is that easy. This is an important lesson however, and we will refer back to it later.
+
+<br />
+
+Javascript is single-threaded[^1], meaning that it can only do one thing at a time. One thing cannot happen until the other finishes, so we need to make sure that the browser has fully parsed the HTML before we attempt to manipulate it. If you have further issues, you can add a defer or async attribute to your script to explicitly tell the browser how the data will load. For now, we'll use defer-- just to make sure that the browser doesn't try to run the script before it's ready.[^2]
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+
+index.html
+
+```html
+<!-- From this point forward, we will be omitting the meta tags for brevity. -->
+<!-- You can find everything in the github repo if you want to copy/paste the whole file. -->
+  <body>
+    <button id="btn">Click Me</button>
+    <div class="App"></div>
+  <script defer>
+    let App = document.querySelector(".App") // This is basically React
+    let button = document.querySelector("#btn") // btn is short for button
+
+    button.addEventListener("click", () => {
+      App.innerHTML = "My state has changed. I live in California now."
+    })
+  </script>
+  </body>
+  <!-- It really is that easy! -->
+</html>
+```
+
+</div>
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch4/fixedstate"
+  id="demo"
+/>
+
+<br />
+
+Now, save the file, reload your browser, and click the button! Satisfying, right? The only problem is that once you click the button, you have to refresh the entire page to reset it. Stop and think about why that would be.
+
+<br />
+
+As we saw when we wrote it, our server doesn't care what we ask for. Every single request gets the same thing no matter who asks for it, and the server forgets about the request as soon as it's made. While most back-ends are much more advanced than ours, the fundamental concept of an API built with stateless methodologies like REST[^3] remains the same-- each request is treated independently of the one before it.
+
+<br />
+
+The only state we currently have in the app is whether the button has been pressed. Once it has been pressed, the only way to “unpress” it is to refresh the page. Because our server only has the one, static file with a button in an un-pressed state to give us, our app's state in the browser will only exist for as long as the user remains on one version of the page-- even though every potential route serves the same page.
+
+<br />
+
+This inherent transience of our client-side app's state can be considered both a help and a hindrance. While we have to take extra measures to remember our user's preferences if they close the browser, the baseline website will remain exactly the same. The server ships the Javascript with all of the routing logic to the browser where it is cached, so that no matter what links the user clicks on, they already have the majority of the data loaded-- except for things like dynamic calls to a database as we'll see later.
+
+<br />
+
+By transferring the burden of customization to the client's computer, we can save on server costs. This may seem miserly, but every penny counts when you start serving up millions of views. This was certainly one of the many reasons for React and Angular's rise in popularity. But, more about that later.
+
+<br />
+
+## **Second Example**
+
+<br />
+
+So, enough about what state is and why we can't rely on it to last in client-side apps with stateless back-ends. Let's start actually making this app interesting! Let's introduce some variable, asynchronous state and watch our DOM manipulation magic grow.
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```html
+    <!-- The Meta Tags would go here -->
+    <body>
+
+    <button id="btn">I bet you won't click me! 🤪</button>
+    <div class="App">Don't do it. Just look at that face... 🤨</div>
+
+    <script defer>
+    let App = document.querySelector(".App")
+    let button = document.querySelector("#btn") // btn means button. FYI.
+
+    button.state = {
+        // Initial state
+      pressed: false,
+    }
+
+    function buttonChanged() {
+        // State change #1
+        App.innerHTML = "OMG, you did it. 🤯"
+        button.innerHTML = "Click me again, cowboy? 🤠"
+    }
+
+    function buttonChanged2() {
+        // State change #2
+      App.innerHTML = "Now, you're just being ridiculous. 🙄"
+      button.innerHTML = "Have you no shame? 😒"
+    }
+
+    button.addEventListener("click", () => {
+      button.state.pressed = !button.state.pressed
+          // This is a classic way to toggle a boolean between true and false
+      button.state.pressed ? buttonChanged() : buttonChanged2()
+          // We can use the ternary operator to check the state of the button
+      console.log(button.state)
+    })
+
+  </script>
+  </body>
+</html>
+    ```
+</div>
+
+<br />
+
+Save the file, refresh the browser, and check it out! Our faithful, formerly boring button can now live a whole life in your browser.
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch4/jesseiscrazy"
+  id="demo"
+/>
+
+<br />
+You may be wondering where the “state” and “pressed” properties that we used on the
+button came from. Surely, state is just built into javascript, and we were just using
+it as a tool, right? Nope! I just called it that to help you understand.
+
+<br />
+
+Welcome to the wild, wacky, wonderful world of JS. Check it out. This still works. In fact, this is the code that I'm using in the demo up above. Press F12 and look in the console. This is why we use declarative semantics in JavaScript. It's the only way to stay sane. Am I still sane?
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```html
+    <!-- The Meta Tags would go here -->
+ <body>
+    <button id="btn">I bet you won't click me twice... 🤪</button>
+    <div class="yumYum">Don't do it. Just look at that face... 🤨</div>
+    <script defer>
+      let yumYum = document.querySelector(".yumYum")
+      let bingBong = document.querySelector("#btn") // btn still stands for button. Forever.
+
+      bingBong.zipZap = {
+        dibbleDoobie: false,
+      }
+
+      function hooptyDoo() {
+        yumYum.innerHTML = "OMG, you did it. 🤯"
+        bingBong.innerHTML = "Click me again, cowboy? 🤠"
+      }
+
+      function hotDog() {
+        yumYum.innerHTML = "Now, you're just being ridiculous. 🙄"
+        bingBong.innerHTML = "Have you no shame? 😒"
+      }
+
+    bingBong.addEventListener("click", () => {
+      bingBong.zipZap.dibbleDoobie = !bingBong.zipZap.dibbleDoobie
+      bingBong.zipZap.dibbleDoobie ? hooptyDoo() : hotDog()
+      console.log(bingBong.zipZap)
+    })
+
+  </script>
+  </body>
+    ```
+</div>
+
+<br />
+
+Anyways… Back to the learning! Reload the code from earlier, and let's think about what's happening.
+
+<br />
+
+## **Conclusion**
+
+<br />
+
+Our app now has variable state within the browser. As the app loads, it renders what we call our initial state. We have told the browser that this particular button object has a property called 'state' which is an object with a property called 'pressed'-- And, that property is currently false. Objects all the way down!
+
+<br />
+
+Because the functions that change the page wait behind a conditional button, none of this has to change. Pressing the button is an example of the user's interaction customizing their experience. But again, all of that state is lost when the page is refreshed.
+
+<br />
+
+So, our state lives in three conditions:
+
+<br />
+
+- Unclicked and false
+- Clicked and true
+- Clicked and false
+
+<br />
+
+Each of these has a different impact on the user's experience in the app. All this from one button! Okay, I'm overstating it, but just imagine a fully interactive, user-based, client-side app like Facebook with all of its potential state changes, and you can start to see why things like React came into being.
+
+<br />
+
+Every single time the user interacts with the app, the state changes. If even one thing is wrong, the entire app can break. And, if you're not careful, you can end up with a lot of spaghetti code trying to keep track of it all.
+
+<br />
+
+You may wonder why I've spent this long talking about state when these articles are supposed to be about routing, but these two concepts are inherently intertwined. As we've seen, state isn't written into JavaScript. It's just a description of how the user is interacting with the app.
+
+<br />
+
+When the entire publicly accessible part of your website lies in a single file, the easiest way to dynamically serve up that code in a dependable variety of ways is by chaining certain aspects of its state to the URL. People expect to be able to share a link to a particular page, and have that page load in the same way that it did for them. This is the fundamental connection between routing and state.
+
+<br />
+
+There is a limit to the amount of state that we can keep in the URL, however. The URL is limited to 2,083 characters. That's a lot, but it's not infinite. And, things like user details need to be stored somewhere more private anyways. That's where the next chapter comes in. Next up, we'll learn more about something called the window object, and the tools that it gives us. But, first here's a link to this chapter on GitHub:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch4
+</div>
+
+<br />
+
+[^1]: 1: [A great article by Lydia Halle about the JavaScript V8 engine.](https://dev.to/lydiahallie/javascript-visualized-event-loop-3dif)
+[^2]: 2: [I like how this similarly garish website describes the process of the browser parsing a document.](https://starkie.dev/blog/how-a-browser-renders-a-web-page)
+[^3]: 3: [As you can see, 1.3 says that REST APIs must be stateless](https://restfulapi.net/)

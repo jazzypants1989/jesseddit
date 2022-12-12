@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't an SPA</title>
+  </head>
+  <body>
+    <button id="btn">I bet you won't click me! 🤪</button>
+    <div class="App">Don't do it. Just look at that face... 🤨</div>
+
+    <script defer>
+      let App = document.querySelector(".App")
+      let button = document.querySelector("#btn")
+
+      button.state = {
+        // Initial state
+        pressed: false,
+      }
+
+      function buttonChanged() {
+        // State change #1
+        App.innerHTML = "OMG, you did it. 🤯"
+        button.innerHTML = "Click me again, cowboy? 🤠"
+      }
+
+      function buttonChanged2() {
+        // State change #2
+        App.innerHTML = "Now, you're just being ridiculous. 🙄"
+        button.innerHTML = "Have you no shame? 😒"
+      }
+
+      button.addEventListener("click", () => {
+        button.state.pressed = !button.state.pressed
+        // This is a classic way to toggle a boolean between true and false
+        button.state.pressed ? buttonChanged() : buttonChanged2()
+        // We can use the ternary operator to check the state of the button
+        console.log(button.state)
+      })
+    </script>
+  </body>
+</html>

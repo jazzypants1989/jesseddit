@@ -1,7 +1,214 @@
 ---
 title: "Getting Started, Setting Up a Server"
 slug: "getting-started-setting-up-a-server"
-nextLink: "./introduction-to-state-management"
+nextLink: "./state-management"
 ---
 
-I should have this finished by 12/12/2022! :D
+import Cat from "../../Cat.tsx"
+
+by Jesse Pence
+
+<Cat />
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  id="ytplayer"
+/>
+
+<br />
+
+## **Table of Contents**
+
+<br />
+
+<a href="#introduction">Introduction</a>
+<a href="#code">Code</a>
+<a href="#conclusion-and-demo">Conclusion and Demo</a>
+
+<br />
+
+## **Introduction**
+
+<br />
+
+This first series of articles will be a step-by-step tutorial on the development of a single page application in a single html file. This will almost certainly be a mess, but I hope it will help you understand why frameworks and routing libraries are so prevalent. Vanilla JavaScript is certainly not easy and often not pretty.
+
+<br />
+
+But, you have to start with the nitty-gritty to fully understand how these tools like React Router really work. Because it can be hard to see through the abstractions of these modern APIs, it can be easy to think that the abstractions are unnecessary. However, the reason for any abstraction in the coding world is often pain, suffering, and boredom.
+
+<br />
+
+This goes down to the very heart of programming itself-- otherwise we would all be writing our programs in binary machine code. It's an interesting conundrum. To make something easier to understand, it is necessary to obscure the way it actually functions.
+
+<br />
+
+To be frank, I make several mistakes over the course of these first articles. For the sake of education, I decided to leave many of them in, but I will be letting you know when they happen and why. After completing this tutorial, I am very happy to return to my well-tested routing libraries.
+
+<br />
+
+As this series of articles will focus solely on client-side routing (for now), we will begin with a very simple Express[^1] HTTP server. I know, it seems strange to start with a server when I just said that I won't be talking about how server-side routing works, but let's face facts. If your website isn't on a server, it doesn't matter how it's routed-- you'll just be zooming around folders on your computer.
+
+<br />
+
+## **Code**
+
+<br />
+
+Since we won't be focusing on how server-side routing works (which is the traditional way of doing things after all), this server is going to be hilariously simple. First, we set up a folder with nothing in it and whatever name you like. Next, download NPM[^2] if you don't have it, open a terminal and type `npm init -y` to start a new Node project with the bare settings. Hit enter, and finally type `npm i express` to install our only dependency.
+
+<br />
+
+Configuring a bare Node server for this project is totally possible and pretty easy, but outside of the scope of this article. For now, just create a file called server.js, and enjoy the fact that Express lets our server code look like this:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+
+server.js
+
+```js
+const express = require("express") // import Express
+
+app = express() // Start it up
+
+app.use(express.static(“public”)) // tell it where our static assets will live.
+
+app.get("*", function (req, res) { // THERE CAN ONLY BE ONE (route)!
+res.sendFile(__dirname + "/index.html") // We'll make this file soon.
+})
+
+app.listen(3000, function () { // the server is now listening for http requests
+console.log("Ctrl-Click here to test: http://localhost:3000")
+})
+
+```
+
+</div>
+
+<br />
+
+That's it. If you're building a single page application, and you're not worried about SEO, that's all the input that you need from the server. This will be our server for this entire series of articles, and much of the next as well. For now, we can just save this file, and go create the index.html file that we just referenced while making the server. Almost every website has a file called index.html, and it helps the server know what to give the user when they ask for just the base website like www.example.com with nothing after it.
+
+<br />
+
+This will be our only other file in this initial version of the app. I know, I said there would be only one file, but the server doesn't count! To test that our server works right, this file will simply contain “hello world”. To make a file like this in VSCode, you just create an empty html file and then press the “!” key followed by enter. This will automatically generate a basic html file. All we have to do is put "Hello World" in the body. Alternatively, you can just copy/paste this:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```html
+    <!DOCTYPE html> <!-- This just tells the browser that this is an html file -->
+    <html lang="en"> <!-- In this case, we're using English -->
+      <head> <!-- Metadata, AKA what the browser needs to know about the page to show it right -->
+        <meta charset="UTF-8" /> <!-- Almost every page uses UTF-8 -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> <!-- Unnecessary usually, but good to have -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- This is for responsive design -->
+        <title>Document</title> <!-- The title of the page that you see in the tab / bookmark -->
+      </head> <!-- All the boring stuff is done -->
+      <body> <!-- This is where we put the actual content of the page -->
+        Hello World <!-- Yay, real content! -->
+      </body> <!-- That's all, folks -->
+    </html> <!-- Seriously, that's it -->
+    ```
+</div>
+
+<br />
+
+Now, let's go back to our terminal and type `node server.js`. If everything has gone correctly, You should see the welcome message we wrote telling you to click on a link. Do as it instructs, and open the page. Ta-da! You now have a server where no matter what else you type in after the root, it defers you back to the single file which will hold our app.
+
+<br />
+
+To test this, feel free to type in whatever nonsense you want after the URL. Everything should still have our “hello world” message unless you were a rebel and secretly put something into a folder called “public” (we'll talk about this in chapter 13.)
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  http://localhost:3000/Wow/This/is/Crazy/How#DoesTHIS?STILLWORK?!?
+</div>
+
+<br />
+
+This will lead us to our first routing lesson, and that involves the use of the asterisk. Essentially, in many routing systems, the \* serves as a wildcard telling the router that literally any request will get the same response. Usually, this is used for something like a 404 page, and we will likely use it for this purpose later on, but here we're just using it as a convenient way to short-circuit the extensive capabilities of our server. Instead, we will choose to only use the combined power of the browser environment and our JavaScript code to determine the content we serve to the user.
+
+<br />
+
+## **Conclusion and Demo**
+
+<br />
+
+Okay, so there's not much here yet, but it's important to build this so you can fully see the difference between the server and the client. Oh, and so the rest of our code will actually work. Everything from this point onwards will be client-side, and we will be exclusively using JavaScript and the browser to determine what to show the user.
+
+<br />
+
+Each chapter will include a demo of our app as it currently stands somewhere in the chapter. I am using TailwindCSS on this website, which includes a hard CSS reset, so my demo may look different than yours. I'm going to have everything hosted here on my page which is mirrored from GitHub, so I'll link to the source code there as well. It's pretty simple for now:
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch3/"
+/>
+
+<br />
+
+And, here's a link to this chapter on GitHub:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch3
+</div>
+
+<br />
+
+But, to give you a treat since you made it to the end of this chapter, here's a teaser of what's to come:
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/products"
+  id="demo"
+/>
+
+<br />
+
+Because I'm using client side routing, I can do crazy stuff like this! How? Well, I'm glad you asked! Otherwise, this whole thing would be a waste of time. In the next chapter, we'll talk about state, what it is, and how we can use it to make our app more dynamic.
+
+<br />
+
+[^1]: 1: [Express.JS is one of the post popular web frameworks for Node.JS.](https://expressjs.com)
+[^2]: 2: [I'm using NPM because of it's ubiquity, but feel free to use Yarn or PNPM.](https://www.npmjs.com/)

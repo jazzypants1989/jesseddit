@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't an SPA</title>
+  </head>
+  <body>
+    <button id="btn">Click Me</button>
+    <div class="App"></div>
+    <script defer>
+      let App = document.querySelector(".App")
+      let button = document.querySelector("#btn")
+
+      button.addEventListener("click", () => {
+        App.innerHTML = "My state has changed. I live in California now."
+      })
+    </script>
+  </body>
+</html>

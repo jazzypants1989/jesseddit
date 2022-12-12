@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't an SPA</title>
+  </head>
+  <body>
+    <button id="btn">I bet you won't click me! 🤪</button>
+    <div class="yumYum">Don't do it. Just look at that face... 🤨</div>
+    <script defer>
+      let yumYum = document.querySelector(".yumYum")
+      let bingBong = document.querySelector("#btn") // btn still stands for button. Forever.
+
+      bingBong.zipZap = {
+        dibbleDoobie: false,
+      }
+
+      function hooptyDoo() {
+        yumYum.innerHTML = "OMG, you did it. 🤯"
+        bingBong.innerHTML = "Click me again, cowboy? 🤠"
+      }
+
+      function hotDog() {
+        yumYum.innerHTML = "Now, you're just being ridiculous. 🙄"
+        bingBong.innerHTML = "Have you no shame? 😒"
+      }
+
+      bingBong.addEventListener("click", () => {
+        bingBong.zipZap.dibbleDoobie = !bingBong.zipZap.dibbleDoobie
+        bingBong.zipZap.dibbleDoobie ? hooptyDoo() : hotDog()
+        console.log(bingBong.zipZap)
+      })
+    </script>
+  </body>
+</html>

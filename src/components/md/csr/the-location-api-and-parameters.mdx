@@ -4,4 +4,133 @@ slug: "the-location-api-and-parameters"
 nextLink: "./the-history-api"
 ---
 
-Coming soon!
+import Cat from "../../Cat.tsx"
+
+by Jesse Pence
+
+<Cat />
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  id="ytplayer"
+/>
+
+<br />
+
+## **Table of Contents**
+
+<br />
+
+<a href="#introduction-and-demo">Introduction and Demo One</a>
+<a href="#demo-two">Demo Two</a>
+<a href="#conclusion">Conclusion</a>
+
+<br />
+
+## **Introduction and Demo One**
+
+<br />
+
+As we discussed, search parameters are usually used to store user information while hash fragments are usually used to store information about the current state of the page. Let's jump right into a simple demo showing some of these principles. Lots of this code is unnecessary, but I wanted to show you how to use the URL API. Read the comments for more information.
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+
+index.html
+
+```html
+<!-- Meta tags, etc. -->
+<body>
+    <button id="btn">Click me to see your current path.</button>
+    <div class="App-1">This will change into the path name</div>
+    <div class="App-2">This will change into search param #1 (brie)</div>
+    <div class="App-3">This will change into search param #2 (cheddar)</div>
+    <div class="App-4">This will change into hash fragment #1 (gouda)</div>
+    <div class="App-5">This will change into hash fragment #2 (mozzarella)</div>
+
+    <script defer>
+    let App1 = document.querySelector(".App-1") // I am
+    let App2 = document.querySelector(".App-2") // really good
+    let App3 = document.querySelector(".App-3") // at naming
+    let App4 = document.querySelector(".App-4") // variables
+    let App5 = document.querySelector(".App-5") // I swear
+    let button = document.querySelector("#btn") // btn is short for button
+
+    let url = new URL(window.location.href) // this is unnecessary, you can use location.pathname, etc.
+    let path = url.pathname // but I wanted to show how to use the URL API
+    let searchParams = url.searchParams // it parses any URL, not just the current one
+    let hash = url.hash // and, as you can see, it's very easy to use
+
+    button.addEventListener("click", () => {
+      App1.innerHTML = path
+      App2.innerHTML = searchParams.get("brie") // this is how you get the value of a search param
+      App3.innerHTML = searchParams.get("cheddar") // they are key-value pairs
+      App4.innerHTML = hash.split("#")[1] // this is how you get the value of a single hash fragment
+      App5.innerHTML = hash.split("#")[2] // usually only one, but you can have as many as you want
+       console.log(location.search) // one way to get search params
+
+        // Why I like the URL API
+        for (const [key, value] of searchParams) {
+          console.log(`This is just the URL API. ${key}: ${value}`)
+        }
+
+        // There is also a URLSearchParams object, which skips the URL API
+        let searchParams2 = new URLSearchParams(location.search)
+        for (const [key, value] of searchParams2) {
+          console.log(`This is URLSearchParams. ${key}: ${value}`)
+        }
+      })
+  </script>
+  </body>
+</html>
+
+```
+
+</div>
+
+<br />
+
+Save the script, now check this out:
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    fontSize: "1.3rem",
+  }}
+>
+  http://localhost:3000/best/cheese?brie=okay&cheddar=better#gouda#mozzarella
+</div>
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch6/demo/START-HERE/best/cheese?brie=okay&cheddar=better#gouda#mozzarella"
+  id="demo"
+/>
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch6
+</div>
+
+[^1]: 1:
+[^2]: 2:

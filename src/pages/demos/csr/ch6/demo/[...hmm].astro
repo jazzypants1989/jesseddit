@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't an SPA</title>
+  </head>
+  <body>
+    <button id="btn">Click me to see your current path.</button>
+    <div class="App-1">This will change into the path name</div>
+    <div class="App-2">This will change into search param #1 (brie)</div>
+    <div class="App-3">This will change into search param #2 (cheddar)</div>
+    <div class="App-4">This will change into hash fragment #1 (gouda)</div>
+    <div class="App-5">This will change into hash fragment #2 (mozzarella)</div>
+    <script defer>
+      let App1 = document.querySelector(".App-1") // I am
+      let App2 = document.querySelector(".App-2") // really good
+      let App3 = document.querySelector(".App-3") // at naming
+      let App4 = document.querySelector(".App-4") // variables
+      let App5 = document.querySelector(".App-5") // I swear
+      let button = document.querySelector("#btn") // btn is short for button
+
+      let url = new URL(window.location.href) // this is unnecessary, you can use location.pathname, etc.
+      let path = url.pathname // but I wanted to show how to use the URL API
+      let searchParams = url.searchParams // it parses any URL, not just the current one
+      let hash = url.hash // and, as you can see, it's very easy to use as well
+
+      button.addEventListener("click", () => {
+        App1.innerHTML = path
+        App2.innerHTML = searchParams.get("brie") // this is how you get the value of a search param
+        App3.innerHTML = searchParams.get("cheddar") // they are key-value pairs
+        App4.innerHTML = hash.split("#")[1] // this is how you get the value of a hash fragment
+        App5.innerHTML = hash.split("#")[2] // usually there's only one, but you can have as many as you want
+        console.log(url) // just to show you what the URL object looks like
+        console.log(location.search) // one way to get search params
+
+        // Why I like the URL API
+        for (const [key, value] of searchParams) {
+          console.log(`This is just the URL API. ${key}: ${value}`)
+        }
+
+        // There is also a URLSearchParams object, which skips the URL API
+        let searchParams2 = new URLSearchParams(location.search)
+        for (const [key, value] of searchParams2) {
+          console.log(`This is URLSearchParams. ${key}: ${value}`)
+        }
+      })
+    </script>
+  </body>
+</html>

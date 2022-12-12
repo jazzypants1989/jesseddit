@@ -1,0 +1,61 @@
+import Cat from "../../Cat.tsx"
+
+by Jesse Pence
+
+<Cat />
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  id="ytplayer"
+/>
+
+<br />
+
+## **Table of Contents**
+
+<br />
+
+<a href="#introduction">Introduction</a>
+<a href="#code">Code</a>
+<a href="#conclusion-and-demo">Conclusion and Demo</a>
+
+<br />
+
+## **Introduction**
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```html
+    <!DOCTYPE html> <!-- This just tells the browser that this is an html file -->
+    <html lang="en"> <!-- In this case, we're using English -->
+      <head> <!-- Metadata, AKA what the browser needs to know about the page to show it right -->
+        <meta charset="UTF-8" /> <!-- Almost every page uses UTF-8 -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> <!-- Unnecessary usually, but good to have -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- This is for responsive design -->
+        <title>Document</title> <!-- The title of the page that you see in the tab / bookmark -->
+      </head> <!-- All the boring stuff is done -->
+      <body> <!-- This is where we put the actual content of the page -->
+        Hello World <!-- Yay, real content! -->
+      </body> <!-- That's all, folks -->
+    </html> <!-- Seriously, that's it -->
+    ```
+</div>
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/products"
+  id="demo"
+/>
+
+[^1]: 1:
+[^2]: 2:
