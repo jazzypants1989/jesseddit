@@ -23,8 +23,33 @@
       text-align: center;
     }
 
-    a {
+    .dark {
+      background-color: #222;
+      color: #fff;
+    }
+    .dark a {
       color: #88f;
+    }
+    .purple {
+      background-color: #88f;
+      color: #ff0;
+    }
+    .purple a {
+      color: #292;
+    }
+    .green {
+      background-color: #0f0;
+      color: #911;
+    }
+    .green a {
+      color: #999;
+    }
+
+    #toggleTheme {
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin: 1rem;
     }
 
     nav,
@@ -85,6 +110,7 @@
       </ul>
     </nav>
     <main class="main"></main>
+    <button id="toggleTheme">Toggle Theme</button>
     <footer>
       <a href="http://jazzypants.dev"> © 2023 Jovial Penguin, LLC.</a>
     </footer>
@@ -96,6 +122,16 @@
       const search = document.querySelector("input") // Get the search input element
       const cartCount = document.querySelector("#cart-count") // Get the cart count element
       const cartAmount = document.querySelector("#cart-total") // Get the cart total element
+      const themeCheck = localStorage.getItem("theme") // Get the theme from localStorage
+
+      // Set the theme
+      if (themeCheck === "dark") {
+        document.body.classList.add("dark")
+      } else if (themeCheck === "purple") {
+        document.body.classList.add("purple")
+      } else if (themeCheck === "green") {
+        document.body.classList.add("green")
+      }
 
       // Bring in the cart and initiate the DOM with the current cart state
       const cart = JSON.parse(localStorage.getItem("cart")) || {} // Get the cart from localStorage, or set it to an empty array if it doesn't exist.
@@ -373,6 +409,24 @@
           }) // Ta-da! We have a SPA! Oh, wait. We need to call the Router function once to render the initial page.
         })
       }
+
+      // This function will run every time the user clicks the toggleTheme button. It will change the theme of the app.
+      const toggleTheme = document.querySelector("#toggleTheme") // Get the toggleTheme button
+
+      toggleTheme.addEventListener("click", () => {
+        // Check current theme
+        const currentTheme = localStorage.getItem("theme") || "dark" // Get the current theme from localStorage, or set it to dark if it doesn't exist.
+        const newTheme =
+          currentTheme === "dark"
+            ? "purple"
+            : "green"
+            ? currentTheme === "purple"
+              ? "green"
+              : "dark"
+            : "dark"
+        document.body.className = newTheme
+        localStorage.setItem("theme", newTheme) // Set the theme in localStorage to the new theme.
+      })
 
       // Even more essential is the render function, which sets our reactive element's innerHTML to whatever we pass to it.
       async function render(component) {

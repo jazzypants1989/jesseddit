@@ -25,8 +25,8 @@ by Jesse Pence
 <br />
 
 <a href="#introduction">Introduction</a>
-<a href="#first-example">First Example</a>
-<a href="#second-example">Second Example</a>
+<a href="#first-demo">First Demo</a>
+<a href="#second-demo">Second Demo</a>
 <a href="#conclusion">Conclusion</a>
 
 <br />
@@ -43,7 +43,7 @@ On multi-page applications where every interaction goes through the server, this
 
 <br />
 
-## **First Example**
+## **First Demo**
 
 <br />
 
@@ -59,7 +59,7 @@ I bet you thought we were going to do a counter? Nope, that's every other state 
     fontSize: "1.3rem",
   }}
 >
-index.html
+brokenstate.html
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -97,7 +97,7 @@ index.html
 
 <br />
 
-Simple enough, let's go test it out! Hmm... It doesn't work? The keen-eyed among you may have already noticed it. The way the browser works is that it scans the file from top to bottom, putting things into place as it goes along. The script tag is at the top of the file, but the button and the div are at the bottom.
+Simple enough, let's go test it out! Hmm... It doesn't work? The keen-eyed among you may have already noticed it. The way the browser works is that it scans the file from top to bottom, putting things into place as it goes along. But, when it comes across a script tag, it pauses to implement whatever is inside of it. Our script tag is at the top of the file, but the button and the div are at the bottom.
 
 <br />
 
@@ -122,7 +122,7 @@ Javascript is single-threaded[^1], meaning that it can only do one thing at a ti
   }}
 >
 
-index.html
+fixedstate.html
 
 ```html
 <!-- From this point forward, we will be omitting the meta tags for brevity. -->
@@ -175,7 +175,7 @@ By transferring the burden of customization to the client's computer, we can sav
 
 <br />
 
-## **Second Example**
+## **Second Demo**
 
 <br />
 
@@ -253,7 +253,7 @@ it as a tool, right? Nope! I just called it that to help you understand.
 
 <br />
 
-Welcome to the wild, wacky, wonderful world of JS. Check it out. This still works. In fact, this is the code that I'm using in the demo up above. Press F12 and look in the console. This is why we use declarative semantics in JavaScript. It's the only way to stay sane. Am I still sane?
+Welcome to the wild, wacky, wonderful world of JS. Check it out. This still works. In fact, this is the code that I'm using in the demo up above. Press F12 and look in the console as you press the button. This is why we use declarative semantics in JavaScript. It's the only way to stay sane. Am I still sane?
 
 <br />
 
@@ -265,7 +265,7 @@ Welcome to the wild, wacky, wonderful world of JS. Check it out. This still work
     fontSize: "1.3rem",
   }}
 >
-    index.html
+    jesseiscrazy.html
     ```html
     <!-- The Meta Tags would go here -->
  <body>
@@ -314,7 +314,7 @@ Our app now has variable state within the browser. As the app loads, it renders 
 
 <br />
 
-Because the functions that change the page wait behind a conditional button, none of this has to change. Pressing the button is an example of the user's interaction customizing their experience. But again, all of that state is lost when the page is refreshed.
+Because the functions that change the page wait behind a conditional button, none of this has to change. Pressing the button is an demo of the user's interaction customizing their experience. But again, all of that state is lost when the page is refreshed.
 
 <br />
 

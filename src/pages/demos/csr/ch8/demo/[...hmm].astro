@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't an SPA</title>
+  </head>
+  <style>
+    #container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 90vh;
+      width: 50vw;
+    }
+  </style>
+  <body>
+    <label for="color-picker">Pick a color</label>
+    <input type="color" id="color-picker" />
+    <div id="container">
+      <p>
+        This container will remember your favorite color, even if you close the
+        browser.
+      </p>
+    </div>
+    <script defer>
+      const container = document.getElementById("container")
+      const colorPicker = document.getElementById("color-picker")
+      const color = localStorage.getItem("favColor")
+      if (color) {
+        container.style.backgroundColor = color
+        colorPicker.value = color
+      }
+      colorPicker.addEventListener("change", (e) => {
+        container.style.backgroundColor = e.target.value
+        localStorage.setItem("favColor", e.target.value)
+      })
+    </script>
+  </body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't an SPA</title>
+  </head>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 90vh;
+      width: 50vw; /* big ol' vertically aligned boxes */
+    }
+    html {
+      scroll-behavior: smooth; /* just to make it obvious */
+    }
+  </style>
+
+  <body>
+    <div id="container1" class="container">
+      <p>This container corresponds to #container1 and ?color1</p>
+    </div>
+    <a href="#container2">Click me to go down there.</a>
+    <div id="container2" class="container">
+      <p>This container corresponds to #container2 and &color2</p>
+    </div>
+    <a href="#container1">Click me to go back up there.</a>
+    <br />
+    <button id="btn">This button gives you a hint of the future</button>
+
+    <script defer>
+      const btn = document.getElementById("btn") // this is a button
+      const container1 = document.getElementById("container1")
+      const container2 = document.getElementById("container2")
+
+      btn.addEventListener("click", () => {
+        let randomColor1 = Math.floor(Math.random() * 16777215).toString(16)
+        // random hex color
+        let randomColor2 = Math.floor(Math.random() * 16777215).toString(16)
+        // the number 16 is the base and 16777215 is the max
+        window.history.pushState(
+          // ignore the two empty arguments
+          {},
+          "",
+          `?color1=${randomColor1}&color2=${randomColor2}`
+          // all we care about for now is the last one– the URL.
+        )
+        container1.style.backgroundColor = `#${randomColor1}`
+        container2.style.backgroundColor = `#${randomColor2}`
+      }) // i wonder what this button does
+
+      function colorCheck() {
+        // We’ll run this twice, so we’re defining it here to keep the code DRY
+        const urlParams = new URLSearchParams(window.location.search) // bypassing the URL API
+        const color1 = urlParams.get("color1") // a getter function that returns the value of the key
+        const color2 = urlParams.get("color2")
+        if (color1) {
+          container1.style.backgroundColor = `#${color1}`
+        }
+        if (color2) {
+          container2.style.backgroundColor = `#${color2}`
+        } // a bit verbose, but I wanted everything to be explicit
+      }
+
+      colorCheck() // initial color check
+
+      window.addEventListener("load", () => {
+        // This event tells us the DOM is fully loaded
+        window.addEventListener("popstate", () => {
+          // wait to see if a popState event fires.
+          colorCheck() // change the colors to match the search params if a popState event fires.
+        })
+      })
+    </script>
+  </body>
+</html>
