@@ -34,7 +34,7 @@ by Jesse Pence
 
 <br />
 
-As the last chapter introduced a lot of new concepts and we're close to building our app, this will be the only chapter without a new demo from this point forwards. Instead, let's bring back the last part of our second demo from the last chapter, and re-examine what was happening with the button on the very bottom of the page.
+As the last chapter introduced a lot of new concepts and we're close to building our app, this will be the one of the few chapters without a new demo from this point forwards. Instead, let's bring back the last part of our second demo from the last chapter, and re-examine what was happening with the button on the very bottom of the page.
 
 <br />
 
@@ -70,16 +70,17 @@ As the last chapter introduced a lot of new concepts and we're close to building
 
 colorCheck() // initial color check
 
-window.addEventListener("load", () => { 
-    // This event tells us the DOM is fully loaded
-        window.addEventListener("popstate", () => { 
-        // wait to see if a popState event fires.
-            colorCheck() 
-            // change the colors to match the search params if a popState event fires.
-        })
-        // Don't worry, I'll explain this... NOW!
-    })
-    </script>
+window.addEventListener("load", () => {
+// This event tells us the DOM is fully loaded
+window.addEventListener("popstate", () => {
+// wait to see if a popState event fires.
+colorCheck()
+// change the colors to match the search params if a popState event fires.
+})
+// Don't worry, I'll explain this... NOW!
+})
+</script>
+
 </body>
 </html>
 ```
@@ -87,7 +88,10 @@ window.addEventListener("load", () => {
 
 <br />
 
-<iframe src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2" style="width: 100%; height: 500px; border: black 1px solid; border-radius: 5px;"></iframe>
+<iframe
+  src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2"
+  style="width: 100%; height: 500px; border: black 1px solid; border-radius: 5px;"
+></iframe>
 
 <br />
 
@@ -119,7 +123,7 @@ When I was constructing this series of articles, I used the DOMContentLoaded eve
 
 <br />
 
-Finally, I will briefly mention the replaceState method of the history object. This is handy when you don't actually want the user to be able to go back. Later, when we create our global Route and Link functions, they will pushState by default. However, there may be some times when you don't want that-- like whenever private information is involved. Because we are not authenticating each request with a server, it is sometimes necessary to make certain pages of a user's history unavailable after completion. 
+Finally, I will briefly mention the replaceState method of the history object. This is handy when you don't actually want the user to be able to go back. Later, when we create our global Route and Link functions, they will pushState by default. However, there may be some times when you don't want that-- like whenever private information is involved. Because we are not authenticating each request with a server, it is sometimes necessary to make certain pages of a user's history unavailable after completion.
 
 <br />
 
@@ -143,7 +147,6 @@ As always, here's the code for today:
 >
   https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch7
 </div>
-
 
 [^1]: 1:
 [^2]: 2:

@@ -14,7 +14,7 @@ by Jesse Pence
 
 <iframe
   style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  src="https://www.youtube.com/embed/u6gW7se4QcE"
   id="ytplayer"
 />
 
@@ -146,7 +146,7 @@ Press the button. Now, press F12 to see the console. You should see something li
 
 <br />
 
-So, first we have the URL object. As you can see, it's almost the same as location, but it's a little more powerful. It can parse any URL, not just the current one. I used the new URL command because it gives me access to the URLSearchParams values. 
+So, first we have the URL object. As you can see, it's almost the same as location, but it's a little more powerful. It can parse any URL, not just the current one. I used the new URL command because it gives me access to the URLSearchParams values.
 
 <br />
 
@@ -208,16 +208,16 @@ Multiple hash fragments are much rarer, as you generally only have one value tha
       const container2 = document.getElementById("container2")
 
       btn.addEventListener("click", () => {
-        let randomColor1 = Math.floor(Math.random() * 16777215).toString(16) 
+        let randomColor1 = Math.floor(Math.random() * 16777215).toString(16)
         // random hex color
-        let randomColor2 = Math.floor(Math.random() * 16777215).toString(16) 
+        let randomColor2 = Math.floor(Math.random() * 16777215).toString(16)
         // toString(16) converts to hex, and 16777215 is the max value
         window.history.pushState(
           // ignore the two empty arguments
           {},
           "",
-          `?color1=${randomColor1}&color2=${randomColor2}` 
-          // all we care about for now is the last one– the URL. 
+          `?color1=${randomColor1}&color2=${randomColor2}`
+          // all we care about for now is the last one– the URL.
         )
         container1.style.backgroundColor = `#${randomColor1}`
         container2.style.backgroundColor = `#${randomColor2}`
@@ -237,16 +237,17 @@ Multiple hash fragments are much rarer, as you generally only have one value tha
 
       colorCheck() // initial color check
 
-      window.addEventListener("load", () => { 
+      window.addEventListener("load", () => {
         // This event tells us the DOM is fully loaded
-        window.addEventListener("popstate", () => { 
+        window.addEventListener("popstate", () => {
             // wait to see if a popState event fires.
-          colorCheck() 
+          colorCheck()
           // change the colors to match the search params if a popState event fires.
         })
         // Don't worry, I'll explain this soon.
       })
     </script>
+
   </body>
   </html>
 ```
@@ -259,19 +260,22 @@ Alright! Now, we're really manipulating the DOM! I always feel dirty when I say 
 <br />
 
 <div
-    style={{
-        maxWidth: "100%",
-        overflow: "auto",
-        borderRadius: "5px",
-        fontSize: "1.3rem",
-    }}
-    >
-    http://localhost:3000/?color1=00f&color2=f00#container2
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  http://localhost:3000/?color1=00f&color2=f00#container2
 </div>
 
-<br /> 
+<br />{" "}
 
-<iframe src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2" style="width: 100%; height: 500px; border: black 1px solid; border-radius: 5px;"></iframe>
+<iframe
+  src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2"
+  style="width: 100%; height: 500px; border: black 1px solid; border-radius: 5px;"
+></iframe>
 
 <br />
 
