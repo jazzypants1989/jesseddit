@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell me this isn't a SPA</title>
+  </head>
+  <style>
+    body {
+      position: absolute; /* only need to do this because of the navbar and footer */
+      overflow: hidden; /* since footer is absolute, we will need a scrollbar inside */
+      width: 100%; /* take up the entire screen */
+      height: 100%; /* ditto */
+      margin: 0; /* no margins to avoid blank area around the edges */
+      padding: 0; /* no need */
+      display: flex; /* flexbox makes life easy */
+      flex-direction: column; /* vertical layout */
+      justify-content: center; /* center everything */
+      align-items: center; /* ditto */
+      text-align: center; /* ditto */
+    } /* this is the container that will hold everything */
+
+    .dark {
+      background-color: #222; /* DARK theme (1) */
+      color: #fff; /* white text */
+    }
+    .dark a {
+      color: #88f; /* purple links */
+    } /* theme 1 (DARK) */
+
+    .purple {
+      background-color: #88f; /* PURPLE theme (2) */
+      color: #ff0; /* yellow text */
+    }
+    .purple a {
+      color: #292; /* green links */
+    } /* theme 2 (PURPLE) */
+
+    .green {
+      background-color: #0f0; /* GREEN theme (3) */
+      color: #911; /* red text */
+    }
+    .green a {
+      color: #999; /* gray links */
+    } /* theme 3 (GREEN) */
+
+    nav,
+    footer {
+      width: 100%;
+      position: absolute;
+      background-color: #222; /* keep nav and footer dark */
+    } /* take up whole screen at the top and bottom */
+
+    nav {
+      top: 0;
+    } /* nav on top */
+
+    ul {
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      list-style: none;
+    } /* make the nav into a horizontal, evenly spaced list */
+
+    main {
+      width: 100%; /* take up the whole screen */
+      overflow-y: auto; /* scrollable */
+      margin-top: 3rem; /* leave room for the navbar */
+      margin-bottom: 1rem; /* leave room for the footer */
+    }
+
+    img {
+      aspect-ratio: 1/1; /* square-ish */
+      object-fit: contain; /* scale to fit */
+      width: 100%; /* take up the whole area if you can */
+      max-height: 50vh; /* but not too big */
+    }
+
+    footer {
+      bottom: 0; /* starting at bottom */
+    }
+  </style>
+  <body class="dark">
+    <nav>
+      <ul>
+        <li>
+          <a href="/demos/csr/ch10/demo/" class="Link">Home</a>
+        </li>
+        <li>
+          <a href="/demos/csr/ch10/demo/about" class="Link">About</a>
+        </li>
+        <li>
+          <a href="/demos/csr/ch10/demo/products" class="Link">Products</a>
+        </li>
+        <li>
+          <a href="/demos/csr/ch10/demo/cart" class="Link">Cart</a>
+          <span id="cart-count"></span>
+          <span id="cart-total"></span>
+        </li>
+        <li>
+          <input aria-label="Search" type="text" placeholder="Search" />
+        </li>
+        <li>
+          <button id="toggleTheme">Toggle Theme</button>
+        </li>
+      </ul>
+    </nav>
+    <main class="main"></main>
+    <footer>
+      <a href="http://jazzypants.dev"> © 2023 Jovial Penguin, LLC.</a>
+    </footer>
+    <script defer>
+      const toggleTheme = document.getElementById("toggleTheme")
+
+      toggleTheme.addEventListener("click", () => {
+        if (document.body.classList.contains("dark")) {
+          document.body.classList.remove("dark")
+          document.body.classList.add("purple")
+        } else if (document.body.classList.contains("purple")) {
+          document.body.classList.remove("purple")
+          document.body.classList.add("green")
+        } else if (document.body.classList.contains("green")) {
+          document.body.classList.remove("green")
+          document.body.classList.add("dark")
+        }
+      })
+    </script>
+  </body>
+</html>

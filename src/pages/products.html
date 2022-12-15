@@ -12,8 +12,8 @@
       overflow: hidden; /* since footer is absolute, we will need a scrollbar inside */
       width: 100%; /* take up the entire screen */
       height: 100%; /* ditto */
-      margin: 0; /* no margins to avoid void around the edges */
-      padding: 0; /* ditto */
+      margin: 0; /* no margins */
+      padding: 0; /* no padding */
       display: flex; /* flexbox */
       flex-direction: column; /* vertical layout */
       justify-content: center; /* center everything */
@@ -48,12 +48,11 @@
       width: 100%;
       position: absolute;
       background-color: #222; /* keep nav and footer dark */
-    } /* take up whole screen at the top and bottom */
+    } /* take up whole area at the top and bottom */
 
     nav {
       top: 0;
-      left: 0;
-    } /* starting at top-left */
+    } /* nav on top */
 
     ul {
       display: flex;
@@ -63,13 +62,14 @@
     } /* make a horizontal list */
 
     main {
-      width: 100%; /* take up the whole screen */
+      width: 100%; /* take up the whole area */
       overflow-y: auto; /* scrollable */
-      margin: 2rem auto; /* centered but away from nav and footer */
+      margin-top: 3rem; /* leave room for the navbar */
+      margin-bottom: 1rem; /* leave room for the footer */
     }
 
     img {
-      aspect-ratio: 1/1; /* square */
+      aspect-ratio: 1/1; /* square-ish */
       object-fit: contain; /* scale to fit */
       width: 100%; /* take up the whole area if you can*/
       max-height: 50vh; /* but not too big */
@@ -117,15 +117,12 @@
       const cartCount = document.querySelector("#cart-count") // Get the cart count element
       const cartAmount = document.querySelector("#cart-total") // Get the cart total element
       const themeCheck = localStorage.getItem("theme") // Get the theme from localStorage
+      const toggleTheme = document.querySelector("#toggleTheme") // Get the toggleTheme button
 
       // Set the theme
-      if (themeCheck === "dark") {
-        document.body.classList.add("dark")
-      } else if (themeCheck === "purple") {
-        document.body.classList.add("purple")
-      } else if (themeCheck === "green") {
-        document.body.classList.add("green")
-      }
+      themeCheck // If there is a theme in localStorage
+        ? (document.body.className = themeCheck) // Set the theme on the body element
+        : (document.body.className = "dark") // Otherwise, default to dark
 
       // Bring in the cart and initiate the DOM with the current cart state
       const cart = JSON.parse(localStorage.getItem("cart")) || {} // Get the cart from localStorage, or set it to an empty object if it doesn't exist
@@ -136,8 +133,6 @@
           .map((item) => item.product.price * item.quantity)
           .reduce((a, b) => a + b, 0)
           .toFixed(2) // Update the cart amount
-
-      search.addEventListener("input", searchHandler) // Add an event listener to the search input element
 
       // "Database" of products
       const db = async () => {
@@ -313,9 +308,13 @@
         }
       }
 
-      // Our reactive search. This function will run every time the user types in the search bar. It will filter the products based on what the user types, and then re-render the page with the filtered products.
+      // Our reactive search.
+
+      search.addEventListener("input", searchHandler) // Add an event listener to the search input element we defined with our global variables.
+
       async function searchHandler() {
-        const searchValue = search.value // Our search input is a global variable, so we can just grab the value from it.
+        // This is the function that will run every time the user types in that input.
+        const searchValue = search.value // Because our search input is a global variable, we can just grab the value from it.
         console.log(`Searching for ${searchValue}`)
         const data = await db()
         const products = data.products
@@ -405,22 +404,40 @@
       }
 
       // This function will run every time the user clicks the toggleTheme button. It will change the theme of the app.
-      const toggleTheme = document.querySelector("#toggleTheme") // Get the toggleTheme button
-
       toggleTheme.addEventListener("click", () => {
         // Check current theme
         const currentTheme = localStorage.getItem("theme") || "dark" // Get the current theme from localStorage, or set it to dark if it doesn't exist.
         const newTheme =
-          currentTheme === "dark"
-            ? "purple"
-            : "green"
-            ? currentTheme === "purple"
-              ? "green"
-              : "dark"
-            : "dark"
-        document.body.className = newTheme
-        localStorage.setItem("theme", newTheme) // Set the theme in localStorage to the new theme.
+          currentTheme === "dark" // if the current theme is dark
+            ? "purple" // set the new theme to purple
+            : currentTheme === "purple" // but, if the current theme is purple
+            ? "green" // set the new theme to green
+            : "dark" // otherwise, set the new theme to dark
+        localStorage.setItem("theme", newTheme) // Save the new theme to localStorage
+        document.body.className = newTheme // Set the new theme on the body element
       })
+
+      //   const themeCheck = localStorage.getItem("theme") // Get the theme from localStorage
+      //   const toggleTheme = document.querySelector("#toggleTheme") // Get the toggleTheme button
+
+      //   // Set the theme
+      //   themeCheck // If there is a theme in localStorage
+      //     ? document.body.className = themeCheck // Set the theme on the body element
+      //     : document.body.className = "dark" // Otherwise, default to dark
+
+      //  // This function will run every time the user clicks the toggleTheme button. It will change the theme of the app.
+      //   toggleTheme.addEventListener("click", () => {
+      //     // Check current theme
+      //     const currentTheme = themeCheck || "dark" // If there is no theme in localStorage, default to dark
+      //     const newTheme =
+      //       currentTheme === "dark" // if the current theme is dark
+      //         ? "purple" // set the new theme to purple
+      //         : currentTheme === "purple" // but, if the current theme is purple
+      //         ? "green" // set the new theme to green
+      //         : "dark" // otherwise, the theme must be green and we've reached the end of the cycle
+      //     localStorage.setItem("theme", newTheme) // Save the new theme to localStorage
+      //     document.body.className = newTheme // Set the new theme on the body element
+      //   })
 
       // Even more essential is the render function, which sets our reactive element's innerHTML to whatever we pass to it.
       async function render(component) {

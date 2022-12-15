@@ -6,6 +6,8 @@ nextLink: "./planning-our-app"
 
 import Cat from "../../Cat.tsx"
 
+import "./ch8.css"
+
 by Jesse Pence
 
 <Cat />
@@ -163,31 +165,22 @@ In our page that loaded the colors from the search parameters, the only state in
 Generally, in Single Page Applications, there are few things that fit in the gaps between simple, transient data that you want to store in a normal cookie; important, transient data that should to be saved in a HTTP-only cookie; complex, long-lived data that is suited to the indexedDB API; and utilitarian, long-lived data that can live in Local Storage. Here's a quick table to help you understand:
 
 <br />
-<div
-  style={{
-    maxWidth: "100%",
-    overflow: "auto",
-    border: "2px solid #000",
-    borderRadius: "5px",
-    fontSize: "1.3rem",
-    textAlign: "center",
-    fontFamily: "monospace",
-  }}
->
 
-| _Data Type_ | _Importance_ | _Persistence_ | _API_             |
-| ----------- | ------------ | ------------- | ----------------- |
-| Simple      | Unimportant  | Transient     | Cookies           |
-| Simple      | Important    | Transient     | HTTP-only Cookies |
-| Complex     | Unimportant  | Transient     | Session Storage   |
-| Simple      | Unimportant  | Persistent    | Local Storage     |
-| Complex     | Important    | Persistent    | IndexedDB         |
+<div id="table" style="max-width: 100%; overflow: auto; border: 2px solid #000; border-radius: 10px;">
+
+| _API_                 | _Data Persistence_ | _Data Importance_ | _Data Complexity_ |
+| --------------------- | ------------------ | ----------------- | ----------------- |
+| **Cookies**           | Transient          | Unimportant       | Simple            |
+| **HTTP-only Cookies** | Transient          | Important         | Simple            |
+| **Session Storage**   | Transient          | Unimportant       | Complex           |
+| **Local Storage**     | Persistent         | Unimportant       | Simple            |
+| **IndexedDB**         | Persistent         | Important         | Complex           |
 
 </div>
 
 <br />
 
-We won't be implementing any Session Storage in this app, and honestly, I don't use normal cookies or session storage very much when building SPA's. But, here's a tweet with more details about using it for breadcrumbs. https://twitter.com/ryanflorence/status/1597633832173285376
+We won't be implementing any Session Storage in this app, and honestly, I don't use normal cookies or session storage very much when building SPA's. But, here's a tweet with more details about using it for breadcrumbs. [^3]
 
 <br />
 
@@ -203,5 +196,21 @@ We now have all the tools we need to build our shopping app. However, building a
 
 <br />
 
+As always, here's the code for today:
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch8
+</div>
+
+<br />
+
 [^1]: 1:
 [^2]: 2:
+[^3]: 3: [Ryan Florence's tweet about using session storage for breadcrumbs](https://twitter.com/ryanflorence/status/1597633832173285376)
