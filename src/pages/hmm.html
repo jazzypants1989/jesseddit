@@ -122,7 +122,6 @@
       const cartAmount = document.querySelector("#cart-total") // Get the cart total element
       const themeCheck = localStorage.getItem("theme") // Get the theme from localStorage
       const toggleTheme = document.querySelector("#toggleTheme") // Get the toggleTheme button
-      let products = {} // Create an empty object to store the products.
 
       // Set the theme
       themeCheck // If there is a theme in localStorage
@@ -142,22 +141,10 @@
       // "Database" of products
       const db = async () => {
         // This has to be async because we're using fetch
-        const response = await fetch("/db.json") // Get the db.json file
-        const data = await response.json() // Parse the JSON
-        console.log("Initial DB fetch")
+        console.log("Fetching data...")
+        const response = await fetch("/db.json") // Fetch the data from the db.json file
+        const data = await response.json() // Parse the data into a JSON object
         return data // Return the data
-      }
-
-      const getProducts = async () => {
-        // This has to be async because we're using fetch
-        if (products.length > 0) {
-          console.log("Products have been cached")
-          return products // If we've already fetched the products, return them
-        }
-        console.log("Products are being fetched")
-        const data = await db() // Get the data from the db
-        products = data.products // Set the products to the products in the db
-        return products // Return the products
       }
 
       // All of our components
@@ -203,34 +190,53 @@
         console.log("Products component is rendering")
         document.title = "Products"
         // Again, we don't know how long it will take for the "API" to respond, so we have to make this async so we can await the response
-        const products = await getProducts() // Get the products
-        const productsHTML = Object.values(products)
-          .map((product) => ProductComponent(product))
-          .join("") // Map over the products and render each one
-        render(productsHTML) // Render the products
-        buttonFinderAdd()
+        const data = await db()
+        const products = data.products
+        const productsHTML = products.map(ProductComponent).join("") // Map over the products and render the ProductComponent for each one. Then join them all together into a string. (This is necessary because map returns an array, and we need a string to render HTML in the browser.)
+        render(`<h1>Products</h1>${productsHTML}`)
+
+        document.querySelectorAll(".add-to-cart").forEach((button) => {
+          if (button.alreadyHasEventListener) return
+          button.addEventListener("click", (e) => {
+            const id = e.target.id
+            const product = products.find(
+              (product) => product.id === Number(id)
+            )
+            addToCart(product)
+          })
+          button.alreadyHasEventListener = true
+        }) // This is a little tricky. We're adding an event listener to every button with the class "add-to-cart". When the button is clicked, we get the id from the button's id attribute, and then we find the product in our data that matches that id. Then we add that product to our cart. We had to wait until the products were rendered to the page before we could add the event listeners, because the buttons didn't exist until then. Also, we had to add a property to the button to make sure we didn't add multiple event listeners to the same button.
       }
 
       const ProductPage = async (id) => {
         console.log(
           `The ProductPage component is rendering product with ID: ${id}`
         )
-        await getProducts() // Get the products
-        const product = products.find((product) => product.id === Number(id)) // Find the product that matches the id
+        const data = await db()
+        const product = data.products.find(
+          (product) => product.id === Number(id) // We need to convert the id to a number because it's a string in the URL, but a number in the JSON data.
+        )
         if (!product) {
           return Nope(id)
         }
         document.title = product.name // Set the page title to the product name
         search.value = product.name // Set the search input value to the product name
         product ? render(ProductComponent(product)) : Nope(id) // If we find a product, render it. If not, render the 404 page.
-        buttonFinderAdd()
+        if (product) {
+          let button = document.querySelector(".add-to-cart")
+          if (button.alreadyHasEventListener) return
+          button.addEventListener("click", (e) => {
+            addToCart(product)
+          })
+          button.alreadyHasEventListener = true
+        }
       }
 
       const Cart = async () => {
         console.log("Cart Component is rendering")
-        const cart = JSON.parse(localStorage.getItem("cart")) || {}
-        // Get the cart from localStorage, or set it to an empty object if it doesn't exist.
-        const products = await getProducts() // Get the products
+        const cart = JSON.parse(localStorage.getItem("cart")) || {} // Get the cart from localStorage, or set it to an empty object if it doesn't exist.
+        const data = await db()
+        const products = data.products
         if (Object.keys(cart).length === 0) {
           // If the cart is empty, render a message saying so.
           render(`
@@ -257,7 +263,13 @@
           <h1>Cart</h1>
           ${cartItems.join("")}
           `)
-          buttonFinderRemove()
+          document.querySelectorAll(".remove-from-cart").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              const id = e.target.id
+              product = products.find((product) => product.id === Number(id))
+              removeFromCart(product)
+            })
+          })
         }
       }
 
@@ -286,21 +298,19 @@
       ]
 
       // The engine of the whole machine. This function will run every time the path in the address bar changes, which is prompted by the event listeners we add to links every time we render a component. A beautiful cycle.
-      const Router = (potentialRoute) => {
+      const Router = (whatIsInAddressBar) => {
         const dynamicRoute = "product" // Define a dynamic route
         const searchRoute = "products" // Define a search route
         const searchParams = new URLSearchParams(location.search) // Get the search params from the URL
         if (
-          // DYNAMIC ROUTE LOGIC
-          potentialRoute.split("/")[1] === dynamicRoute && // We're turning the path into an array by splitting it every time we see a slash. Then we're checking to see if the second item in the array is the same as the dynamicRoute global variable we set at the top of the file.
-          potentialRoute.split("/")[2]
+          whatIsInAddressBar.split("/")[1] === dynamicRoute && // We're turning the path into an array by splitting it every time we see a slash. Then we're checking to see if the second item in the array is the same as the dynamicRoute global variable we set at the top of the file.
+          whatIsInAddressBar.split("/")[2]
         ) {
           console.log("Dynamic route detected")
-          const id = potentialRoute.split("/")[2] // If it is, we're getting the id from the third item in the array. This limits us to only having one dynamic route and only at that point in the array, but we're just showing one way to do it here. This would much more capable and flexible if we were to use regex, but I refuse.
+          const id = whatIsInAddressBar.split("/")[2] // If it is, we're getting the id from the third item in the array. This limits us to only having one dynamic route and only at that point in the array, but we're just showing one way to do it here. This would much more capable and flexible if we were to use regex, but I refuse.
           return ProductPage(id)
         } else if (
-          // SEARCH ROUTE LOGIC
-          potentialRoute.split("/")[1] === searchRoute &&
+          whatIsInAddressBar.split("/")[1] === searchRoute &&
           searchParams.has("name")
         ) {
           console.log("Search route detected")
@@ -308,10 +318,9 @@
           search.value = searchValue
           return searchHandler()
         } else {
-          // STATIC ROUTE LOGIC
           console.log("Static route detected")
           const route = Routes.find(
-            (route) => route.path === potentialRoute // We're finding the route that matches the path in the address bar.
+            (route) => route.path === whatIsInAddressBar
           )
           route ? route.component() : Nope()
         }
@@ -325,7 +334,8 @@
         // This is the function that will run every time the user types in that input.
         const searchValue = search.value // Because our search input is a global variable, we can just grab the value from it.
         console.log(`Searching for ${searchValue}`)
-        products = await getProducts() // Get the products
+        const data = await db()
+        const products = data.products
         const filteredProducts = products.filter((product) => {
           return product.name.toLowerCase().includes(searchValue.toLowerCase()) // We're converting both the product name and the search value to lowercase so that we can search for "shirt" and "Shirt" and "SHIRT" and "sHiRt" and it will still work.
         })
@@ -334,26 +344,15 @@
         } else {
           const productsHTML = filteredProducts.map(ProductComponent).join("")
           render(`<h1>Products</h1>${productsHTML}`)
-          buttonFinderAdd()
-        }
-      }
-
-      async function urlSearchHandler() {
-        const searchParams = new URLSearchParams(window.location.search) // We're creating a new URLSearchParams object from the search query in the URL.
-        const searchValue = searchParams.get("search") // We're getting the value of the search query.
-        search.value = searchValue // We're setting the value of the search input to the search query.
-        products = await getProducts() // We're getting the products from the database.
-
-        const filteredProducts = products.filter((product) => {
-          return product.name.toLowerCase().includes(searchValue.toLowerCase()) // We're filtering the products to only include the ones that match the search query.
-        })
-
-        if (filteredProducts.length === 0) {
-          render(`<h1>Products</h1><p>No products found!</p>`) // If there are no products, we're rendering a message saying so.
-        } else {
-          const productsHTML = filteredProducts.map(ProductComponent).join("") // If there are products, we're mapping over them and rendering them.
-          render(`<h1>Products</h1>${productsHTML}`)
-          buttonFinderAdd()
+          document.querySelectorAll(".add-to-cart").forEach((button) => {
+            button.addEventListener("click", (e) => {
+              const id = e.target.id
+              const product = products.find(
+                (product) => product.id === Number(id)
+              )
+              addToCart(product) // You know the drill by now.
+            })
+          })
         }
       }
 
@@ -406,11 +405,9 @@
 
       // Essential to any routed SPA, our linkFinder function will run every time we render a component. It will find all the links in the component, and add event listeners to them. When the user clicks a link, it will prevent the default behavior of the link (which is to navigate to a new page), and instead run the Router function with the path of the link as the argument.
       function linkFinder() {
-        const links = document.querySelectorAll(".Link")
-        // instead of targeting every anchor tag, we only target the ones meant for navigating around our app.
+        const links = document.querySelectorAll(".Link") // instead of targeting every anchor tag, we only target the ones meant for navigating around our app.
         links.forEach((link) => {
-          if (link.alreadyHasEventListener) return
-          // This is so that we don't add multiple event listeners to the same link.
+          if (link.alreadyHasEventListener) return // This is so that we don't add multiple event listeners to the same link.
           link.alreadyHasEventListener = true
           console.log(`Changing link behavior of ${link}`)
           // Target each link that we have marked with the Link class,
@@ -421,41 +418,6 @@
             history.pushState(null, null, linkPath) // push the link's path to the history object
             Router(linkPath) // call the Router function with the link's path
           }) // Ta-da! We have a SPA! Oh, wait. We need to call the Router function once to render the initial page.
-        })
-      }
-
-      // Even more essential is the render function, which sets our reactive element's innerHTML to whatever we pass to it.
-      function render(component) {
-        console.log(`The render function just ran with ${component}`)
-        main.innerHTML = component // Since we only have one dynamic element on the page and very little state, this function is pretty simple.
-        linkFinder()
-      }
-
-      function buttonFinderAdd() {
-        document.querySelectorAll(".add-to-cart").forEach((button) => {
-          if (button.alreadyHasEventListener) return // This is so that we don't add multiple event listeners to the same button.
-          button.alreadyHasEventListener = true
-          button.addEventListener("click", (e) => {
-            const id = e.target.id
-            const product = products.find(
-              (product) => product.id === Number(id)
-            )
-            addToCart(product) // You know the drill by now.
-          })
-        })
-      }
-
-      function buttonFinderRemove() {
-        document.querySelectorAll(".remove-from-cart").forEach((button) => {
-          if (button.alreadyHasEventListener) return // This is so that we don't add multiple event listeners to the same button.
-          button.alreadyHasEventListener = true
-          button.addEventListener("click", (e) => {
-            const id = e.target.id
-            const product = products.find(
-              (product) => product.id === Number(id)
-            )
-            removeFromCart(product) // You know the drill by now.
-          })
         })
       }
 
@@ -473,13 +435,37 @@
         document.body.className = newTheme // Set the new theme on the body element
       })
 
-      // We check for search params, then run the urlSearchHandler function if there are any.
-      let urlParams = new URLSearchParams(window.location.search)
-      if (urlParams.has("search")) {
-        urlSearchHandler()
-      } else {
-        Router(path)
+      //   const themeCheck = localStorage.getItem("theme") // Get the theme from localStorage
+      //   const toggleTheme = document.querySelector("#toggleTheme") // Get the toggleTheme button
+
+      //   // Set the theme
+      //   themeCheck // If there is a theme in localStorage
+      //     ? document.body.className = themeCheck // Set the theme on the body element
+      //     : document.body.className = "dark" // Otherwise, default to dark
+
+      //  // This function will run every time the user clicks the toggleTheme button. It will change the theme of the app.
+      //   toggleTheme.addEventListener("click", () => {
+      //     // Check current theme
+      //     const currentTheme = themeCheck || "dark" // If there is no theme in localStorage, default to dark
+      //     const newTheme =
+      //       currentTheme === "dark" // if the current theme is dark
+      //         ? "purple" // set the new theme to purple
+      //         : currentTheme === "purple" // but, if the current theme is purple
+      //         ? "green" // set the new theme to green
+      //         : "dark" // otherwise, the theme must be green and we've reached the end of the cycle
+      //     localStorage.setItem("theme", newTheme) // Save the new theme to localStorage
+      //     document.body.className = newTheme // Set the new theme on the body element
+      //   })
+
+      // Even more essential is the render function, which sets our reactive element's innerHTML to whatever we pass to it.
+      async function render(component) {
+        console.log(`The render function just ran with ${component}`)
+        main.innerHTML = component // Since we only have one dynamic element on the page and very little state, this function is pretty simple.
+        await linkFinder()
       }
+
+      // Finally, we call the Router function with whatever the current path is. This will render the initial page.
+      Router(path)
 
       // And, double finally, we add an event listener to the window object that waits until it is fully loaded, and then adds an event listener to the back and forward buttons. When the user clicks the back or forward button, it will run the Router function with the path of the new page as the argument. We have to do this because the Router function only runs when the user clicks a link, and we need it to run when the user clicks the back or forward button (remember, the back and forward buttons don't actually change the URL, they just change the history object and the popstate event is slow to fire).
       window.addEventListener("load", () => {

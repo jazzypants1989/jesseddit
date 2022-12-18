@@ -1,7 +1,335 @@
 ---
 title: "The Router, The Link, and The Routes"
 slug: "router-link-and-routes"
-nextLink: "./cart-and-theme-storage"
+nextLink: "./nested-and-dynamic-routes"
 ---
 
-Coming soon!
+import Cat from "../../Cat.tsx"
+
+by Jesse Pence
+
+<Cat />
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  id="ytplayer"
+/>
+
+<br />
+
+## **Table of Contents**
+
+<br />
+
+<a href="#introduction">Introduction</a>
+<a href="#the-router">The Routes</a>
+<a href="#the-routes">The Router</a>
+<a href="#the-link">The Link</a>
+<a href="#popstate-and-demo">Popstate and Demo</a>
+<a href="#conclusion">Conclusion</a>
+
+<br />
+
+## **Introduction**
+
+<br />
+
+We now have all of the core HTML and CSS that we will need for the remainder of this tutorial. But, as we saw, clicking any of the links on our page completely destroyed the DOM and lost all of our state. To fix this, we will need to employ full client-side routing.
+
+<br />
+
+Many routing libraries have three main components: a central component to manipulate the URL, another component for internal navigation, and a configuration component that controls how the URL is interpreted. Commonly, in libraries like React Router, these components are called the Router, the Link, and the Routes respectively. We will be building a simple version of each of these components for our project.
+
+<br />
+
+As we think about building these components, I invite you to think about what our routing system needs to do. It needs to take in a URL, match it to a certain element, do some additional processing if necessary, and then render that element to the DOM. I hope each aspect of this process is already clear to you from our previous lessons, but don't worry if not! Let's start with the first step: taking in a URL.
+
+<br />
+
+## **The Routes**
+
+<br />
+
+The Routes component is important because it matches the URL to a particular view template and tells the Router if it requires any additional processing. Often, it is a good idea to keep all of your route definitions defined together in a central configuration object. This makes it easier to change the routes as needed without worrying about breaking things.
+
+<br />
+
+As we learned in chapter six, _The Location API and Parameters_, we can get the current URL from the `location` object. Our primary method of reading the URL will be the `location.pathname` property. This will allow us to define specific responses for certain URLs.
+
+<br />
+
+Additionally, we also saw that the `location.search` and `location.hash` properties can be used to read the query string and hash respectively so that we are not limited by static pathnames. This could assist us in the next two steps of matching the element and processing it. But, let's start by defining a Routes component that will take in a static pathname and render the associated element.
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```js
+    <main class="main"></main>
+    <script>
+        const main = document.querySelector(".main");
+        // define the Routes object
+         const Routes = {
+        "/": () => (main.innerHTML = "<h1>Home</h1>"),
+        "/about": () => (main.innerHTML = "<h1>About</h1>"),
+        "/products": () => (main.innerHTML = "<h1>Products</h1>"),
+        "/cart": () => (main.innerHTML = "<h1>Cart</h1>"),
+      }
+    </script>
+    </body>
+    </html>
+    ```
+</div>
+
+<br />
+
+As you can see, each route is simply a function that will be called when the URL matches the key. In this case, we are just changing the innerHTML of the main element, but we could also use this to fetch data from an API or do any other processing that we need to do before rendering the view. We will explore this in the next chapter, but first let's build the Router that will make all of this work.
+
+<br />
+
+## **The Router**
+
+<br />
+
+As our routes configuration is currently taking care of all the matching and rendering logic, our router can be elegantly simple. All it needs to do is look at the current configuration and activate the associated function if it exists. If it doesn't, we will render a 404 page.
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```js
+        const Router = (potentialPath) => {
+        // Define the Router function and pass it a pathname.
+        if (Routes[potentialPath]) {
+          // If we have a path that matches that,
+          Routes[potentialPath]() 
+          // call the associated view function.
+        } else { 
+          main.innerHTML = `<h1>Huh, you're at ${location.pathname}, 
+          but you really shouldn't be. 🤔
+          Why are you looking for ${potentialPath}?</h1>` 
+        // If nothing is found, we just render a 404 page.
+        }
+      }
+
+      Router(location.pathname)
+      ```
+
+</div>
+
+<br />
+
+Our router just checks to see if the path exists in the Routes object, calls the associated function if so, and renders a 404 page if not. So, our app now renders the correct data for each path. But, if someone clicks on one of our internal links, the DOM will still be destroyed and we will lose all of our state. To fix this, we will be creating a Link component that will use the History API to change the URL and call the Router function.
+
+<br />
+
+## **The Link**
+
+<br />
+
+The Link component is a simple wrapper around the anchor tag that will call the Router function when clicked. It disables the default behavior of the anchor tag, takes the pathname out of the href attribute, puts it into the address bar using the `window.history` API, and finally calls the Router function with the pathname of the link. This will allow us to change the URL and render the correct view without reloading the page.
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+    index.html
+    ```js
+    const links = document.querySelectorAll("a");
+    links.forEach((link) => {
+      if (link.alreadyHasListener) return;
+      link.alreadyHasListener = true;
+      console.log(`Changing link behavior for ${link}`);
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const linkPath = link.getAttribute("href");
+        Router(linkPath);
+        history.pushState({}, "", linkPath);
+      });
+    });
+    ```
+
+</div>
+
+<br />
+
+Take notice of the `alreadyHasListener` property. This is a simple way to prevent the event listener from being added multiple times. If you don't do this, you will end up with multiple event listeners on the same element after the user clicks around a few times. This may cause the mouse to glitch or the Router function to be called multiple times. Either one's detrimental to the user's experience. Feel free to take it off and see what happens after clicking around more than once.
+
+<br />
+
+## **Popstate and Demo**
+
+<br />
+
+There is only one additional element that we will need to add to our code to achieve full client-side routing functionality. If you remember in our chapter on the History API, we spent some time talking about the `popstate` event. This event is fired when the user clicks the back or forward button in the browser. However, this event comes relatively late in the process of building the DOM, and we need to make sure that the browser has the right URL in the address bar before we call the Router function.
+
+<br />
+
+So, we will again add a listener to the `window` object waiting on it's `load` event. Only after this event has fired will we add the `popstate` event listener. This will ensure that the Router function is called with the correct URL.[^1] Let's put all of our code from this chapter together with the theme selection that we added in the last chapter to create a fully functional client-side routing app before we start adding some more advanced features.
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+  >
+    index.html
+    ```js
+    <!-- insert index.html from last chapter here until line 112 -->
+    <script defer>
+      const toggleTheme = document.getElementById("toggleTheme")
+      // Get the toggleTheme button, which will be used to change the theme of the app
+      const main = document.querySelector(".main") 
+      // Get the main element, which will be used to render the dynamic content
+      const links = document.querySelectorAll(".Link") 
+      // Instead of targeting every <a> tag, we only target internal navigation links
+
+      toggleTheme.addEventListener("click", () => {
+        // this is still extremely ugly, but it works for now
+        if (document.body.classList.contains("dark")) {
+          document.body.classList.remove("dark")
+          document.body.classList.add("purple")
+        } else if (document.body.classList.contains("purple")) {
+          document.body.classList.remove("purple")
+          document.body.classList.add("green")
+        } else if (document.body.classList.contains("green")) {
+          document.body.classList.remove("green")
+          document.body.classList.add("dark")
+        }
+      })
+
+      const Routes = {
+        // Define our central routing configuration object
+        "/": () => (main.innerHTML = "<h1>Home</h1>"),
+        "/about": () => (main.innerHTML = "<h1>About</h1>"),
+        "/products": () => (main.innerHTML = "<h1>Products</h1>"),
+        "/cart": () => (main.innerHTML = "<h1>Cart</h1>"),
+      } // This also holds all rendering logic for now.
+
+      const Router = (potentialPath) => {
+        // Define the Router function and pass it a pathname.
+        if (Routes[potentialPath]) {
+          // If we have a path that matches that,
+          Routes[potentialPath]()
+          // call the associated view function.
+        } else {
+          main.innerHTML = `<h1>Huh, you're at ${location.pathname},
+          but you really shouldn't be. 🤔
+          Why are you looking for ${potentialPath}?</h1>`
+        // If nothing is found, we just render a 404 page.
+        }
+      }
+
+      links.forEach((link) => {
+        // Target each link that we have marked with the Link class,
+        if (link.alreadyHasListener) return
+        // and if it doesn't already have a listener,
+        link.alreadyHasListener = true
+        console.log(`Changing link behavior for ${link}`);
+        // start by adding the alreadyHasListener property.
+        link.addEventListener("click", (e) => {
+          // then, add a click event listener
+          e.preventDefault()
+          // prevent the default behavior of the anchor tag
+          const linkPath = link.getAttribute("href")
+          // get the href attribute of the link
+          history.pushState(null, null, linkPath)
+          // push the link's path to the address bar using the History API
+          Router(linkPath)
+          // call the Router function with the link's path
+        }) // Ta-da! We have a SPA!
+      })
+
+      // Oh, wait. We need to call the Router function once to render the initial page.
+
+      Router(location.pathname)
+
+      // Now, we need to add a listener for the popstate event.
+
+      window.addEventListener("load", () => {
+        window.addEventListener("popstate", () => {
+          Router(location.pathname)
+        })
+      })
+    </script>
+
+  </body>
+</html>
+    ```
+
+</div>
+
+<br />
+
+Go ahead and spin up your app or play around with the demo below. To see the full benefit of our new client-side routing functionality, try changing the theme of the app and then clicking around. Unlike the previous demo, our state is preserved and the theme is maintained despite changing the internal content-- even after pressing the backwards and forwards buttons in the browser (or right-clicking with your mouse on my demo below).
+
+<br />
+
+Because of the inherit limitations with the way that I am hosting these demos (Astro[^2] is incredible, but not able to bend time & space... yet...), each one will start with a 404 page from this point forward until the final demo. But, clicking on any of the links will bring you to each respective page as expected. It's a little hard to host multiple apps that are looking for a home route at the root of the domain, so I have to do a little bit of trickery to get them to work.
+
+<br />
+
+<iframe
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch11/demo/"
+  id="demo"
+/>
+
+<br />
+
+## **Conclusion**
+
+<br />
+
+We have now built a fully functional client-side routing app. We have also added a small dose of interactivity by adding a theme toggle button. But, I think you will agree that our app doesn't have much to offer the user at this point. In the next chapter, we will discuss how we will bring in outside data to populate our app, make that content interactive, and overcome the challenges that come with that.
+
+<br />
+
+<br />
+
+As always, you can see the code for this demo on my Github at:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch11
+</div>
+
+<br />
+
+[^1]: 1: [Here's an article about popstate and how late it fires.](https://yedri.medium.com/popstate-and-history-api-the-missing-part-dc49f75676d)
+[^2]: 2: [Astro is super cool.](https://astro.build/)

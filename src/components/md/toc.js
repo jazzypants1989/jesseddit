@@ -14,11 +14,10 @@ let tocs = {
     "9.) Planning Our App": "planning-our-app",
     "10.) The Skeleton": "the-skeleton",
     "11.) The Router, The Link, and the Routes": "router-link-and-routes",
-    "12.) Cart and Theme Storage": "cart-and-theme-storage",
-    "13.) Nested and Dynamic Routes": "nested-and-dynamic-routes",
+    "12.) Nested and Dynamic Routes": "nested-and-dynamic-routes",
+    "13.) Cart and Theme Storage": "cart-and-theme-storage",
     "14.) Adding Reactive Search": "adding-reactive-search",
-    "15.) XSS Attacks and Other Concerns": "xss-attacks-and-other-concerns",
-    "16.) Conclusion": "conclusion",
+    "15.) Conclusion": "conclusion",
   },
 }
 

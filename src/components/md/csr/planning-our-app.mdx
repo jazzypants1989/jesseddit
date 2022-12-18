@@ -14,7 +14,7 @@ by Jesse Pence
 
 <iframe
   style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  src="https://www.youtube.com/embed/mfBvqEZBU5A"
   id="ytplayer"
 />
 
@@ -81,7 +81,7 @@ Luckily, we learned about the `history` API as well. This will allow us to both 
 
 <br />
 
-For that, we learned about the `localStorage` API. This will allow us to persist our cart and theme between page loads. This is a very simple API, but it is extremely useful in a single-page app.
+For that, we learned about the `localStorage` API. This will allow us to persist our cart and theme between page loads. This is a very simple API, but it is extremely useful when building any app-- not just a SPA.
 
 <br />
 
@@ -89,7 +89,7 @@ We do still need to worry about how to accomodate search parameters, though. For
 
 <br />
 
-One additional web API that we will be using is the `fetch` API. This will allow us to make requests to our mock database. In our case, we will be using this to get the products for our dynamic pages. Many single page applications use external APIs to populate their content, and we will be no exception. I needed this to be a fetch call so you could see how incorporating external data can be an issue in a single-page app.
+One additional web API that we will be using is the `web fetch` API. This will allow us to make requests to our mock database. In our case, we will be using this to get the products for our dynamic pages. Many single page applications use external APIs to populate their content, and we will be no exception. I needed this to be a fetch call so you could see how incorporating external data can be an issue in a single-page app.
 
 <br />
 
@@ -113,7 +113,7 @@ So, let's put on our programming hats and think about what we need to build to m
 
 <br />
 
-This will be our Link component. Normally, we would use the `a` tag to navigate to different pages. The problem with this is that clicking on a link will completely reset the page. Even though we will be using `localStorage` to preserve our state, the browser still completely destroys and rebuilds the DOM from scratch. This causes a jarring white flash that single page apps are meant to avoid. Why make a single page app if we're not going to enjoy the benefits?
+This will be our Link component. Normally, we would use the `<a>` tag to navigate to different pages. The problem with this is that clicking on a link will completely reset the page. Even though we will be using `localStorage` to preserve some state, the browser still completely destroys and rebuilds the DOM from scratch. This causes a jarring white flash that single page apps are meant to avoid. Why make a single page app if we're not going to enjoy the benefits?
 
 <br />
 
