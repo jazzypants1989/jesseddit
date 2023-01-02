@@ -1,7 +1,7 @@
 ---
 title: "Nested and Dynamic Routes"
 slug: "nested-and-dynamic-routes"
-nextLink: "./adding-reactive-search"
+nextLink: "./cart-and-theme-storage"
 ---
 
 import Cat from "../../Cat.tsx"
@@ -14,7 +14,7 @@ by Jesse Pence
 
 <iframe
   style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  src="https://www.youtube.com/embed/IGCMOqag5Qk"
   id="ytplayer"
 />
 
@@ -39,15 +39,15 @@ by Jesse Pence
 
 <br />
 
-We have full client-side routing, but we're not doing much with it yet. We could define all of our products in an object in the index.html. Perhaps that would be truer to the spirit of doing this all in one file, but that's not how real web sites work.
+We have full client-side routing, but we're not doing much with it yet. Most notably, our products page doesn't have any products on it! To define all of our products, we could place them in a JavaScript object inside the index.html. Perhaps that would be truer to the spirit of doing all of this in one file, but that's not how real web sites work.
 
 <br />
 
-So, we will be building a fake database in our public folder that defines a few products and their details. We will then use the Web Fetch API to get the data from the database and display it on the page. This will simply be a JSON file, but it could be a database, or a REST API, or anything else that returns JSON. The principle is the same.
+So instead, we will be building a fake database in our public folder that simply defines a few products and their details. We will then use the Web Fetch API to get the data from the database and display it on the page. We will be getting the items from a simple JSON file, but it could be a database, or a REST API, or anything else that returns data asynchronously. The principle is the same.
 
 <br />
 
-Before we define each of these things, first let's finish creating our view templates so that we actually have pages ready to fill with data.
+Before we define each of these things, let's finish creating our view templates so that we actually have pages ready to fill with data.
 
 <br />
 
@@ -55,11 +55,11 @@ Before we define each of these things, first let's finish creating our view temp
 
 <br />
 
-In our last chapter, we created a `Routes` configuration object that defined four static routes, Home, About, Products, and Cart. However, each view template contained some repetitive code used to manipulate the DOM. And, we will want to link between the products page to a new page that displays the details of a single product. While doing this, we will want to run our linkFinder function to make sure that our interal links will work while not placing unnecessary event listeners on the page.
+In our last chapter, we created a `Routes` configuration object that defined four static routes, Home, About, Products, and Cart. However, each view template contained some repetitive code that we used to manipulate the DOM. And, we want to be able to link from the products page to new pages that display the details of each product. While doing this, we will want to run our linkFinder function that we built in the previous chapter to make sure that our internal links work correctly.
 
 <br />
 
-To solve both of these problems at once, let's separate our rendering logic into a separate function called `render` that takes a template as an argument and adds whatever links are needed on the page. This function will return a string that we can then insert into the DOM. The `linkFinder` function included is the one we employed in the previous chapter.
+To solve all of these problems at once, let's separate our rendering logic into a separate function called `render` that takes a template as an argument. This function will return a string that we can then insert into the DOM. The `linkFinder` function included in the code below is the same one we employed in the previous chapter.
 
 <br />
 
@@ -74,10 +74,9 @@ To solve both of these problems at once, let's separate our rendering logic into
   
   ```js
     function render(component) {
-    console.log(`The render function just ran with ${component}`)
-    // Since we only have one dynamic element on the page and very content in common between pages,
+    // Since we only have one dynamic element on the page and very little content in common between pages...
     main.innerHTML = component
-    // We can just replace the entire innerHTML of the main element
+    // We can just replace the entire innerHTML of the main element...
     linkFinder()
     // And then run the linkFinder function to add event listeners to our links
   }
@@ -103,8 +102,8 @@ Next, let's make the actual view templates. First, we create two static view tem
   ```js
     // Almost all of our final components
       const Home = () => {
-        console.log("Home component is rendering")
-        document.title = "Home" // Set the page title
+        document.title = "Home" 
+        // Set the page title
         render(`
         <p>This is a totally real shop! See! That's a picture! Of a shop! Totally
       open.</p>
@@ -113,7 +112,6 @@ Next, let's make the actual view templates. First, we create two static view tem
       } // Hmm, this looks familiar.
 
       const About = () => {
-        console.log("About component is rendering")
         document.title = "About"
         render(`
         <h1>About</h1>
@@ -126,7 +124,6 @@ Next, let's make the actual view templates. First, we create two static view tem
       } // It's a functional component!
 
       const ProductComponent = (product) => {
-        console.log("A product is rendering")
         return `
         <div class="product">
           <a href=/product/${product.id} class="Link">
@@ -141,34 +138,37 @@ Next, let's make the actual view templates. First, we create two static view tem
       } // Oh look, we're passing props now.
 
       const ProductsPage = async () => {
-        console.log("Products component is rendering")
         document.title = "Products"
-        const products = await getProducts() // Get the products
+        const products = await getProducts()
+        // Get the products
         const productsHTML = Object.values(products)
           .map((product) => ProductComponent(product))
-          .join("") // Map over the products and render each one
-        render(productsHTML) // Render the products
+          .join("")
+          // Map over the products and create a product component for each one
+        render(productsHTML)
+        // Render the products
         buttonFinderAdd()
       }
 
       const ProductPage = async (id) => {
-        console.log(
-          `The ProductPage component is rendering product with ID: ${id}`
-        )
-        await getProducts() // Get the products
-        const product = products.find((product) => product.id === Number(id)) // Find the product that matches the id
+        await getProducts()
+        // Get the products
+        const product = products.find((product) => product.id === Number(id))
+        // Find the product that matches the id
         if (!product) {
           return Nope(id)
         }
-        document.title = product.name // Set the page title to the product name
-        search.value = product.name // Set the search input value to the product name
-        product ? render(ProductComponent(product)) : Nope(id) // If we find a product, render it. If not, render the 404 page.
+        // 404 if no product is found
+        document.title = product.name
+        // Set the page title to the product name
+        search.value = product.name
+        // Set the search input value to the product name
+        product ? render(ProductComponent(product)) : Nope(id)
+        // If we find a product, render it. If not, render the 404 page.
         buttonFinderAdd()
       }
 
       const Nope = (id) => {
-        console.log(`404 Component just rendered on ${path}.`)
-        console.log(`ID detected: ${!!id}`) // The double bang is just a fancy way of converting the id to a boolean. If there's an id, it'll be true. If there isn't, it'll be false.
         if (id) {
           render(
             `<h1>404</h1><h2>Sorry buddy, but I don't think we have a product with id #${id}!</h2>`
@@ -181,7 +181,7 @@ Next, let's make the actual view templates. First, we create two static view tem
         }
       } // Only on v1 of this project, and I already have 2 404 pages... I think that's a good sign?
 
-```
+````
 
 </div>
 
@@ -229,7 +229,7 @@ style={{
   }
 ]
 }
-```
+````
 
 </div>
 
@@ -239,11 +239,11 @@ style={{
 
 <br />
 
-The Web Fetch API is a way to get data from a server. It is a modern replacement for XMLHttpRequest, so it is a promise-based API. That just means that it returns a promise that resolves to a response object. This response object contains the data that we want.
+The Web Fetch API is an easy way to get data from a server. It is a modern replacement for XMLHttpRequest, so it is a promise-based API. That just means that it returns a promise that resolves to a response object. This response object contains the data that we want.
 
 <br />
 
-This will result in asynchronous code which was very hard to do right with JavaScript for a long time. Now, it's easy. We can simply use the async/await syntax to make it look synchronous. We will be using this to get our data from the db.json file.
+This will result in asynchronous code which was very hard to do right with JavaScript for a long time. You either used something like jQuery or ended up in callback hell. Now, it's really easy. We can simply use the async/await syntax to make it look synchronous. We will be using this to get our data from the db.json file.
 
 <br />
 
@@ -266,30 +266,35 @@ We will then create a function called db that returns a fetch to our pretend dat
   
   ```js
 
-let products = {}; // An initial empty object for us to cache our products in
+let products = {};
+// Initializing an empty object for us to cache our products in
 
     // "Database" of products
       const db = async () => {
         // This has to be async because we're using fetch
-        const response = await fetch("/db.json") // Get the db.json file
-        const data = await response.json() // Parse the JSON
-        console.log("Initial DB fetch")
-        return data // Return the data
+        const response = await fetch("/db.json")
+        // Get the db.json file
+        const data = await response.json()
+        // Parse the JSON
+        return data
+        // Return the data
       }
 
       const getProducts = async () => {
         // This has to be async because we're using fetch
         if (products.length > 0) {
-          console.log("Products have been cached")
-          return products // If we've already fetched the products, return them
+          return products
+          // If we've already fetched the products, return them
         }
-        console.log("Products are being fetched")
-        const data = await db() // Get the data from the db
-        products = data.products // Set the empty object to the products in the db
-        return products // Return the products
+        const data = await db()
+        // Get the data from the db
+        products = data.products
+        // Set the empty object to the products in the db
+        return products
+        // Return the products
       }
 
-```
+````
 
 </div>
 
@@ -303,7 +308,7 @@ So, we have our products, but we want to be able to create individual pages for 
 
 <br />
 
-Generally, this would be achieved by sharing the same pathname for all of the pages that you want to share data between. For example, if you wanted to share data between the /products and /products/:id pages, you would use the same pathname for both of them. This is called a nested route. But, this is also a dynamic route in that it uses a wildcard or a specific character like a colon to indicate a dynamic segment of the pathname.
+Generally, this would be achieved by sharing the same pathname for all of the pages that you want to share data between. For example, if you wanted to share data between the /products and /products/:id pages, you would use the same pathname for both of them. This is called a **nested** route. But, this example is also a **dynamic route** in that it uses a wildcard or a specific character like a colon to indicate a dynamic segment of the pathname-- `id` in this example.
 
 <br />
 
@@ -311,7 +316,7 @@ Most routers employ regex to find this character and then use it to match the pa
 
 <br />
 
-However, this method is very inexact. Despite my best efforts, I could not get the product and products page to share a route. I was able to get it to work for most situations, but I had enough edge cases that I decided to just use two separate routes. This is a bit more verbose, but it is also a lot more explicit and easier to understand. I may come back to this project in the future and try to get it to work with nested routes, but for now, I'm going to move on.
+However, this method is very inexact. Despite my best efforts, I could not get the product and products page to share a route. I was able to get it to work for most situations, but I had enough edge cases that I decided to just use two separate routes. This is a bit more verbose, but it is also a lot more explicit and error-free. I may come back to this project in the future and try to make a more perfect example, but this works well. There are more examples in the footnotes if you want to see how others have done it.
 
 <br />
 
@@ -319,7 +324,7 @@ However, this method is very inexact. Despite my best efforts, I could not get t
 
 <br />
 
-In our last chapter, our `Routes` configuration object handled all of the rendering logic. Also, our `Router` function was not capable of handling dynamic routes. Let's see one way of changing them after separating our concerns to add this functionality.
+In our last chapter, our `Routes` configuration object handled all of the rendering logic. Also, our `Router` function was not capable of handling dynamic routes. Let's see one way of changing them to accomodate these new features.
 
 <br />
 
@@ -350,27 +355,27 @@ In our last chapter, our `Routes` configuration object handled all of the render
           potentialRoute.split("/")[2]
           // Finally, we're making sure there is an id in the third item.
         ) {
-          console.log("Dynamic route detected")
           const id = potentialRoute.split("/")[2]
           // If there is a third item, we're setting it to the id variable.
           return ProductPage(id)
           // Then we're calling the ProductPage function and passing it the id.
         } else {
-          console.log("Static route detected")
           const route = Routes.find(
             (route) => route.path === potentialRoute
+            // If it's not a dynamic route, normal logic applies.
           )
           route ? route.component() : Nope()
+          // Call 404 function if no route is found.
         }
       }
 
-```
+````
 
 </div>
 
 <br />
 
-If you wanted to have multiple dynamic routes, we could define them as an array. Then, we could create a separate part of our Routes object that would hold the processing logic for each dynamic route. I thought about doing this for the project, but I honestly couldn't think of a good use case for it. So, I decided to keep it simple.
+If you wanted to have multiple dynamic routes, we could define them as an array. Then, we could create a separate part of our Routes object that would hold the processing logic for each dynamic route. I thought about doing this for the project, but I honestly couldn't think of a good use case for it in an e-commerce app unless I added more features like Auth. So, I decided to keep it simple.
 
 <br />
 
@@ -383,9 +388,9 @@ So, we have fully working dynamic routes-- even though it could be done in a mor
 <br />
 
 <iframe
-style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-src="/demos/csr/ch12/demo"
-id="demo"
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch12/demo"
+  id="demo"
 />
 
 <br />
@@ -395,24 +400,23 @@ As always, you can see the code for this demo on my Github at:
 <br />
 
 <div
-style={{
-  maxWidth: "100%",
-  overflow: "auto",
-  borderRadius: "5px",
-  fontSize: "1.3rem",
-}}
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
 >
-https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch12
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch12
 </div>
 
 <br />
-
 
 ## **Other Ways to Do This**
 
 <br />
 
-Like I said, I'm not particularly happy with my implementation. So, if you would like to see some other ways to do it, check out the following links. Some of these served as inspiration for my implementation. However, I didn't like how many of them employed an object-oriented approach or used regex. 
+Like I said, I'm not particularly happy with my implementation. So, if you would like to see some other ways to do it, check out the following links. Some of these served as inspiration for my implementation. However, I didn't like the way that many of them employed an object-oriented approach or used regex.
 
 <br />
 
@@ -443,4 +447,5 @@ I'm more of a functional programmer, so I wanted to keep it that way. After comp
 6: [Jeff Delaney released Flamethrower which has some features including pre-fetching ](https://github.com/fireship-io/flamethrower)
 
 7: [And, finally if you really want features without a whole framework, you can bring in a library like Turbo from Hotwired](https://github.com/hotwired/turbo)
+
 </div>

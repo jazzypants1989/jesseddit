@@ -38,7 +38,7 @@ by Jesse Pence
 
 <br />
 
-So, in our chapter on state, we talked about persisting user interaction so that we don't lose everything when the page reloads. The question is: How do we make that happen when the server sends the exact same file every time? Most of you probably already know, but the answer lies in storing information on the user's PC in one way or another. Traditionally, this has been done through something called cookies.
+So, in our chapter on state, we talked about persisting user interaction so that we don't lose everything when the page reloads. The question is: How do we make that happen when the server sends the exact same file every time? Some of you probably already know, but the answer lies in storing information on the user's PC in one way or another. Traditionally, this has been done through something called cookies.
 
 <br />
 
@@ -50,7 +50,7 @@ If the information that you want to store is in any way private to the user, tha
 
 <br />
 
-Cookies do have a few inherit issues as well. They are sent with every request, which is a lot of unnecessary data. They are also limited to 4kb, which is not a lot of space. Neither of those are issues for us, but they also expire after a certain amount of time, which is not ideal for a shopping cart. And, while setting and getting a cookie is much easier than many things in web development, there is another option that is even easier: Local Storage.
+Cookies come with a few minor issues as well. They are sent with every request which is not a problem in a single page application. And, they are also limited to 4kb, which is not a lot of space. We don't need much space, but they also require an expiration date which is not ideal for a shopping cart. And, while setting and getting a cookie is much easier than many things in web development, there is another option that is even easier: Local Storage.
 
 <br />
 
@@ -134,7 +134,7 @@ It's important to understand that this is not essential to or restricted by our 
 
 <br />
 
-However, I will stress once again that Local Storage should not be used for any kind of private information unless you are very confident in your encryption method. You just saw how easy it was to retrieve a value using plain old JavaScript. Even if your information is encrypted, it's better to use the built-in protections and tested reliability of HTTP-only cookies in my opinion. While this is not an authentication lesson, we will discuss some more concerns in chapter 15. But, since we don't have any authentication and it only takes a couple of lines of additional code, it looks like Local Storage is perfect for our use case.
+However, I will stress once again that Local Storage should not be used for any kind of private information unless you are very confident in your encryption method. You just saw how easy it was to retrieve a value using plain old JavaScript. Even if your information is encrypted, it's better to use the built-in protections and tested reliability of HTTP-only cookies in my opinion. But, since we don't have any authentication and it only takes a couple of lines of additional code, it looks like Local Storage is perfect for our use case.
 
 <br />
 
@@ -162,19 +162,21 @@ In our page that loaded the colors from the search parameters, the only state in
 
 <br />
 
-Generally, in Single Page Applications, there are few things that fit in the gaps between simple, transient data that you want to store in a normal cookie; important, transient data that should to be saved in a HTTP-only cookie; complex, long-lived data that is suited to the indexedDB API; and utilitarian, long-lived data that can live in Local Storage. Here's a quick table to help you understand:
+Generally, in Single Page Applications, there are few things that fit in the gaps between simple data that you want to store in a normal cookie; sensitive data that should to be saved in a HTTP-only cookie; complex data that is suited to the IndexedDB API; and utilitarian, long-lived data that can live in Local Storage. Here's a quick table to help you understand:
 
 <br />
 
 <div id="table" style="max-width: 100%; overflow: auto; border: 2px solid #000; border-radius: 10px;">
 
-| _API_                 | _Data Persistence_ | _Data Importance_ | _Data Complexity_ |
-| --------------------- | ------------------ | ----------------- | ----------------- |
-| **Cookies**           | Transient          | Unimportant       | Simple            |
-| **HTTP-only Cookies** | Transient          | Important         | Simple            |
-| **Session Storage**   | Transient          | Unimportant       | Complex           |
-| **Local Storage**     | Persistent         | Unimportant       | Simple            |
-| **IndexedDB**         | Persistent         | Important         | Complex           |
+**Choosing the Right Storage API by Data Type**
+
+| _API_                 | _Data Persistence_ | _Data Sensitivity_ | _Data Complexity_ |
+| --------------------- | ------------------ | ------------------ | ----------------- |
+| **Session Storage**   | Transient          | Public             | Simple            |
+| **Cookies**           | Semi-Transient     | Public             | Simple            |
+| **HTTP-only Cookies** | Semi-Transient     | Private            | Simple            |
+| **Local Storage**     | Persistent         | Public             | Simple            |
+| **IndexedDB**         | Persistent         | Public             | Complex           |
 
 </div>
 
@@ -184,7 +186,7 @@ We won't be implementing any Session Storage in this app, and honestly, I don't 
 
 <br />
 
-As you can see, between the Web Storage API and cookies, we have a lot of options for storing data. Intelligently designed apps like Wordle are wise to leverage these APIs to give users a feeling of continuity upon page load without the need for unnecessary server requests. It just comes down to knowing what data you want to persist and why.
+As you can see, the Web Storage API gives us a lot of options for storing data. Intelligently designed apps like Wordle are wise to leverage these APIs to give users a feeling of continuity upon page load without the need for unnecessary server requests. It just comes down to knowing what data you want to persist and why.
 
 <br />
 
@@ -192,7 +194,7 @@ As I said, we will be using Local Storage for our shopping app. It is a simple a
 
 <br />
 
-We now have all the tools we need to build our shopping app. However, building a client-side router is not something to approach lightly so we will be doing this bit-by-bit. In the next lesson, we're
+We now have all the tools we need to build our shopping app. However, building a client-side router is not something to approach lightly so we will be doing this bit-by-bit. In the next lesson, we're planning out our app.
 
 <br />
 

@@ -146,14 +146,15 @@
       // Update the cart amount
 
       // Set the theme
-      if (themeCheck) {
-        document.body.className = themeCheck
-      }
+      themeCheck // If there is a theme in localStorage
+        ? (document.body.className = themeCheck) // Set the theme on the body element
+        : (document.body.className = "dark") // Otherwise, default to dark
 
       // This function will run every time the user clicks the toggleTheme button and change the theme.
       toggleTheme.addEventListener("click", () => {
         // Check current theme
-        const currentTheme = localStorage.getItem("theme") || "dark" // Get the current theme from localStorage, or set it to dark if it doesn't exist.
+        const currentTheme = localStorage.getItem("theme") || "dark"
+        // Get the current theme from localStorage, or set it to dark if it doesn't exist.
         const newTheme =
           currentTheme === "dark" // if the current theme is dark
             ? "purple" // set the new theme to purple
@@ -232,6 +233,7 @@
           .map((product) => ProductComponent(product))
           .join("") // Map over the products and render each one
         render(productsHTML) // Render the products
+        buttonFinderAdd() // Find the add to cart buttons
       }
 
       const ProductPage = async (id) => {
@@ -246,6 +248,7 @@
         document.title = product.name // Set the page title to the product name
         search.value = product.name // Set the search input value to the product name
         product ? render(ProductComponent(product)) : Nope(id) // If we find a product, render it. If not, render the 404 page.
+        buttonFinderAdd() // Find the add to cart buttons
       }
 
       // Create the cart component
@@ -280,7 +283,7 @@
           <h1>Cart</h1>
           ${cartItems.join("")}
           `)
-          buttonFinderRemove()
+          buttonFinderRemove() // Find the remove from cart buttons
         }
       }
 
@@ -366,16 +369,11 @@
       // This function will run every time the user clicks the "Remove from cart" button.
       function removeFromCart(product) {
         console.log(`Removed ${product.name} from cart`)
-        const cart = JSON.parse(localStorage.getItem("cart")) || {}
-        // Get the cart from localStorage, or set it to an empty array if it doesn't exist.
-        if (cart[product.id]) {
-          // If the product is in the cart, decrement the quantity.
-          cart[product.id].quantity--
-        }
+        // Decrement the quantity.
+        cart[product.id].quantity--
         if (cart[product.id].quantity === 0) {
           // If the quantity is 0, remove the product from the cart.
-          delete cart[product.id].quantity
-          delete cart[product.id].product
+          delete cart[product.id]
         }
         localStorage.setItem("cart", JSON.stringify(cart)) // Set the cart in localStorage to the updated cart.
         alert(`${product.name} removed from cart!`) // Alert the user that the product was removed from the cart.

@@ -60,25 +60,40 @@ demo1.html
     <div class="App-5">This will change into hash fragment #2 (mozzarella)</div>
 
     <script defer>
-    let App1 = document.querySelector(".App-1") // I am
-    let App2 = document.querySelector(".App-2") // really good
-    let App3 = document.querySelector(".App-3") // at naming
-    let App4 = document.querySelector(".App-4") // variables
-    let App5 = document.querySelector(".App-5") // I swear
-    let button = document.querySelector("#btn") // btn is short for button
+    let App1 = document.querySelector(".App-1")
+    // I am
+    let App2 = document.querySelector(".App-2")
+    // really good
+    let App3 = document.querySelector(".App-3")
+    // at naming
+    let App4 = document.querySelector(".App-4")
+    // variables
+    let App5 = document.querySelector(".App-5")
+    // I swear
+    let button = document.querySelector("#btn")
+    // btn is short for button
 
-    let url = new URL(window.location.href) // this is unnecessary, you can use location.pathname, etc.
-    let path = url.pathname // but I wanted to show how to use the URL API
-    let searchParams = url.searchParams // it parses any URL, not just the current one
-    let hash = url.hash // and, as you can see, it's very easy to use
+    let url = new URL(window.location.href)
+    // this is unnecessary, you can use location.pathname, etc.
+    let path = url.pathname
+    // but I wanted to show how to use the URL API
+    let searchParams = url.searchParams
+    // it parses any URL, not just the current one
+    let hash = url.hash
+    // and, as you can see, it's very easy to use
 
     button.addEventListener("click", () => {
       App1.innerHTML = path
-      App2.innerHTML = searchParams.get("brie") // this is how you get the value of a search param
-      App3.innerHTML = searchParams.get("cheddar") // they are key-value pairs
-      App4.innerHTML = hash.split("#")[1] // this is how you get the value of a single hash fragment
-      App5.innerHTML = hash.split("#")[2] // usually only one, but you can have as many as you want
-       console.log(location.search) // one way to get search params
+      App2.innerHTML = searchParams.get("brie")
+      // this is how you get the value of a search param
+      App3.innerHTML = searchParams.get("cheddar")
+      // they are key-value pairs
+      App4.innerHTML = hash.split("#")[1]
+      // this is how you get the value of a single hash fragment if there are multiple
+      App5.innerHTML = hash.split("#")[2]
+      // if only one, you can just use hash
+       console.log(location.search)
+       // one way to get search params
 
         // Why I like the URL API
         for (const [key, value] of searchParams) {
@@ -184,10 +199,12 @@ Multiple hash fragments are much rarer, as you generally only have one value tha
       align-items: center;
       justify-content: center;
       height: 90vh;
-      width: 50vw;     /* big ol' vertically aligned boxes */
+      width: 50vw;     
+      /* big ol' vertically aligned boxes */
     }
     html {
-      scroll-behavior: smooth;     /* just to make it obvious */
+      scroll-behavior: smooth;     
+      /* just to make it obvious */
     }
   </style>
 
@@ -223,16 +240,22 @@ Multiple hash fragments are much rarer, as you generally only have one value tha
         container2.style.backgroundColor = `#${randomColor2}`
       }) // i wonder what this button does
 
-      function colorCheck() { // We’ll run this twice, so we’re defining it here to keep the code DRY
-        const urlParams = new URLSearchParams(window.location.search) // bypassing the URL API
-        const color1 = urlParams.get("color1") // a getter function that returns the value of the key
+      function colorCheck() {
+        // We’ll run this twice, so we’re defining it here to keep the code DRY
+        const urlParams = new URLSearchParams(window.location.search)
+        // bypassing the URL API to get search params
+        const color1 = urlParams.get("color1")
+        // get the value of the color1 key if it exists
         const color2 = urlParams.get("color2")
+        // get the value of the color2 key if it exists
         if (color1) {
           container1.style.backgroundColor = `#${color1}`
         }
+        // if the color1 key exists, change the background color of container1
         if (color2) {
           container2.style.backgroundColor = `#${color2}`
-        } // a bit verbose, but I wanted everything to be explicit
+        }
+        // ditto. a bit verbose, but I wanted everything to be explicit
       }
 
       colorCheck() // initial color check

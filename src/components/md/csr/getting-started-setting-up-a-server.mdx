@@ -42,7 +42,7 @@ But, you have to start with the nitty-gritty to fully understand how these tools
 
 <br />
 
-This goes down to the very heart of programming itself-- otherwise we would all be writing our programs in binary machine code. It's an interesting conundrum. To make something easier to understand, it is necessary to obscure the way it actually functions.
+This goes down to the very heart of programming itself-- otherwise we would all be writing our programs in binary machine code. It's an interesting conundrum. To make something easier to understand, it is often necessary to obscure the way that it actually functions.
 
 <br />
 
@@ -78,17 +78,23 @@ Configuring a bare Node server for this project is totally possible and pretty e
 server.js
 
 ```js
-const express = require("express") // import Express
+const express = require("express")
+// import Express
 
-app = express() // Start it up
+app = express()
+// Start it up
 
-app.use(express.static(“public”)) // tell it where our static assets will live.
+app.use(express.static(“public”))
+// tell it where our static assets will live.
 
-app.get("*", function (req, res) { // THERE CAN ONLY BE ONE (route)!
-res.sendFile(__dirname + "/index.html") // We'll make this file soon.
+app.get("*", function (req, res) {
+  // THERE CAN ONLY BE ONE (route)!
+res.sendFile(__dirname + "/index.html")
+// We'll make this file soon.
 })
 
-app.listen(3000, function () { // the server is now listening for http requests
+app.listen(3000, function () {
+  // the server is now listening for http requests
 console.log("Ctrl-Click here to test: http://localhost:3000")
 })
 
@@ -116,18 +122,30 @@ This will be our only other file in this initial version of the app. I know, I s
 >
     index.html
     ```html
-    <!DOCTYPE html> <!-- This just tells the browser that this is an html file -->
-    <html lang="en"> <!-- In this case, we're using English -->
-      <head> <!-- Metadata, AKA what the browser needs to know about the page to show it right -->
-        <meta charset="UTF-8" /> <!-- Almost every page uses UTF-8 -->
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> <!-- Unnecessary usually, but good to have -->
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- This is for responsive design -->
-        <title>Document</title> <!-- The title of the page that you see in the tab / bookmark -->
-      </head> <!-- All the boring stuff is done -->
-      <body> <!-- This is where we put the actual content of the page -->
-        Hello World <!-- Yay, real content! -->
-      </body> <!-- That's all, folks -->
-    </html> <!-- Seriously, that's it -->
+    <!DOCTYPE html> 
+    <!-- This just tells the browser that this is an html file -->
+    <html lang="en"> 
+      <!-- In this case, we're using English -->
+      <head> 
+        <!-- Metadata, AKA what the browser needs to know about the page to show it right -->
+        <meta charset="UTF-8" /> 
+        <!-- Almost every page uses UTF-8 -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <!-- Internet Explorer compatibility. Unnecessary usually, but good to have -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" /> 
+        <!-- This is for responsive design, tells the browser to adapt to monitor size -->
+        <title>Document</title> 
+        <!-- The title of the page that you see in the tab / bookmark -->
+      </head> 
+      <!-- All the boring stuff is done -->
+      <body> 
+        <!-- This is where we put the actual content of the page -->
+        Hello World 
+        <!-- Yay, real content! -->
+      </body> 
+      <!-- That's all, folks -->
+    </html> 
+    <!-- Seriously, that's it -->
     ```
 </div>
 
@@ -206,7 +224,7 @@ But, to give you a treat since you made it to the end of this chapter, here's a 
 
 <br />
 
-Make sure you scroll down and click around! Because I'm using client side routing, I can do crazy stuff like this! How? Well, I'm glad you asked! Otherwise, this whole thing would be a waste of time. In the next chapter, we'll talk about state, what it is, and how we can use it to make our app more dynamic.
+Feel free to change the theme and click around. Because I'm using client side routing, I can do crazy stuff like this! How? Well, I'm glad you asked! Otherwise, this whole thing would be a waste of time. In the next chapter, we'll talk about state, what it is, and how we can use it to make our app more dynamic.
 
 <br />
 

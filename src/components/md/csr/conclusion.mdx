@@ -14,7 +14,7 @@ by Jesse Pence
 
 <iframe
   style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  src="https://www.youtube.com/embed/h_OrD6T77c4"
   id="ytplayer"
 />
 
@@ -25,7 +25,8 @@ by Jesse Pence
 <br />
 
 <a href="#discussion">Discussion</a>
-<a href="#demo">Conclusion and Demo</a>
+<a href="#known-issues">Known Issues</a>
+<a href="#conclusion-and-demo">Conclusion and Demo</a>
 
 <br />
 
@@ -37,15 +38,39 @@ Well, we've come a long way from hello world. I hope that you've learned some tr
 
 <br />
 
+## **Known Issues**
+
+<br />
+
+I had several bugs here when I started this project, but I have been gradually refactoring it and I think that I have solved the majority of the glaring issues. Most of them were due to sloppy declaration of global variables. So, they were simple enough to fix in hindsight.
+
+<br />
+
+Still, one glaring issue is that our getProducts function currently takes the entire database of products into the client's memory and keeps it without checking for changes throughout the session. One issue with this is that, in a real shop, items would have a limited stock. What if something sells out while the user is scrolling through the web page?
+
+<br />
+
+Another problem with this method would occur if the store had more products. When there are only two products in the database, they load quickly and display without issue. But, what if there were thousands of products?
+
+<br />
+
+This could be easily fixed by implementing virtualization or pagination, or by separating the products into more distinct categories. But, I feel like that is all above the scope of this tutorial. It could be a fun way to transition into talking about things like TanStack Query[^1] or React Virtualized[^2] though.
+
+<br />
+
 ## **Conclusion and Demo**
 
 <br />
 
-While I've been working on this project, I've been thinking about how I could make improve it. I've come up with a few ideas, and the code has been refactored endlessly, but I'm really not sure what's best from here. One way or another, I'm definitely coming back soon for a version 2.0. So, if you have any suggestions, feel free to reach out to me on [Twitter](https://twitter.com/JessePence5) or [Discord](https://discord.gg/8qZ3Z5Z). I'd love to have some help with making this project better.
+While I've been working on this project, I've thought about so many ways that I could improve it. The code has been refactored endlessly (I know it needs more), but I'm really not sure what's best from here. I've already spent a lot of time, and I don't want to waste effort going in the wrong direction.
 
 <br />
 
-The next project will start with moving everything into individual files and folders. I just need to see this code converted into something readable. From there, do I convert it to React? Continue to show the limits of Vanilla JS? I'm not sure. Does anyone care? We'll see.
+One way or another, I'm definitely coming back soon for a version 2.0. So, if you have any suggestions, feel free to reach out to me on [Twitter](https://twitter.com/JessePence5) or [Discord](https://discord.gg/8qZ3Z5Z). I'd love to have some help with making this project better.
+
+<br />
+
+The next project will start with moving everything into individual files and folders. I just need to see this code converted into something readable. From there, do I continue to add features and show the limits of Vanilla JS? Add an old-school library like jQuery? Show how to adapt it for TypeScript? I already have several versions made with React-- should I show how to convert it? I'm not sure. Does anyone care? We'll see.
 
 <br />
 
@@ -57,7 +82,7 @@ The next project will start with moving everything into individual files and fol
 
 <br />
 
-And again, here's the code on github (the comments are slightly different):
+And again, here's the code on github fully commented (the comments are slightly different):
 
 <br />
 
@@ -69,5 +94,28 @@ And again, here's the code on github (the comments are slightly different):
     fontSize: "1.3rem",
   }}
 >
-  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch13
+  https://github.com/jazzypants1989/astro-solid-blog/blob/main/src/pages/products.html
 </div>
+
+<br />
+
+And, here's a version that doesn't have any comments at all. It's just the code:
+
+<br />
+
+<div
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
+>
+https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch15
+
+</div>
+
+<br />
+
+[^1]: 1: [TanStack Query is the premier data caching solution for single page applciations.](https://react-query-v3.tanstack.com/)
+[^2]: 2: [React Virtualized is a popular way to render large amounts of data.](https://github.com/bvaughn/react-virtualized)

@@ -35,7 +35,7 @@ by Jesse Pence
 
 <br />
 
-So, I'm sure you've heard of state and how difficult it can be to manage in single page applications. But, what is it? State is one of those concepts that is hard to define without using the word itself. I like thinking of it as the current representation of changeable data. Every time the user interacts with something on a web page without loading a new one, the state of the page changes.
+So, I'm sure you've heard of state and how difficult it can be to manage in single page applications. But, what is it? **State** is the current representation of changeable data. Every time the user interacts with something on a web page without loading a new one, the state of the page changes.
 
 <br />
 
@@ -70,8 +70,10 @@ brokenstate.html
     <title>Tell me this isn't a SPA</title>
   </head>
   <script>
-    let App = document.querySelector(".App") // Let's just define this first
-    let button = document.querySelector("#btn") // Nothing could go wrong here
+    let App = document.querySelector(".App") 
+    // Let's just define this first
+    let button = document.querySelector("#btn") 
+    // Nothing could go wrong here
 
     button.addEventListener("click", () => {
       App.innerHTML = "My state has changed. I live in California now."
@@ -97,11 +99,11 @@ brokenstate.html
 
 <br />
 
-Simple enough, let's go test it out! Hmm... It doesn't work? The keen-eyed among you may have already noticed it. The way the browser works is that it scans the file from top to bottom, putting things into place as it goes along. But, when it comes across a script tag, it pauses to implement whatever is inside of it. Our script tag is at the top of the file, but the button and the div are at the bottom.
+Simple enough, let's go test it out! Hmm... It doesn't work? The keen-eyed among you may have already noticed it. The way the browser works is that it scans the file from top to bottom, putting things into place as it goes along. But, when it comes across a script tag, it pauses to implement whatever is inside of it. Our script tag is at the top of the file, but the `button` and the `div` are at the bottom.
 
 <br />
 
-The browser sees our script tag, and tries to do what it says, but the query selectors are looking for HTML tags that simply don't exist yet. A whole two lines of code separates the Javascript and the HTML, but that's enough. This means that the script runs before the button and div are even on the page.
+The browser sees our script tag, and tries to do what it says, but the query selectors are looking for HTML tags that simply don't exist yet. A whole two lines of code separates the Javascript from the HTML, but that's enough. This means that the script runs before the button and div are even on the page.
 
 <br />
 
@@ -131,8 +133,10 @@ fixedstate.html
     <button id="btn">Click Me</button>
     <div class="App"></div>
   <script defer>
-    let App = document.querySelector(".App") // This is basically React
-    let button = document.querySelector("#btn") // btn is short for button
+    let App = document.querySelector(".App")
+    // This is basically React (jk)
+    let button = document.querySelector("#btn")
+    // btn is short for button
 
     button.addEventListener("click", () => {
       App.innerHTML = "My state has changed. I live in California now."
@@ -201,7 +205,8 @@ So, enough about what state is and why we can't rely on it to last in client-sid
 
     <script defer>
     let App = document.querySelector(".App")
-    let button = document.querySelector("#btn") // btn means button. FYI.
+    let button = document.querySelector("#btn")
+    // btn means button. FYI.
 
     button.state = {
         // Initial state
@@ -248,7 +253,7 @@ Save the file, refresh the browser, and check it out! Our faithful, formerly bor
 
 <br />
 You may be wondering where the “state” and “pressed” properties that we used on the
-button came from. Surely, state is just built into javascript, and we were just using
+button came from. Surely, state is just built into JavaScript, and we were just using
 it as a tool, right? Nope! I just called it that to help you understand.
 
 <br />
@@ -273,7 +278,8 @@ Welcome to the wild, wacky, wonderful world of JS. Check it out. This still work
     <div class="yumYum">Don't do it. Just look at that face... 🤨</div>
     <script defer>
       let yumYum = document.querySelector(".yumYum")
-      let bingBong = document.querySelector("#btn") // btn still stands for button. Forever.
+      let bingBong = document.querySelector("#btn") 
+      // btn still stands for button. Forever.
 
       bingBong.zipZap = {
         dibbleDoobie: false,

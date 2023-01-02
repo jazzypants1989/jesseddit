@@ -14,7 +14,7 @@ by Jesse Pence
 
 <iframe
   style="height: fit-content; aspect-ratio: 16/9; width: 100%; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-  src="https://www.youtube.com/embed/GOsTR2HrE3A"
+  src="https://www.youtube.com/embed/LD4DioU5wTs"
   id="ytplayer"
 />
 
@@ -35,11 +35,11 @@ by Jesse Pence
 
 <br />
 
-Just a few more steps and we'll have the finished product! We can get the product information and create individual pages with it, but we still need to add the ability to add products to the cart and save the theme preference. We'll also need to add a cart page to view the products in the cart.
+Just a few more steps and we'll have the finished product! We can get the product information and create individual pages with it, but we can't add products to the cart or save the theme preference. We'll also need to build a cart page to view the products in the cart.
 
 <br />
 
-After seeing the way that we cached the product data, I hope that you understand that `localStorage` isn't necessary to implement a cart in vanilla JavaScript. We could simply create an empty object the first time we load the page and add the products to it as we add them to the cart. And, since we're implementing a theme preference feature that the user will want to persist, we'll need to use `localStorage` anyway.
+After seeing the way that we cached the product data, I hope that you understand that `localStorage` isn't necessary to implement a cart in vanilla JavaScript unless you want the cart to persist. We could simply create an empty object the first time we load the page and add the products to it as we add them to the cart. But, since we're implementing a theme preference feature that the user will want to persist anyways, we'll just use `localStorage` for everything.
 
 <br />
 
@@ -50,7 +50,6 @@ After seeing the way that we cached the product data, I hope that you understand
 I think that the code is pretty self-explanatory, so I'll just go over the important parts. We'll start by adding our dynamic spans in the nav bar to our collection of global variables. Next, we'll initiate the cart while checking to see if one already exists. Then, we'll create the cart component. And finally, we will create a series of functions to add products to the cart, remove them, and update the event listeners on whatever page we may be on. That's a lot! But, hopefully my comments will help you understand what's going on.
 
 <br />
-
 
 <div
   style={{
@@ -69,25 +68,22 @@ I think that the code is pretty self-explanatory, so I'll just go over the impor
     // Get the cart total element
 
     // Bring in the cart and initiate the DOM with the current cart state
-      const cart = JSON.parse(localStorage.getItem("cart")) || {} 
+      const cart = JSON.parse(localStorage.getItem("cart")) || {}
       // Get the cart from localStorage, or set it to an empty object if it doesn't exist
-      cartCount.innerText = Object.keys(cart).length 
+      cartCount.innerText = Object.keys(cart).length
       // Set the cart count to the number of items in the cart
       cartAmount.innerText =
         "$" +
         Object.values(cart)
           .map((item) => item.product.price * item.quantity)
           .reduce((a, b) => a + b, 0)
-          .toFixed(2) 
+          .toFixed(2)
           // Update the cart amount
 
     // Create the cart component
     const Cart = async () => {
-        console.log("Cart Component is rendering")
-        const cart = JSON.parse(localStorage.getItem("cart")) || {}
-        // Get the cart from localStorage, or set it to an empty object if it doesn't exist.
-        const products = await getProducts() 
-        // Get the products
+        products = await getProducts()
+        // Get the products if they haven't been cached
         if (Object.keys(cart).length === 0) {
           // If the cart is empty, render a message saying so.
           render(`
@@ -121,22 +117,22 @@ I think that the code is pretty self-explanatory, so I'll just go over the impor
 
       // This function will run every time the user clicks the "Add to cart" button.
       function addToCart(product) {
-        console.log(`Added ${product.name} to cart`)
         if (cart[product.id]) {
           // If the product is already in the cart, increment the quantity.
           cart[product.id].quantity++
         } else {
-          // If the product isn't in the cart, add the product and a quantity property to the cart.
+          // If the product isn't in the cart,
           cart[product.id] = {
             quantity: 1,
             product,
           }
+          // add the product with the info and a quantity property to the cart.
         }
-        localStorage.setItem("cart", JSON.stringify(cart)) 
+        localStorage.setItem("cart", JSON.stringify(cart))
         // Set the cart in localStorage to the updated cart.
-        alert(`${product.name} added to cart!`) 
+        alert(`${product.name} added to cart!`)
         // Alert the user that the product was added to the cart.
-        cartCount.innerText = Object.keys(cart).length 
+        cartCount.innerText = Object.keys(cart).length
         // Update the cart count.
         cartAmount.innerText =
           "$" +
@@ -147,25 +143,19 @@ I think that the code is pretty self-explanatory, so I'll just go over the impor
 
       // This function will run every time the user clicks the "Remove from cart" button.
       function removeFromCart(product) {
-        console.log(`Removed ${product.name} from cart`)
-        const cart = JSON.parse(localStorage.getItem("cart")) || {} 
-        // Get the cart from localStorage, or set it to an empty array if it doesn't exist.
-        if (cart[product.id]) {
-          // If the product is in the cart, decrement the quantity.
-          cart[product.id].quantity--
-        }
+        cart[product.id].quantity--
+        // Decrement the quantity.
         if (cart[product.id].quantity === 0) {
           // If the quantity is 0, remove the product from the cart.
-          delete cart[product.id].quantity
-          delete cart[product.id].product
+          delete cart[product.id]
         }
-        localStorage.setItem("cart", JSON.stringify(cart)) 
+        localStorage.setItem("cart", JSON.stringify(cart))
         // Set the cart in localStorage to the updated cart.
-        alert(`${product.name} removed from cart!`) 
+        alert(`${product.name} removed from cart!`)
         // Alert the user that the product was removed from the cart.
-        Cart() 
+        Cart()
         // Re-render the cart.
-        cartCount.innerText = Object.keys(cart).length 
+        cartCount.innerText = Object.keys(cart).length
         // Update the cart count.
         cartAmount.innerText =
           "$" +
@@ -181,7 +171,7 @@ I think that the code is pretty self-explanatory, so I'll just go over the impor
             // Get all the buttons with the class "add-to-cart"
             if(button.alreadyAdded) return
             button.alreadyAdded = true
-            // Check if the button has already been added
+            // Check if the button already has an event listener
           button.addEventListener("click", (e) => {
             // Add an event listener to each button if not
             const id = e.target.id
@@ -202,7 +192,7 @@ I think that the code is pretty self-explanatory, so I'll just go over the impor
             // Get all the buttons with the class "remove-from-cart"
             if(button.alreadyAdded) return
             button.alreadyAdded = true
-            // Check if the button has already been added
+            // Check if the button already has an event listener
           button.addEventListener("click", (e) => {
             // Add an event listener to each button if not
             const id = e.target.id
@@ -217,11 +207,12 @@ I think that the code is pretty self-explanatory, so I'll just go over the impor
         })
       }
     ```
+
 </div>
 
 <br />
 
-Hopefully you noticed how we fixed the buttons on the products page while we were making our new functions. Now, we have full cart functionality. Let's fix our theme selection with just a few lines of code. 
+Hopefully you noticed how we fixed the buttons on the products page while we were making our new functions. If you look in the code, you'll see that the all the product pages now run the `buttonFinderAdd` function. Now, we have full cart functionality. Let's fix our theme selection with just a few lines of code.
 
 <br />
 
@@ -243,38 +234,38 @@ We again start by checking local storage for a theme. However, since the initial
 >
 
     ```js
-    const themeCheck = localStorage.getItem("theme") 
+    const themeCheck = localStorage.getItem("theme")
     // Get the theme from localStorage
-    const toggleTheme = document.querySelector("#toggleTheme") 
+    const toggleTheme = document.querySelector("#toggleTheme")
     // Get the toggleTheme button
 
     // Set the theme
-      themeCheck 
+      themeCheck
       // If there is a theme in localStorage
-        ? (document.body.className = themeCheck) 
+        ? (document.body.className = themeCheck)
         // Set the theme on the body element
-        : (document.body.className = "dark") 
+        : (document.body.className = "dark")
         // Otherwise, accept the default theme
 
     // This function will run every time the user clicks the toggleTheme button and change the theme.
       toggleTheme.addEventListener("click", () => {
         // Check current theme
-        const currentTheme = localStorage.getItem("theme") || "dark" 
+        const currentTheme = localStorage.getItem("theme") || "dark"
         // Get the current theme from localStorage, or set it to dark if it doesn't exist.
         const newTheme =
-          currentTheme === "dark" 
+          currentTheme === "dark"
           // if the current theme is dark
-            ? "purple" 
+            ? "purple"
             // set the new theme to purple
-            : currentTheme === "purple" 
+            : currentTheme === "purple"
             // but, if the current theme is purple
-            ? "green" 
+            ? "green"
             // set the new theme to green
-            : "dark" 
+            : "dark"
             // otherwise, accept the default theme
-        localStorage.setItem("theme", newTheme) 
+        localStorage.setItem("theme", newTheme)
         // Save the new theme to localStorage
-        document.body.className = newTheme 
+        document.body.className = newTheme
         // Set the new theme on the body element
       })
     ```
@@ -291,18 +282,14 @@ Now, we can change the theme by clicking the toggleTheme button. Let's add a few
 
 <br />
 
-So, the app is almost done! Everything works except the search function. We'll fix that in the next chapter, but for now feel free to play with the demo and add or remove items from the cart. There are still a few bugs, but we'll discuss those as we go along.
-
-<br />
-
-Oof, this demo is broken for some reason. I'll come back to this. I swear! The same code works on the final example, so this is a bug with doing the demo as an Astro catch-all. Not too worried about it. If you're this far in the tutorial: just make the dang thing yourself! The final code is on Github.
+So, the app is almost done! Everything works except the search function. We'll fix that in the next chapter, but for now feel free to play with the demo and add or remove items from the cart. You can also change the theme by clicking the toggleTheme button. Everything will be saved in localStorage, so you can refresh the page and the cart and theme will still be there. If you want to see the code for this chapter, you can find it on Github.
 
 <br />
 
 <iframe
-style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
-src="/demos/csr/ch13/demo"
-id="demo"
+  style="height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.2);"
+  src="/demos/csr/ch13/demo"
+  id="demo"
 />
 
 <br />
@@ -312,12 +299,12 @@ Here's the code for this chapter on Github:
 <br />
 
 <div
-style={{
-  maxWidth: "100%",
-  overflow: "auto",
-  borderRadius: "5px",
-  fontSize: "1.3rem",
-}}
+  style={{
+    maxWidth: "100%",
+    overflow: "auto",
+    borderRadius: "5px",
+    fontSize: "1.3rem",
+  }}
 >
-https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch13
+  https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch13
 </div>
