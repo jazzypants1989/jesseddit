@@ -46,7 +46,11 @@ I had several bugs here when I started this project, but I have been gradually r
 
 <br />
 
-Still, one glaring issue is that our getProducts function currently takes the entire database of products into the client's memory and keeps it without checking for changes throughout the session. One issue with this is that, in a real shop, items would have a limited stock. What if something sells out while the user is scrolling through the web page?
+The biggest issue with our current code is that we aren't catching any errors in our promises. I intended to show what would happen if the db connection failed, but I forgot to show that at any point. It will definitely be part of any continuation of this tutorial.
+
+<br />
+
+One other glaring issue is that our getProducts function currently takes the entire database of products into the client's memory and keeps it without checking for changes throughout the session. One issue with this is that, in a real shop, items would have a limited stock. What if something sells out while the user is scrolling through the web page?
 
 <br />
 
