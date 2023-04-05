@@ -13,24 +13,26 @@ const posts = await fetchData()
 
 <Layout title="My words are important." now="Blog" others={others}>
   <main class="min-h-screen">
-    <h1
-      class="text-4xl p-4 font-bold text-center text-purple-900 animate-fade-in-down dark:text-blue-200"
+    <h2
+      class="text-4xl p-4 font-bold text-center animate-fade-in-down dark:text-gray-200"
     >
-      Listen to my words, you <span class="text-blue-500 animate-pulse"
-        >heathens!</span
-      >
-    </h1>
+      Web dev doesn't have to be so hard.
+    </h2>
     <div class="flex flex-col items-center justify-center gap-4">
-      <h2
-        class="text-2xl font-bold text-purple-900 animate-fade-in-down dark:text-blue-200"
-      >
-        My Articles
-      </h2>
-      <ul>
+      <h3 class="text-4xl font-bold animate-fade-in-down">My Articles</h3>
+      <ul class="flex flex-col gap-4 text-center">
         {
           posts.map((post) => (
-            <li class="text-purple-900 animate-fade-in-down dark:text-blue-200 list-disc">
-              <a href={`/blog/${post.permalink}`}>{post.title}</a>
+            <li class="animate-fade-in-up flex flex-col gap-2">
+              <a
+                class="text-blue-600 animate-fade-in-down dark:text-green-500 underline hover:text-purple-900 dark:hover:text-blue-200 text-2xl"
+                href={`/blog/${post.permalink}`}
+              >
+                {post.title}
+              </a>
+              <span class="text-gray-500 animate-fade-in-down dark:text-gray-400">
+                {post.createdAt.toLocaleString()}
+              </span>
             </li>
           ))
         }

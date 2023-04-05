@@ -1,0 +1,18 @@
+---
+let { extraStyle, src, id } = Astro.props as {
+  extraStyle: string
+  src: string | undefined
+  id: string | undefined
+}
+
+extraStyle = extraStyle || "background-color: #ccc;"
+
+id = id || "demo"
+---
+
+<iframe
+  style={`height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
+  src={src}
+  id={id}
+>
+</iframe>

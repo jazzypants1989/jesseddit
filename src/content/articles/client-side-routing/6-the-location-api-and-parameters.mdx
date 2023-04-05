@@ -1,0 +1,222 @@
+---
+title: "The Location API and Parameters"
+nextLink: "./7-the-history-api#introduction-and-demo"
+video: "https://www.youtube.com/embed/u6gW7se4QcE"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+## **Introduction and Demo One**
+
+As we discussed, search parameters are usually used to store user input while hash fragments are usually used to store information about the current state of the page. Let's jump right into some verbose yet simple code to understand some of these principles. Lots of this code is unnecessary, but I wanted to show you how to use the URL API as well as URLSearchParams. Read the comments for more information.
+
+<CodeBlock>
+<h4>demo1.html</h4>
+```html
+<!-- Meta tags, etc. -->
+<body>
+    <button id="btn">Click me to see your current path.</button>
+    <div class="App-1">This will change into the path name</div>
+    <div class="App-2">This will change into search param #1 (brie)</div>
+    <div class="App-3">This will change into search param #2 (cheddar)</div>
+    <div class="App-4">This will change into hash fragment #1 (gouda)</div>
+    <div class="App-5">This will change into hash fragment #2 (mozzarella)</div>
+
+    <script defer>
+    let App1 = document.querySelector(".App-1")
+    // I am
+    let App2 = document.querySelector(".App-2")
+    // really good
+    let App3 = document.querySelector(".App-3")
+    // at naming
+    let App4 = document.querySelector(".App-4")
+    // variables
+    let App5 = document.querySelector(".App-5")
+    // I swear
+    let button = document.querySelector("#btn")
+    // btn is short for button
+
+    let url = new URL(window.location.href)
+    // this is unnecessary, you can use location.pathname, etc.
+    let path = url.pathname
+    // but I wanted to show how to use the URL API
+    let searchParams = url.searchParams
+    // it parses any URL, not just the current one
+    let hash = url.hash
+    // and, as you can see, it's very easy to use
+
+    button.addEventListener("click", () => {
+      App1.innerHTML = path
+      App2.innerHTML = searchParams.get("brie")
+      // this is how you get the value of a search param
+      App3.innerHTML = searchParams.get("cheddar")
+      // they are key-value pairs
+      App4.innerHTML = hash.split("#")[1]
+      // this is how you get the value of a single hash fragment if there are multiple
+      App5.innerHTML = hash.split("#")[2]
+      // if only one, you can just use hash
+       console.log(location.search)
+       // one way to get search params
+
+        // Why I like the URL API
+        for (const [key, value] of searchParams) {
+          console.log(`This is just the URL API. ${key}: ${value}`)
+        }
+
+        // There is also a URLSearchParams object, which skips the URL API
+        let searchParams2 = new URLSearchParams(location.search)
+        for (const [key, value] of searchParams2) {
+          console.log(`This is URLSearchParams. ${key}: ${value}`)
+        }
+      })
+  </script>
+  </body>
+</html>
+
+```
+
+</CodeBlock>
+
+Save the script, now check this out:
+
+<CodeBlock>
+  http://localhost:3000/best/cheese?brie=okay&cheddar=better#gouda#mozzarella
+</CodeBlock>
+
+<IFrame
+  src="/demos/csr/ch6/demo/START-HERE/best/cheese?brie=okay&cheddar=better#gouda#mozzarella"
+  id="demo1"
+/>
+
+Press the button. Now, press F12 to see the console. You should see something like this:
+
+<CodeBlock>
+    
+    ```js
+    URL {href: "http://localhost:3000/best/cheese?brie=okay&cheddar=better#gouda#mozzarella", origin: "http://localhost:3000", protocol: "http:", username: "", password: "", host: "localhost:3000", hostname: "localhost", port: "3000", pathname: "/best/cheese", search: "?brie=okay&cheddar=better", searchParams: URLSearchParams, hash: "#gouda#mozzarella"}
+    ?brie=okay&cheddar=better
+    This is just the URL API. brie: okay
+    This is just the URL API. cheddar: better
+    This is URLSearchParams. brie: okay
+    This is URLSearchParams. cheddar: better
+    ```
+</CodeBlock>
+
+So, first we have the URL object. As you can see, it's almost the same as location, but it's a little more powerful. It can parse any URL, not just the current one. I used the new URL command because it gives me access to the URLSearchParams values.
+
+If all you need are the search params, then the URLSearchParams object is better because it skips the URL API. As you can see, it organized my key value pairs into an iterable, indexed list. It provides methods to get, set, and delete search params. It is very useful when working with complex client state.
+
+Crucially, you can chain multiple search parameter key/value pairs together by just throwing a & in there. This is used extensively by websites like Amazon. Ever try to send someone a link of a search that you were doing on an e-commerce website? It gets crazy pretty quickly because the client state is so specific in terms of showing those exact search results. This is an extreme example of passing state to the URL.
+
+## **Demo Two**
+
+Multiple hash fragments are much rarer, as you generally only have one value that determines where you want the user to look. Let's build our most complex site yet to show how these two parameters can work together. Here we go…
+
+<CodeBlock>
+    demo2.html
+    ```html
+    <!-- Meta tags, etc. -->
+    <style>
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 90vh;
+      width: 50vw;     
+      /* big ol' vertically aligned boxes */
+    }
+    html {
+      scroll-behavior: smooth;     
+      /* just to make it obvious */
+    }
+  </style>
+
+  <body>
+    <div id="container1" class="container">
+      <p>This container corresponds to #container1 and ?color1</p>
+    </div>
+    <a href="#container2">Click me to go down there.</a>
+    <div id="container2" class="container">
+      <p>This container corresponds to #container2 and &color2</p>
+    </div>
+    <a href="#container1">Click me to go back up there.</a>
+    <button id="btn">This button gives you a hint of the future</button>
+
+    <script defer>
+      const btn = document.getElementById("btn") // this is a button
+      const container1 = document.getElementById("container1")
+      const container2 = document.getElementById("container2")
+
+      btn.addEventListener("click", () => {
+        let randomColor1 = Math.floor(Math.random() * 16777215).toString(16)
+        // random hex color
+        let randomColor2 = Math.floor(Math.random() * 16777215).toString(16)
+        // toString(16) converts to hex, and 16777215 is the max value
+        window.history.pushState(
+          // ignore the two empty arguments
+          {},
+          "",
+          `?color1=${randomColor1}&color2=${randomColor2}`
+          // all we care about for now is the last one– the URL.
+        )
+        container1.style.backgroundColor = `#${randomColor1}`
+        container2.style.backgroundColor = `#${randomColor2}`
+      }) // i wonder what this button does
+
+      function colorCheck() {
+        // We’ll run this twice, so we’re defining it here to keep the code DRY
+        const urlParams = new URLSearchParams(window.location.search)
+        // bypassing the URL API to get search params
+        const color1 = urlParams.get("color1")
+        // get the value of the color1 key if it exists
+        const color2 = urlParams.get("color2")
+        // get the value of the color2 key if it exists
+        if (color1) {
+          container1.style.backgroundColor = `#${color1}`
+        }
+        // if the color1 key exists, change the background color of container1
+        if (color2) {
+          container2.style.backgroundColor = `#${color2}`
+        }
+        // ditto. a bit verbose, but I wanted everything to be explicit
+      }
+
+      colorCheck() // initial color check
+
+      window.addEventListener("load", () => {
+        // This event tells us the DOM is fully loaded
+        window.addEventListener("popstate", () => {
+            // wait to see if a popState event fires.
+          colorCheck()
+          // change the colors to match the search params if a popState event fires.
+        })
+        // Don't worry, I'll explain this soon.
+      })
+    </script>
+
+  </body>
+  </html>
+```
+</CodeBlock>
+
+Alright! Now, we're really manipulating the DOM! I always feel dirty when I say that… Anyways… Let's explore this code. Save the file, and check out this link: http://localhost:3000/?color1=00f&color2=f00#container2
+
+<IFrame
+  src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2"
+  id="demo2"
+/>
+
+So, as you can see, the hash fragment in the URL tells the browser to scroll to the second container upon page load, and the colors are determined by the search parameters. We can use the hash fragments as links within single pages, and we can use the search parameters to determine how that page looks and acts. When we use JavaScript to dynamically change these values, we can create a single page application that feels like a traditional website.
+
+## **Conclusion**
+
+Now, to really start grasping the power of client-side routing, you have to press the button on the bottom. The colors change, the url changes, but the page doesn't have to reload. Press the button a few more times. Now, press back on your browser (or right click on the demo, then click back). The history has been saved, allowing us to replay the previous state of the user's experience, and allowing them to navigate in a natural fashion-- as if these were actually separate pages.
+
+This is because we employed the History API. That's what all the popState business at the end was about. We'll learn more about it in the next chapter. But for now, just know that it's a powerful tool that allows us to manipulate the browser's history and the URL without reloading the page. 
+
+[Here's the code for this chapter!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch6)
+
+[^1]: 1:
+[^2]: 2:

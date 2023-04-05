@@ -1,10 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
+  content: [
+    "./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}",
+    "!./src/demos/**/*",
+  ],
   darkMode: "class",
   theme: {
     fontFamily: {
-      sans: ["Antonio", "sans-serif"],
+      sans: [
+        "Heebo",
+        "sans-serif",
+        "ui-sans-serif",
+        "system-ui",
+        "monospace",
+        "ui-monospace",
+      ],
+      serif: ["ui-serif", "Georgia"],
     },
     extend: {
       animation: {
@@ -202,7 +213,144 @@ module.exports = {
           },
         },
       },
+      typography: (theme) => ({
+        DEFAULT: {
+          css: {
+            color: theme("colors.yellow.900"),
+            a: {
+              color: theme("colors.blue.700"),
+              "&:hover": {
+                color: theme("colors.purple.800"),
+              },
+            },
+            h1: {
+              color: theme("colors.purple.600"),
+            },
+            h2: {
+              color: theme("colors.purple.600"),
+            },
+            h3: {
+              color: theme("colors.purple.600"),
+            },
+            h4: {
+              color: theme("colors.purple.600"),
+            },
+            h5: {
+              color: theme("colors.purple.600"),
+            },
+            h6: {
+              color: theme("colors.purple.600"),
+            },
+            strong: {
+              color: theme("colors.purple.600"),
+            },
+            code: {
+              color: theme("colors.purple.600"),
+            },
+            figcaption: {
+              color: theme("colors.purple.500"),
+            },
+            blockquote: {
+              color: theme("colors.purple.600"),
+              borderLeftColor: theme("colors.red.400"),
+            },
+            ol: {
+              li: {
+                "&:before": {
+                  color: theme("colors.purple.600"),
+                },
+              },
+            },
+            ul: {
+              li: {
+                "&:before": {
+                  backgroundColor: theme("colors.purple.600"),
+                },
+              },
+            },
+            hr: {
+              borderColor: theme("colors.purple.600"),
+            },
+            thead: {
+              color: theme("colors.purple.600"),
+            },
+            tbody: {
+              tr: {
+                borderBottomColor: theme("colors.purple.600"),
+              },
+            },
+          },
+        },
+        DARK: {
+          css: {
+            color: theme("colors.yellow.400"),
+            a: {
+              color: theme("colors.green.400"),
+              "&:hover": {
+                color: theme("colors.blue.300"),
+              },
+            },
+            h1: {
+              color: theme("colors.purple.400"),
+            },
+            h2: {
+              color: theme("colors.purple.400"),
+            },
+            h3: {
+              color: theme("colors.purple.400"),
+            },
+            h4: {
+              color: theme("colors.purple.400"),
+            },
+            h5: {
+              color: theme("colors.purple.400"),
+            },
+            h6: {
+              color: theme("colors.purple.400"),
+            },
+            strong: {
+              color: theme("colors.purple.400"),
+            },
+            code: {
+              color: theme("colors.purple.400"),
+              font: "Menlo, monospace",
+            },
+            figcaption: {
+              color: theme("colors.purple.500"),
+            },
+            blockquote: {
+              color: theme("colors.purple.100"),
+              borderLeftColor: theme("colors.purple.700"),
+            },
+            ol: {
+              li: {
+                "&:before": {
+                  color: theme("colors.purple.400"),
+                },
+              },
+            },
+            ul: {
+              li: {
+                "&:before": {
+                  backgroundColor: theme("colors.purple.400"),
+                },
+              },
+            },
+            hr: {
+              borderColor: theme("colors.purple.400"),
+            },
+            thead: {
+              color: theme("colors.purple.400"),
+            },
+            tbody: {
+              tr: {
+                borderBottomColor: theme("colors.purple.400"),
+              },
+            },
+          },
+        },
+      }),
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 }

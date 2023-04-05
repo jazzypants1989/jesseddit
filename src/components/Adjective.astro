@@ -24,7 +24,7 @@ export const adjectives = [
   "least beautiful",
   "least stylish",
 ]
-export function randomAdjective(x) {
+export function randomAdjective(x: string[]) {
   return x[Math.floor(Math.random() * x.length)]
 }
 ---

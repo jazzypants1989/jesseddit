@@ -5,11 +5,14 @@ import mdx from "@astrojs/mdx"
 import netlify from "@astrojs/netlify/functions"
 
 // https://astro.build/config
-import node from "@astrojs/node"
-
-// https://astro.build/config
 export default defineConfig({
-  integrations: [tailwind(), solidJs(), mdx()],
+  integrations: [
+    tailwind({
+      config: { applyBaseStyles: false },
+    }),
+    solidJs(),
+    mdx(),
+  ],
   output: "server",
   adapter: netlify(),
 })

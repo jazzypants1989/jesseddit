@@ -1,0 +1,63 @@
+---
+title: "Planning Our App"
+nextLink: "10-the-skeleton"
+video: "https://www.youtube.com/embed/mfBvqEZBU5A"
+---
+
+## **Introduction**
+
+Alright folks, the time has finally come. We've spent the last six chapters making sure that we understood our tools, and it's time to put them to use. But, every good project needs a planning stage. This is especially true whenever you're not separating your concerns in a reasonable fashion. Since we're only using one file for everything, our app will be a bit of a mess if we don't plan it out.
+
+If you read my history chapter, you know that a lack of structure was a defining feature of early JavaScript apps. However, my neurotic brain will not allow me to make a complete tragedy of an example, so we're going to be separating everything into React-style functional components very early on. They will simply all be in the same file lumped together.
+
+Additionally, I could not bring myself to do inline styling. I mean, if I really wanted you to see how bad it could get, I would be using HTML style attributes. But, I'm not that cruel. While everything will be in one file, the CSS and the JavaScript will be organized into their own sections.
+
+So, in our final chapter without a demo, we will be discussing how we want our app to work, which APIs we will leverage to make that happen, and how we will structure our code to make it all work.
+
+## **What We Need**
+
+As you saw in the introduction, we will be building a small mock shopping app with two terrible products. It will have a wide variety of features, including:
+
+- Two static pages, "Home" and "About"
+- A dynamic page for each product
+- A dynamic page for all products
+- A dynamic page to show the cart contents
+- A cart that persists between page loads
+- A theme that persists between page loads
+- A reactive search bar that actively filters products
+
+That's a lot of features to fit into one file! The key will be to focus on one thing at a time, and luckily we will be using the same tools to solve each of these problems. Let's see how each tool we've discussed so far will be essential to our app.
+
+First, we learned about state management. The cart, the theme, the search bar, even the URL are all things that we will need to keep track of. Because we are using vanilla JavaScript, that means we will have to not only keep track of the state, but also update the DOM whenever the state changes. This is a lot of work, and it's easy to make mistakes.
+
+Next, we learned about the `location` API. We learned that we can use it to read what is in the address bar. So, we can use it to determine which page to serve the user. However, the `location` just lets us read the URL. We need to be able to update it as well when the user clicks on a link.
+
+Luckily, we learned about the `history` API as well. This will allow us to both update and listen for changes to the URL. With these two APIs combined, we will have full client-side routing in our app. But, what about the cart and the theme?
+
+For that, we learned about the `localStorage` API. This will allow us to persist our cart and theme between page loads. This is a very simple API, but it is extremely useful when building any app-- not just a SPA.
+
+We do still need to worry about how to accomodate search parameters, though. For that, we learned about the `URLSearchParams` API. This will allow us to read and update the search parameters in the URL and filter our products based on the user's search.
+
+One additional web API that we will be using is the `web fetch` API. This will allow us to make requests to our mock database. In our case, we will be using this to get the products for our dynamic pages. Many single page applications use external APIs to populate their content, and we will be no exception. I needed this to be a fetch call so you could see how incorporating external data can be an issue in a single-page app.
+
+## **The Plan**
+
+After I've figured out the essential pages, my favorite place to start with a website is the nav-bar. If you know that you will have a layout that will wrap each page, it helps to have that established early. Because the nav-bar is static within our otherwise dynamic app, we can build it first and let everything change around it. We will also build a small footer just to make the navigation more obvious.
+
+I'll show you the code for those in the next chapter. I want to discuss what comes between them first. This will be the dynamic portion of our app, and we need to find a way to fit everything else inside it. We need a home page, an about page, a products page, a unique page for each product, and a page to hold the contents of the user's cart. The question is: how do we have multiple pages inside one small part of one file?
+
+The answer is that we won't be building pages at all. Instead, we will be building view templates and using them to populate the main area of the app based on the user's request. We will use the URL, the database, and the contents of localStorage to determine which template and how to populate it.
+
+So, let's put on our programming hats and think about what we need to build to make this happen. First, we need to build a component that will match the URL to the appropriate view template, apply any user specifications, and then render everything to the DOM. This will be our Router component, and it will be the engine of our app. But, that's useless if we don't have a way of using that component. So, we need to build another component that allows us to navigate between the different view templates while inside the app.
+
+This will be our Link component. Normally, we would use the `<a>` tag to navigate to different pages. The problem with this is that clicking on a link will completely reset the page. Even though we will be using `localStorage` to preserve some state, the browser still completely destroys and rebuilds the DOM from scratch. This causes a jarring white flash that single page apps are meant to avoid. Why make a single page app if we're not going to enjoy the benefits?
+
+This means that we will need to alter the default behavior of our internal navigation links. To do this, we will be marking them with a custom Link class that will prevent the default behavior and instead use our Router component to navigate to the appropriate page. This will allow us to have the best of both worlds: the speed of a single page app and the linkability of a multi-page app. But, how will the router know how to match the path to the appropriate template?
+
+While we could define everything inside the router component, our app will be unwieldy enough as it is. A common feature in many client-side routing libraries is a central route configuration-- often called `Routes`. This allows us to define all of our routes in one place for easy maintenance. This way, if we need to change a route or add a new one, we don't have to worry about breaking the router as a whole. This will also allow us to keep our Router component small and focused on its job-- which is often the best idea when employing functional programming like we are.
+
+## **Conclusion**
+
+So, we have a plan. From this point forwards, it's all forward momentum. We will be building our app in a series of small steps, but each one will be slowly building to the end result. In our next chapter, we will build a skeleton for our app so we can start filling in the details.
+
+No new code today!

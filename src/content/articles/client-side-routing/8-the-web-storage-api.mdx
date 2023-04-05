@@ -1,0 +1,115 @@
+---
+title: "The Web Storage API"
+nextLink: "./9-planning-our-app"
+video: "https://www.youtube.com/embed/j5NfTd9jATY"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+## **Introduction**
+
+So, in our chapter on state, we talked about persisting user interaction so that we don't lose everything when the page reloads. The question is: How do we make that happen when the server sends the exact same file every time? Some of you probably already know, but the answer lies in storing information on the user's PC in one way or another. Traditionally, this has been done through something called cookies.
+
+## **Cookies**
+
+If the information that you want to store is in any way private to the user, that will of course require server-side authentication in some way-- even OAuth uses Google/Github/**someone**'s server. HTTP-only cookies are very secure if you do them right, so they are a good option for storing private information. However, they require an entire server-side framework to implement correctly which is more than our little 10 line server can handle. And, we're simply designing a shopping app that needs to remember the user's cart. In real life, this is not far from the amount of information that one needs to build an e-commerce app as long as you use an external payment provider like Stripe.
+
+Cookies come with a few minor issues as well. They are sent with every request which is not a problem in a single page application. And, they are also limited to 4kb, which is not a lot of space. We don't need much space, but they also require an expiration date which is not ideal for a shopping cart. And, while setting and getting a cookie is much easier than many things in web development, there is another option that is even easier: Local Storage.
+
+## **Local Storage and Demo**
+
+Local Storage is a great option for storing small amounts of non-essential data. It is not particularly secure however, so you should stick with HTTP-only cookies for private data as even the most basic of attacks can get access to local storage. So, before we end this lesson and start building the entire shopping app, let's do a quick demonstration showing how the localStorage concept works.
+
+<CodeBlock>
+    <h4>index.html</h4>
+    ```html
+<!-- Meta Tags, etc. -->
+  <style>
+    #container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 90vh;
+      width: 50vw;
+    }
+  </style>
+  <body>
+    <label for="color-picker">Pick a color</label>
+    <input type="color" id="color-picker" />
+    <div id="container">
+      <p>
+        This container will remember your favorite color, even if you close the
+        browser.
+      </p>
+    </div>
+    <script defer>
+      const container = document.getElementById("container")
+      const colorPicker = document.getElementById("color-picker")
+      const color = localStorage.getItem("favColor")
+      if (color) {
+        container.style.backgroundColor = color
+        colorPicker.value = color
+      }
+      colorPicker.addEventListener("change", (e) => {
+        container.style.backgroundColor = e.target.value
+        localStorage.setItem("favColor", e.target.value)
+      })
+    </script>
+  </body>
+</html>
+```
+</CodeBlock>
+
+Alright, save the file, and let's boot it up: http://localhost:3000
+
+<IFrame src="/demos/csr/ch8/demo/" />
+
+Feel free to close the browser and open it again. Or, if you're just using my demos for reference, right click on it and press 'reload frame'. The color will still be there.
+
+It's important to understand that this is not essential to or restricted by our use of client-side routing. Nothing is stopping you from supplying the user's data from the server upon each page load request. I just wanted to demonstrate how easy localStorage is to work with, and how handy it can be for client-side situations like these.
+
+However, I will stress once again that Local Storage should not be used for any kind of private information unless you are very confident in your encryption method. You just saw how easy it was to retrieve a value using plain old JavaScript. Even if your information is encrypted, it's better to use the built-in protections and tested reliability of HTTP-only cookies in my opinion. But, since we don't have any authentication and it only takes a couple of lines of additional code, it looks like Local Storage is perfect for our use case.
+
+To check out what you're currently holding in Local Storage, just hit f12 in the browser and then click on the application tab. Scroll down to Local Storage, and you should see the list of key/value pairs to the right. To clarify, the items in Local Storage are always stored as strings. If you have a more complex object that you want to store as a string, make sure that you use the JSON.stringify function on it before storing it (and JSON.parse when you take it out of storage.) We'll be using this in our app to store the cart as an array of objects.
+
+## **IndexedDB and Session Storage**
+
+As you can see, you can hold quite a bit in here, and if you ever have issues, the IndexedDB API is even better. The IndexedDB is a NoSQL database that is built into the browser. It is a bit more complicated to use, but it is a great option for storing large amounts of data. This is especially true if you want it to be available offline.
+
+Session Storage is another option. It is similar to Local Storage except that it is deleted after the tab or window is closed-- which is already the default for our app's state since it is only one page. So, much of the traditional usage for session storage in Multi-Page Apps does not apply to us here. However, one way that session storage can be useful on a single page app is storing our state when users go to another website from the same browser window.
+
+In our page that loaded the colors from the search parameters, the only state in the app was passed down from the URL and that was why we were able to restore it completely when we clicked backwards and forwards-- even from another website entirely. However, with apps with complex internal state, much of this can be lost when the user browses to another page. If we want to restore that app state on a popState event, one way of doing that is putting it in Session Storage during the onBeforeUnload event that happens when every page is closed. Then, you can just check if anything is in there on each popState event.
+
+## **Conclusion**
+
+Generally, in Single Page Applications, there are few things that fit in the gaps between simple data that you want to store in a normal cookie; sensitive data that should to be saved in a HTTP-only cookie; complex data that is suited to the IndexedDB API; and utilitarian, long-lived data that can live in Local Storage. Here's a quick table to help you understand:
+
+<div style="max-width: 100%; overflow: auto; border: 2px solid #000; border-radius: 10px;">
+
+**Choosing the Right Storage API by Data Type**
+
+| **API**                 | **Data Persistence** | **Data Privacy** | **Data Complexity** |
+| --------------------- | ------------------ | ------------------ | ----------------- |
+| **Session Storage**   | Transient          | Public             | Simple            |
+| **Cookies**           | Semi-Transient     | Public             | Simple            |
+| **HTTP-only Cookies** | Semi-Transient     | Private            | Simple            |
+| **Local Storage**     | Persistent         | Public             | Simple            |
+| **IndexedDB**         | Persistent         | Public             | Complex           |
+
+</div>
+
+We won't be implementing any Session Storage in this app, and honestly, I don't use normal cookies or session storage very much when building SPA's. But, here's a tweet with more details about using it for breadcrumbs. [^3]
+
+As you can see, the Web Storage API gives us a lot of options for storing data. Intelligently designed apps like Wordle are wise to leverage these APIs to give users a feeling of continuity upon page load without the need for unnecessary server requests. It just comes down to knowing what data you want to persist and why.
+
+As I said, we will be using Local Storage for our shopping app. It is a simple and easy way to store data that we want to remain across both page loads and browser sessions. Who needs a server and a database when you have Local Storage? (Actual shopping apps... that's who.)
+
+We now have all the tools we need to build our shopping app. However, building a client-side router is not something to approach lightly so we will be doing this bit-by-bit. In the next lesson, we're planning out our app.
+
+[As always, here's the code for today!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch8)
+
+[^1]: 1:
+[^2]: 2:
+[^3]: 3: [Ryan Florence's tweet about using session storage for breadcrumbs](https://twitter.com/ryanflorence/status/1597633832173285376)

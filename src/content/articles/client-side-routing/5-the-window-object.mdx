@@ -1,0 +1,79 @@
+---
+title: "The Window Object"
+nextLink: "./6-the-location-api-and-parameters#introduction-and-demo-one"
+video: "https://www.youtube.com/embed/HY8dPNFw-ic"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+## **Introduction**
+
+So, as we learned in the last lesson, our state lives entirely within the browser. Luckily for us, browser developers give us reliable methods to access and manipulate that state. This is known as the Browser Object Model, or BOM[^1].
+
+Over the years, several APIs have been added to the BOM, and they are all accessible through the `window` object. The `window` object simply represents the active browser window or tab. It is the global object in the browser, meaning it contains all of the other objects.
+
+We will be using several of these APIs as we build our SPA. Indeed, it would be extremely difficult without them. The next few chapters will go through how we will implement each API specifically, but for now, let's just take a look at some simple code to see how we can access the `window` object.
+
+## **Code and Demo**
+
+So, we learned in the last chapter that it makes sense to keep parts of your application's state connected to the URL so that links and bookmarks will work correctly. But, how do we access the URL? We'll start with the location API because it's relatively obvious to see how this will help us.
+
+<CodeBlock>
+<h4>index.html</h4>
+
+```html
+
+<!-- Meta tags, etc. -->
+  <body>
+    <button id="btn">Click me to see your current path.</button>
+    <div class="App">I'm waiting...</div>
+  <script defer>
+    let App = document.querySelector(".App")
+    let button = document.querySelector("#btn")
+
+    let path = window.location.pathname
+
+    button.addEventListener("click", () => {
+      App.innerHTML = "The path is currently " + path
+      button.innerHTML = "This works with ANY path!"
+    })
+
+console.log(window)
+  </script>
+</body>
+</html>
+```
+</CodeBlock>
+
+Save this code into our environment, and then load up something wild like:
+
+<CodeBlock>
+[http://localhost:3000/i/like/cheese?i-hate-nazis#controversial](http://localhost:3000/i/like/cheese?i-hate-nazis#controversial)
+</CodeBlock>
+
+<IFrame
+  src="/demos/csr/ch5/demo/START-HERE/i/like/cheese?i-hate-nazis#controversial"
+/>
+
+Press the button. Hmm, only part of that path was recorded. Where did everything after the question mark go? Press F12 again and check out that console log. Open the object. I purposefully logged the entire window object to the console so you could see how much is in here. Scroll down to “location” and look in there. Pretty crazy, right? But, there's a ton of really helpful information in there that we're gonna exploit as we continue our journey.
+
+First, we have one very helpful property that I made really obvious with that button. This is the pathname. This is everything after the hostname of your website, including the '/'. This is the most important and most obvious part of the URL to the user, especially when they bookmark it. They want to know that “/i/like/cheese” will lead to the same information every time!
+
+We generally want to target the path when we're doing client-side routing because every other part of the URL is variable. If your website is hosted on http://KanyeWestRulesForever.com, [^2] you probably want to change the domain. But, if you used the “href” property when building your site, then you'll have to change every single line of code that references this. Relative links are much more flexible, and they're the standard for modern web development.
+
+Next, let's discuss the two main methods of programmatic customization in our arsenal. As you can see, we're going to rely on the path to know exactly where we are in the app, so we can't serve different content based on the path unless we use some of the state persistence techniques we'll talk about in chapter 8. Luckily, the location API sequesters anything written after a '?' or a '#' as 'search' parameters or 'hash' fragments respectively.
+
+For our search parameters, we have “?i-hate-nazis”[^3], and our hash fragment is "#controversial”. The search parameters are very aptly named, as they help us respond to the user's custom input. Generally, this will be used to query a database somewhere for specialized information. We can use this input to determine what we show the user, and I hope that it's easy to see how that could be useful in a variety of situations.
+
+The main difference with hash fragments is that they are usually used by web designers to apply “breadcrumbs” within a single page without requiring navigation to an entirely new page. In other words, the hash fragment in the url can be used to direct the user to a particular part of the page. However, it is not limited to this, and developers have used hash fragments as a routing mechanism for their entire web sites in the past. While this is outdated and unrecommended, it shows that we are not limited to using fragments for simple in-page navigation.
+
+## **Conclusion**
+
+We're going to be exploring the location object and the various parameters in greater detail in the next chapter, but I hope that you can see how this will be useful in our app. We can use the URL as a way to store state-- both by storing the user's location in the pathname and by processing user input with search and hash parameters. This is just a taste of the power of the BOM, and we'll be using it extensively in the next few chapters. Next, we examine a few ways to use parameters to make our app more dynamic.
+
+[As always, here's a link to the code for this chapter!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch5)
+
+[^1]: 1: [This is a pretty decent resource for learning about the BOM.](https://www.javascripttutorial.net/javascript-bom/)
+[^2]: 2: To clarify, I think that Kanye West is an ass.
+[^3]: 3: If you are a Nazi, please stop reading my tutorial. In fact, just stop.

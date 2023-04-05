@@ -68,6 +68,7 @@
       overflow-y: auto; /* scrollable */
       margin-top: 3rem; /* leave room for the navbar */
       margin-bottom: 1rem; /* leave room for the footer */
+      height: calc(100% - 4rem); /* take up the rest of the screen */
     }
 
     img {
@@ -148,8 +149,8 @@
 
       // Set the theme
       themeCheck // If there is a theme in localStorage
-        ? (document.body.className = themeCheck) // Set the theme on the body element
-        : (document.body.className = "dark") // Otherwise, default to dark
+        ? main.classList.add(themeCheck) // Add the theme to the main element
+        : main.classList.add("dark") // Otherwise, add the dark theme to the main element
 
       // This function will run every time the user clicks the toggleTheme button and change the theme.
       toggleTheme.addEventListener("click", () => {
@@ -163,7 +164,8 @@
             ? "green" // set the new theme to green
             : "dark" // otherwise, set the new theme to dark
         localStorage.setItem("theme", newTheme) // Save the new theme to localStorage
-        document.body.className = newTheme // Set the new theme on the body element
+        main.classList.remove(currentTheme) // Remove the current theme from the main element
+        main.classList.add(newTheme) // Add the new theme to the main element
       })
 
       // "Database" of products
@@ -308,7 +310,7 @@
         { path: "/about", component: About },
         { path: "/products", component: ProductsPage },
         { path: "/product", component: ProductPage },
-        { path: "/cart", component: () => render("Cart") },
+        { path: "/cart", component: Cart },
       ]
 
       // METHOD ONE (BIG ROUTER)
@@ -514,8 +516,6 @@
       } else {
         Router(location.pathname)
       }
-
-      console.log("Hello from chapter 14.")
 
       // Now, we need to add a listener for the popstate event.
 

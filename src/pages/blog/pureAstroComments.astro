@@ -1,0 +1,282 @@
+---
+import prisma from "../../utils/db"
+import Layout from "../../layouts/Layout.astro"
+
+import type { Comment } from "@prisma/client"
+import ToC from "../../components/ToC.astro"
+
+type CommentWithUser = Comment & {
+  user: { login: string; avatar_url: string }
+  avatar_url: string
+  html_url: string
+}
+
+let others = ["Home", "About", "Contact", "Portfolio"]
+
+const permalink = Astro?.params?.permalink?.toString()
+
+async function getPost() {
+  const post = await prisma.post.findUnique({
+    where: {
+      permalink,
+    },
+    include: {
+      Comment: {
+        include: {
+          user: true,
+        },
+      },
+    },
+  })
+  return post
+}
+
+const post = await getPost()
+
+if (!post) {
+  Astro.redirect("/")
+}
+
+// @ts-ignore
+let { title, body, likes, createdAt, updatedAt, Comment: comments } = post
+
+const userCookie = Astro.cookies.get("user")?.value ?? null
+
+const user = userCookie ? JSON.parse(userCookie) : {}
+
+const userAvatar = user ? user?.avatar_url : null
+
+const userInDB =
+  user && user.login
+    ? await prisma.user.findUnique({
+        where: {
+          login: user.login,
+        },
+      })
+    : null
+
+if (!userInDB && user.login) {
+  await prisma.user.create({
+    data: {
+      login: user.login,
+      id: user.id,
+      avatar_url: user.avatar_url,
+      html_url: user.html_url,
+    },
+  })
+}
+
+if (Astro.request.method === "POST") {
+  if (!user) {
+    Astro.redirect(Astro.url.pathname)
+  }
+  if (postCooldown()) {
+    Astro.redirect(Astro.url.pathname)
+  }
+  try {
+    const data = await Astro.request.formData()
+
+    const body = data?.get("body")?.toString()
+    const login = data?.get("user")?.toString()
+    const permalink = data?.get("permalink")?.toString()
+    const post = await prisma.post.findUnique({
+      where: {
+        permalink,
+      },
+    })
+
+    if (!body || !login || !permalink || !post) {
+      throw new Error("Invalid data")
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        body,
+        user: {
+          connect: {
+            login: login,
+          },
+        },
+        Post: {
+          connect: {
+            permalink: post.permalink,
+          },
+        },
+      },
+      include: {
+        user: true,
+      },
+    })
+
+    Astro.cookies.set("lastPost", JSON.stringify(new Date()))
+    console.log(comment)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+function postCooldown() {
+  const postCookie = Astro.cookies.get("lastPost").value
+  const lastPost = postCookie ? JSON.parse(postCookie) : null
+
+  if (lastPost) {
+    const now = new Date()
+    const lastPostDate = new Date(lastPost)
+    const diffSeconds = (now.getTime() - lastPostDate.getTime()) / 1000
+    if (diffSeconds < 60) {
+      return true
+    } else {
+      return false
+    }
+  } else {
+    return false
+  }
+}
+---
+
+<Layout now="Blog" others={others}>
+  <div class="flex justify-center items-center max-w-2xl mx-auto">
+    <div
+      class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-blue-200 rounded-lg shadow-md dark:bg-gray-800"
+    >
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{title}</h1>
+      <p class="mt-2 text-xl text-gray-600 dark:text-gray-400">{body}</p>
+      <span id="likes" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        👍: {likes}
+      </span>
+      <span
+        id="createdAt"
+        class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+      >
+        Created: {new Date(createdAt).toLocaleString()}
+      </span>
+      {
+        updatedAt !== createdAt && (
+          <span
+            id="updatedAt"
+            class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+          >
+            Updated: {new Date(updatedAt).toLocaleString()}
+          </span>
+        )
+      }
+      <ToC />
+      <h3 class="mt-4 text-2xl font-bold text-gray-800 dark:text-white">
+        Comments
+      </h3>
+      <div
+        class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-slate-200 rounded-lg shadow-md dark:bg-gray-800"
+      >
+        <h3>Write a comment</h3>
+        <form
+          method="POST"
+          class="flex flex-col justify-center gap-1 items-center w-full max-w-2xl p-4 mx-auto my-8 bg-slate-200 rounded-lg shadow-md dark:bg-gray-800"
+        >
+          <input type="hidden" name="permalink" value={permalink || ""} />
+          <input type="hidden" name="user" value={user.login || ""} />
+          <textarea
+            class="w-full h-24 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-800 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-700"
+            name="body"
+            id="body"
+            cols="30"
+            rows="10"></textarea>
+          {
+            user.login ? (
+              <button
+                class={`${
+                  postCooldown() ? "bg-gray-500" : "bg-purple-500"
+                } text-white font-bold py-2 px-4 rounded`}
+                type="submit"
+                disabled={postCooldown()}
+              >
+                Submit
+              </button>
+            ) : null
+          }
+          {
+            userAvatar ? (
+              <img
+                class="w-16 h-16 rounded-full"
+                src={userAvatar}
+                alt="user avatar"
+              />
+            ) : null
+          }
+          {
+            user.login ? (
+              <p>Logged in as {user?.login}</p>
+            ) : (
+              <a
+                class="bg-purple-500 text-white font-bold py-2 px-4 rounded"
+                href="/login"
+              >
+                Log in to comment
+              </a>
+            )
+          }
+          {
+            postCooldown() ? (
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Please wait 60 seconds between posts. If you don't see it yet,
+                just
+                <a
+                  href={Astro.request.url}
+                  class="bg-purple-500 text-white font-bold pl-1 py-1 rounded"
+                >
+                  refresh
+                </a>
+                the page.
+              </p>
+            ) : (
+              ""
+            )
+          }
+          {
+            user.login ? (
+              ""
+            ) : (
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                You must be logged in to comment. Click the button above to log
+                in.
+              </p>
+            )
+          }
+        </form>
+      </div>
+      {
+        comments.map((comment: CommentWithUser) => (
+          <div class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-slate-200 rounded-lg shadow-md dark:bg-gray-800">
+            <p class="mt-2 text-md text-gray-600 dark:text-gray-400">
+              {comment.body}
+            </p>
+            {comment.user.avatar_url && (
+              <img
+                class="w-16 h-16 rounded-full"
+                src={comment.user.avatar_url}
+                alt="user avatar"
+              />
+            )}
+            <span
+              id="user"
+              class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+            >
+              {comment.user.login}
+            </span>
+            <span
+              id="likes"
+              class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+            >
+              👍: {comment.likes}
+            </span>
+            <span
+              id="createdAt"
+              class="mt-2 text-sm text-gray-600 dark:text-gray-400"
+            >
+              {new Date(comment.createdAt).toLocaleString()}
+            </span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</Layout>

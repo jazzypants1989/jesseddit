@@ -1,0 +1,81 @@
+---
+import Headings from "../../components/Headings.astro"
+import IFrame from "../../components/IFrame.astro"
+import ArticleLayout from "../../layouts/ArticleLayout.astro"
+
+import { getEntryBySlug } from "astro:content"
+
+const { slug } = Astro.params
+
+if (slug === undefined) {
+  throw new Error("Slug is required")
+}
+
+const entry = await getEntryBySlug("articles", slug)
+
+if (entry === undefined) {
+  return Astro.redirect("/404")
+}
+
+const { title, nextLink, video } = entry.data
+
+const { Content } = await entry.render()
+
+const blog = slug.split("/")[0]
+const article = slug.split("/")[1]
+---
+
+<title>{title}</title>
+<ArticleLayout>
+  <a
+    class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1 my-1"
+    href={`/blog/${blog}`}
+  >
+    Back to Table of Contents
+  </a>
+  <h1
+    class="text-4xl font-bold text-center text-purple-600 dark:text-purple-400"
+  >
+    {title}
+  </h1>
+  <img
+    src="/Cat.svg"
+    class="w-24 h-24 mx-auto my-4"
+    alt="What CoPilot thinks a cat looks like"
+  />
+  <p class="text-center text-purple-600 dark:text-purple-400 text-xl">
+    By Jesse Pence
+  </p>
+  {video && <IFrame id="ytplayer" src={video} allowfullscreen />}
+  <article
+    class="prose p-2 max-w-none prose-xl flex flex-col justify-center items-center tracking-wide bg-blue-200 rounded-lg shadow-2xl dark:bg-gray-800 text-gray-800 dark:text-gray-200 dark:prose-DARK indent-8"
+  >
+    {article !== "1-introduction" ? <Headings /> : <h1>Hey there!</h1>}
+    <Content />
+  </article>
+  <div class="flex items-center justify-between w-full h-24 mt-4 text-center">
+    <a
+      class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-3"
+      href={`/blog/${blog}`}
+    >
+      Back to Table of Contents (with comments)
+    </a>
+    {
+      nextLink === "/blog" ? (
+        <a
+          href="/blog"
+          class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 text-3xl bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-2"
+        >
+          Other Articles!
+        </a>
+      ) : (
+        <a
+          class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 text-3xl bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-2"
+          href={nextLink}
+        >
+          Next Page!
+        </a>
+      )
+    }
+  </div>
+</ArticleLayout>

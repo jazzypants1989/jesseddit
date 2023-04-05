@@ -1,0 +1,157 @@
+---
+title: "Adding Reactive Search"
+nextLink: "./15-conclusion"
+video: "https://www.youtube.com/embed/DozbrIXEk08"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+## **Introduction**
+
+Our penultimate chapter will be short and sweet. At this point, my hope is that I have given you the tools and shown how they can be used. I just want emphasize how easy it is to add additional features once you fully understand these concepts. So, let's add a reactive search bar.
+
+## **Code**
+
+<CodeBlock>
+    <h4>index.html</h4>
+    ```js
+    <!-- rest of the code -->
+    const search = document.querySelector("#search") 
+    // Get the search input
+
+      search.addEventListener("input", searchHandler)
+      // Add an event listener to the search input element we defined.
+
+      async function searchHandler() {
+        // This is the function that will run every time the user types in that input.
+        const searchValue = search.value
+        // Because our search input is a global variable, we can just grab the value from it.
+        history.pushState(null, null, `/products?name=${searchValue}`)
+        // We're pushing the search query to the URL so it can be shared.
+        products = await getProducts()
+        // Get the products
+        const filteredProducts = products.filter((product) => {
+          // Filter the products
+          return product.name.toLowerCase().includes(searchValue.toLowerCase())
+          // We're converting both the product name and the search value to lowercase
+          // "shirt" and "Shirt" and "SHIRT" and "sHiRt" will all match.
+        })
+        if (filteredProducts.length === 0) {
+          render(`<h1>Products</h1><p>No products found!</p>`)
+          // A third 404 page! I'm on a roll!
+        } else {
+          const productsHTML = filteredProducts.map(ProductComponent).join("")
+          render(`<h1>Products</h1>${productsHTML}`)
+          buttonFinderAdd()
+        }
+      }
+    <!-- rest of the code -->
+    ```
+</CodeBlock>
+
+I can hear you now. "But, wait Jesse! Why did we even learn about URLSearchParams if we didn't need it to make a search bar?" Well, I'm glad you asked. While our app is working perfectly well as it is, what if we wanted to allow people to search for specific things without even opening the app first? I considered two ways of doing this.
+
+In the first, we pursue a similar method to the dynamic route by defining the search route in the router function. This works, and almost gives the impression of a nested route, but we end up with a bulky router function filled with else if's (or a switch case). In the second, we allow every route to be a search route and simply check for the search query in the URL on every route. I'll show you both methods.
+
+<CodeBlock>
+    <h4>index.html</h4>
+    ```js
+    // rest of the code
+    // METHOD ONE (BIG ROUTER)
+    const Router = (potentialRoute) => {
+        const dynamicRoute = "product" 
+        // Define a dynamic route
+        const searchRoute = "products" 
+        // Define a search route
+        const searchParams = new URLSearchParams(location.search) 
+        // Get the search params from the URL
+        if (
+          // DYNAMIC ROUTE LOGIC
+          potentialRoute.split("/")[1] === dynamicRoute && 
+          potentialRoute.split("/")[2]
+        ) {
+          const id = potentialRoute.split("/")[2]
+          // /product/1 
+          return ProductPage(id)
+        } else if (
+          // SEARCH ROUTE LOGIC
+          potentialRoute.split("/")[1] === searchRoute &&
+          // Pre-defined search route
+          searchParams.has("name")
+          // Check if the search query exists
+        ) {
+          const searchValue = searchParams.get("name")
+          // Get the search query
+          search.value = searchValue
+          // Set the search input value to the search query
+          return searchHandler()
+          // Run the search handler function
+        } else {
+          // STATIC ROUTE LOGIC
+          const route = Routes.find(
+            (route) => route.path === potentialRoute 
+            // We're finding the route that matches the path in the address bar.
+          )
+          route ? route.component() : Nope()
+        }
+      }
+
+    Router(location.pathname) // We're passing the pathname to the router function.
+
+    // METHOD TWO (EVERY ROUTE IS A SEARCH ROUTE)
+
+    async function urlSearchHandler() {
+        const searchParams = new URLSearchParams(window.location.search)
+        // Create a new URLSearchParams object from the search query in the URL.
+        const searchValue = searchParams.get("search")
+        // Get the value of the search query.
+        search.value = searchValue
+        // Set the value of the search input to the search query.
+        products = await getProducts()
+        // Get the products from the database.
+
+        const filteredProducts = products.filter((product) => {
+          return product.name.toLowerCase().includes(searchValue.toLowerCase())
+          // Filter the products to only include the ones that match the search query.
+        })
+
+        if (filteredProducts.length === 0) {
+          render(`<h1>Products</h1><p>No products found!</p>`)
+          // If there are no products, Render a message saying so.
+        } else {
+          const productsHTML = filteredProducts.map(ProductComponent).join("")
+          // If there are products, we're mapping over them and rendering them.
+          render(`<h1>Products</h1>${productsHTML}`)
+          buttonFinderAdd()
+        }
+      }
+
+    // We check for search params, then run the urlSearchHandler function if there are any.
+      let urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.has("search")) {
+        urlSearchHandler()
+      } else {
+        Router(path)
+      }
+
+    // rest of the code
+    ```
+</CodeBlock>
+
+To fully demonstrate both of these features, our final code will include them both. With this, we now have three different ways to search for products in our app-- by using the name paramater on the products page, by using the search parameter on any page, and by entering a query into the search input.
+
+Some things that I thought about adding to the app were hash fragments and allowing the user to search for multiple things at once. But, I already showed you the basics of both of those things in chapter 6. I'll leave it up to you to add those features to the app if you want to.
+
+## Conclusion
+
+Our rendering system takes user input and pushes it directly into the HTML. Generally, this is a huge security risk. If users determine that your routing system allows them to directly manipulate your code, they can do some pretty nasty things. In our example, they could add a script tag to the URL and run malicious code on your site. This is called a cross-site scripting attack.
+
+When I first planned this tutorial, I had a whole section dedicated to XSS attacks and other security concerns. But, my most recent designs seem to have made it so that the app is pretty secure. I'm sure there are still some vulnerabilities, and I welcome any insight into things that I have overlooked.
+
+Please, don't hack me. Just let me know if there are any vulnerabilities. I keep trying to put script commands into random places and nothing has happened. I'm sure I'm missing something. If you would like to read more about possible XSS vulnerabilities in this kind of system, I recommend Will Taylor's blog article about it listed below.
+
+[Client Side Routing in Vanilla JS by Will Taylor.](https://www.willtaylor.blog/client-side-routing-in-vanilla-js/)
+
+
+[Here's the final code with everything put together.](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch14) Alternatively, click below to head to the final chapter for a brief conclusion and another demo of the app.

@@ -1,8 +1,18 @@
 ---
 import Layout from "../layouts/Layout.astro"
-import Cat from "../components/Cat"
 import { adjectives, randomAdjective } from "../components/Adjective.astro"
 let others = ["Blog", "About", "Contact", "Portfolio"]
+
+const cookie = Astro.cookies.get("user").value
+
+const user = cookie
+  ? JSON.parse(cookie)
+  : {
+      name: "Jesse Pence",
+      avatar_url: "https://avatars.githubusercontent.com/u/102560332?v=4",
+    }
+
+const { name } = user
 ---
 
 <Layout now="Home" others={others}>
@@ -12,13 +22,14 @@ let others = ["Blog", "About", "Contact", "Portfolio"]
     <h1
       class="text-4xl pt-4 font-bold text-center text-purple-900 animate-fade-in-down"
     >
-      Jesse is the <span class="text-blue-500 animate-pulse"
+      {name ? `${name} is the` : "Jesse is the"}
+      <span class="text-blue-500 animate-pulse"
         >{randomAdjective(adjectives)}
       </span>developer in the world.
       <div
         class="flex items-center justify-center mt-10 animate-bounce hover:animate-fade-out-up"
       >
-        <Cat />
+        <img class="w-32 h-32 rounded-full" src="/Cat.svg" alt="Cat" />
       </div>
     </h1>
   </main>

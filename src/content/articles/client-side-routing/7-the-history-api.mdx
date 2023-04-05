@@ -1,0 +1,83 @@
+---
+title: "The History API"
+nextLink: "./8-the-web-storage-api"
+video: "https://www.youtube.com/embed/BYiFZ61mWXM"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+## **Introduction and Demo**
+
+As the last chapter introduced a lot of new concepts and we're close to building our app, this will be the one of the few chapters without a new demo from this point forwards. Instead, let's bring back the last part of our second demo from the last chapter, and re-examine what was happening with the button on the very bottom of the page.
+
+<CodeBlock>
+    <h4>demo2.html</h4>
+    ```js
+// the rest of the code here...
+
+      btn.addEventListener("click", () => {
+        let randomColor1 = Math.floor(Math.random() * 16777215).toString(16)
+        // random hex color
+        let randomColor2 = Math.floor(Math.random() * 16777215).toString(16)
+        // the number 16 is the base and 16777215 is the max
+        window.history.pushState(
+          // ignore the two empty arguments
+          {},
+          "",
+          `?color1=${randomColor1}&color2=${randomColor2}`
+          // all we care about for now is the last one– the URL.
+        )
+        container1.style.backgroundColor = `#${randomColor1}`
+        container2.style.backgroundColor = `#${randomColor2}`
+      }) // Let's talk about what this does...
+
+...
+
+colorCheck() // initial color check
+
+window.addEventListener("load", () => {
+// This event tells us the DOM is fully loaded
+window.addEventListener("popstate", () => {
+// wait to see if a popState event fires.
+colorCheck()
+// change the colors to match the search params if a popState event fires.
+})
+// Don't worry, I'll explain this... NOW!
+})
+
+</script>
+
+</body>
+</html>
+```
+</CodeBlock>
+
+<IFrame
+  src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2"
+/>
+
+As you can see, we are picking two random colors and adding them to the URL as search parameters. We are then using the pushState method of the window.history object to add a new entry to the history stack. This will allow us to press the back button and see the previous search parameters. We are also changing the background colors of the containers to match the new search parameters.
+
+We've already learned about the Location and URL APIs for accessing what is in the address bar, but now we are using the History API to change it without reloading the page. While this will soon be supplanted by the more powerful Navigation API (whenever Mozilla and Webkit get their stuff together), the history API still gives us the tools necessary to replicate the classic web experience.
+
+## **Discussion**
+
+The history object is one of the few objects in JavaScript that carries a predefined “state” attribute. We can manipulate it in three ways-- pushState, replaceState, or popState. Websites naturally fire a pushState event as you browse, but as you saw in our code, you can also manually add entries to simulate this event with pushState. This is what allows us to press the back button in the browser and see the previous search parameters.
+
+Every time a user presses the back or forwards buttons, a popState event is fired. We added an event listener to this so that we could change the container colors to match the search parameters in each URL. The only problem with this is that the popState event doesn't happen until relatively late in the page load. Much of our code is usually parsed by then.
+
+This is why we added an event listener to the “load” event tied to the global window object. This event does not fire until the page has been fully constructed-- all the HTML elements and their associated styles and scripts. Remember how I told you we would have to watch out for that in chapter 4? Luckily, if we wait for the load event to fire, we can be sure that our asynchronous JavaScript will be able to take effect.
+
+When I was constructing this series of articles, I used the DOMContentLoaded event for this rather than "load". This worked for the majority of the time, until my JavaScript started to get complex (around chapter 11). The DomContentLoaded event does not wait for the JavaScript to finish loading, while the load event does. I decided to remove this mistake from the article because this is a tricky thing to explain, and I didn't want to confuse anyone.
+
+Finally, I will briefly mention the replaceState method of the history object. This is handy when you don't actually want the user to be able to go back. Later, when we create our global Route and Link functions, they will pushState by default. However, there may be some times when you don't want that-- like whenever private information is involved. Because we are not authenticating each request with a server, it is sometimes necessary to make certain pages of a user's history unavailable after completion.
+
+## **Conclusion**
+
+We almost have all the tools necessary to build our app, but there are still a few missing puzzle pieces. Although we can maintain certain bits of state in our URL, this is extremely limited. Unless we have our users bookmark very exact URLs, the website will not remember anything about them after they close the page. Let's discuss how we will fix that.
+
+[As always, you can see the code for this demo on my Github here](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch7)
+
+[^1]: 1:
+[^2]: 2:

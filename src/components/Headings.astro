@@ -1,0 +1,175 @@
+<aside class="text-center" id="TOC"></aside>
+<button
+  class="top-0 sticky shadow-2xl font-bold bg-purple-400 opacity-40 hover:opacity-100 rounded-full p-2 animate-slide-right text-sm lg:text-base"
+  id="scroll-to-TOC"
+>
+  On this Page
+</button>
+
+<!-- END MARKUP -->
+
+<!-- BEGIN ANIMATION STYLES -->
+
+<style>
+  .animate-slide-right {
+    animation: slide-right 0.5s ease-in-out forwards;
+  }
+
+  .animate-slide-left {
+    animation: slide-left 0.5s ease-in-out forwards;
+  }
+
+  @keyframes slide-right {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(444%);
+    }
+  }
+
+  @keyframes slide-left {
+    0% {
+      transform: translateX(444%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  @media only screen and (max-width: 400px) {
+    @keyframes slide-right {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(125%);
+      }
+    }
+
+    @keyframes slide-left {
+      0% {
+        transform: translateX(125%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+  }
+
+  @media only screen and (min-width: 401px) and (max-width: 724px) {
+    @keyframes slide-right {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(150%);
+      }
+    }
+
+    @keyframes slide-left {
+      0% {
+        transform: translateX(150%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+  }
+
+  @media only screen and (min-width: 725px) and (max-width: 1024px) {
+    @keyframes slide-right {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(300%);
+      }
+    }
+
+    @keyframes slide-left {
+      0% {
+        transform: translateX(300%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+  }
+
+  @media only screen and (min-width: 1025px) and (max-width: 1280px) {
+    @keyframes slide-right {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(333%);
+      }
+    }
+
+    @keyframes slide-left {
+      0% {
+        transform: translateX(333%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+  }
+</style>
+
+<!-- END ANIMATION STYLES -->
+
+<!-- BEGIN SCRIPTS -->
+
+<script>
+  function h2Finder() {
+    const headings = document.querySelectorAll("h2")
+    const h2Array: HTMLHeadingElement[] = []
+    headings.forEach((heading) => {
+      h2Array.push(heading)
+    })
+    return h2Array
+  }
+
+  const h2Array = h2Finder()
+
+  const ToC = h2Array.map((h2) => {
+    if (!h2.id) return // Skip if there is no id (e.g. it's a code block)
+    const h2Id = h2.id
+    const h2Text = h2.innerText
+    return `<li><a href="#${h2Id}">${h2Text}</a></li>`
+  })
+
+  const TOCContainer = document.querySelectorAll("#TOC")
+  TOCContainer.forEach((container) => {
+    if (!ToC.length) return
+    container.innerHTML = `<h3 class="text-2xl font-bold">On this Page</h3><ol class="list-decimal text-left
+    ">${ToC.join("")}</ol>`
+  })
+</script>
+
+<script>
+  const scrollButton = document.querySelector("#scroll-to-TOC")
+  const TOC = document.querySelector("#TOC")
+  if (!scrollButton || !TOC) throw new Error("No button or TOC found")
+  scrollButton?.addEventListener("click", () => {
+    TOC?.scrollIntoView({ behavior: "smooth" })
+  })
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        scrollButton.classList.remove("animate-slide-right")
+        scrollButton.classList.add("animate-slide-left")
+      } else {
+        scrollButton.classList.add("animate-slide-right")
+        scrollButton.classList.remove("animate-slide-left")
+      }
+    })
+  })
+
+  observer.observe(TOC)
+</script>
+
+<!-- END SCRIPTS -->

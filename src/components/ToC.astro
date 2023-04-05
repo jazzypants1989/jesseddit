@@ -1,0 +1,51 @@
+---
+import { getCollection } from "astro:content"
+
+const articles = await getCollection("articles")
+
+const currentPage = Astro.url.pathname
+
+const currentBlog = currentPage.split("/")[2]
+
+const thisBlog = articles.filter((article) => {
+  return article.id.split("/")[0] === currentBlog
+})
+
+const sortedBlog = thisBlog.sort((a, b) => {
+  const aNum = parseInt(a.id.split("/")[1], 10)
+  const bNum = parseInt(b.id.split("/")[1], 10)
+  return aNum - bNum
+})
+
+function removeTrailingSlash(path: string) {
+  return path.replace(/\/$/, "")
+}
+
+function inPathWithoutHome(path: string, href: string) {
+  return removeTrailingSlash(path).startsWith(href) && href !== "/"
+}
+
+const isActive = (href: string) => {
+  return inPathWithoutHome(currentPage, href) ? "active" : ""
+}
+---
+
+<ol class="prose pl-4 ml-4 mt-4 list-decimal">
+  {
+    sortedBlog.map((article) => {
+      return (
+        <li>
+          <a
+            class={
+              (isActive(`/articles/${article.slug}`) ? "active" : "") +
+              " text-blue-600 dark:text-green-500 text-lg dark:hover:text-green-300"
+            }
+            href={`/articles/${article.slug}`}
+          >
+            {article.data.title}
+          </a>
+        </li>
+      )
+    })
+  }
+</ol>

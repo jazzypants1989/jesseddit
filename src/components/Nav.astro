@@ -1,17 +1,28 @@
 ---
-// Write your component code in this file!
 export interface Props {
   now: string
   others: Array<string>
 }
+
+const cookie = Astro.cookies.get("user").value
+
+const user = cookie ? JSON.parse(cookie) : null
 ---
 
 <ul class="text-3xl">
-  <li
-    class="pointer-events-none px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600 duration-1000 hover:bg-purple-600 hover:text-white"
-  >
-    {Astro.props.now === "Blog" ? <a href="/blog">Blog</a> : Astro.props.now}
-  </li>
+  {
+    Astro.props.now === "Blog" ? (
+      <a href="/blog" class="Link">
+        <li class="px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600 duration-1000 hover:bg-purple-600 hover:text-white">
+          Blog
+        </li>
+      </a>
+    ) : (
+      <li class="pointer-events-none px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600 duration-1000 hover:bg-purple-600 hover:text-white">
+        {Astro.props.now}
+      </li>
+    )
+  }
   {
     Astro.props.others.map((item) => {
       if (item.toLowerCase().trim() == "home") {
@@ -40,5 +51,20 @@ export interface Props {
         )
       }
     })
+  }
+  {
+    user ? (
+      <a href="/logout">
+        <li class="p-2 m-1 hover:shadow-md rounded-full text-center hover:bg-purple-600 hover:text-white">
+          Logout
+        </li>
+      </a>
+    ) : (
+      <a href="/login">
+        <li class="p-2 m-1 hover:shadow-md rounded-full text-center hover:bg-purple-600 hover:text-white">
+          Login
+        </li>
+      </a>
+    )
   }
 </ul>
