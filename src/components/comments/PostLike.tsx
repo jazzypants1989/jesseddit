@@ -7,14 +7,23 @@ export default function PostLike(props: { post: PostProps; user: User }) {
   const [like, setLike] = createSignal(userLikedPost(props.post, props.user))
   const [likes, setLikes] = createSignal(props.post.likes)
   const [liked, setLiked] = createSignal(like()?.id ? true : false)
+  const [sleep, setSleep] = createSignal(false)
 
   const toggleLike = () => {
+    if (sleep()) {
+      console.log("sleeping")
+      return
+    }
     if (liked()) {
       try {
         unlikePost(like()?.id).then((res) => {
           setLike(res)
           setLikes(likes().filter((l) => l.id !== like()?.id))
           setLiked(false)
+          setSleep(true)
+          setTimeout(() => {
+            setSleep(false)
+          }, 1000)
         })
       } catch (e) {
         console.log(e)
@@ -26,6 +35,10 @@ export default function PostLike(props: { post: PostProps; user: User }) {
             setLike(res)
             setLikes([...likes(), res])
             setLiked(true)
+            setSleep(true)
+            setTimeout(() => {
+              setSleep(false)
+            }, 1000)
           } else
             alert(
               "You must be logged in to like a post. You can log in with the nav bar on the top-left."

@@ -55,7 +55,7 @@ const CommentList = (props: {
             onInput={(e: Event) =>
               setText((e.target as HTMLInputElement).value)
             }
-            class="border w-full border-gray-300 rounded-md bg-slate-600 text-slate-200"
+            class="w-full max-w-4xl p-2 bg-purple-300 rounded-md text-xl dark:bg-gray-700 dark:text-gray-300 border border-gray-400 dark:border-gray-500 text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
           {error() && (
             <div class="text-red-300 animate-pulse bold self-center text-center text-4xl p-2 w-fit bg-red-700 rounded-xl">

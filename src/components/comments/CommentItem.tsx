@@ -33,6 +33,7 @@ const CommentItem = (props: {
   const [showReply, setShowReply] = createSignal(false)
   const [showEdit, setShowEdit] = createSignal(false)
   const [showChildren, setShowChildren] = createSignal(true)
+  const [sleep, setSleep] = createSignal(false)
 
   createEffect(() => {
     const children = lookForChildren(comment, props.post.comments)
@@ -65,7 +66,7 @@ const CommentItem = (props: {
   })
 
   createEffect(() => {
-    if (newMessage()) {
+    if (newMessage() && showEdit() && commentHasBeenEdited(comment)) {
       setComment((comment: CommentItemProps) => {
         return {
           ...comment,
@@ -86,6 +87,7 @@ const CommentItem = (props: {
       if (!props.user) throw new Error("You must be logged in to comment")
       if (!props.post) throw new Error("Post not found")
       if (!props.post.permalink) throw new Error("Permalink not found")
+      if (sleep()) throw new Error("Please wait a few seconds")
       addReply(text(), props?.post?.permalink, comment?.id).then((reply) => {
         setComment((comment: CommentItemProps) => {
           return {
@@ -94,6 +96,10 @@ const CommentItem = (props: {
           }
         })
       })
+      setSleep(true)
+      setTimeout(() => {
+        setSleep(false)
+      }, 5000)
     } catch (err) {
       setError((err as Error).message)
     }
@@ -124,6 +130,10 @@ const CommentItem = (props: {
           })
         }
       })
+      setSleep(true)
+      setTimeout(() => {
+        setSleep(false)
+      }, 5000)
     } catch (err) {
       setError((err as Error).message)
     }
