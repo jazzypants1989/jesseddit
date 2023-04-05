@@ -187,7 +187,7 @@ const CommentItem = (props: {
         {comment.body}
       </div>
       <Show when={commentHasBeenEdited(comment) && !comment.softDelete}>
-        <div class="text-gray-200 text-sm italic">
+        <div class="text-pink-800 dark:text-pink-300 text-sm italic">
           This comment was edited on{" "}
           {new Date(comment.updatedAt).toLocaleString()}.
         </div>
