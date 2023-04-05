@@ -66,13 +66,14 @@ const CommentItem = (props: {
   })
 
   createEffect(() => {
-    if (newMessage()) {
+    if (newMessage() && commentHasBeenEdited(comment)) {
       setComment((comment: CommentItemProps) => {
         return {
           ...comment,
           body: newMessage(),
         }
       })
+      setShowEdit(false)
     }
   })
 
@@ -142,7 +143,7 @@ const CommentItem = (props: {
   return (
     <div
       id={comment.id}
-      class="flex flex-col gap-2 pl-2 border-b border-gray-300 m-2 p-2 border-dashed w-full"
+      class="flex flex-col gap-2 pl-2 border-b border-purple-700 m-2 p-2 border-dashed w-full"
     >
       {comment?.user?.html_url && !comment.softDelete ? (
         <a
@@ -287,7 +288,7 @@ const CommentItem = (props: {
             </Show>
           </button>
           <Show when={showChildren()}>
-            <ul class="border-l border-gray-300 pl-2 md:pl-4 border-dashed">
+            <ul class="border-l pl-2 md:pl-4 border-dashed border-purple-700">
               <For each={comment.children}>
                 {(item) => (
                   <CommentItem

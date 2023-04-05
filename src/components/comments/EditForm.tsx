@@ -12,6 +12,7 @@ export default function EditForm(props: { comment: Comment }) {
   createEffect(() => {
     if (text()) {
       setError("")
+      console.log(sleep())
     }
   })
 
@@ -33,10 +34,11 @@ export default function EditForm(props: { comment: Comment }) {
 
       setNewMessage(text())
 
-      setText("")
-
       setSleep(true)
+
       setTimeout(() => setSleep(false), 5000)
+
+      setText("")
 
       return updatedComment
     } catch (e) {
@@ -49,7 +51,7 @@ export default function EditForm(props: { comment: Comment }) {
       onSubmit={onSubmit}
     >
       <textarea
-        value={text() || props.comment.body}
+        value={text()}
         onInput={(e: Event) => setText((e.target as HTMLInputElement).value)}
         class="border w-full border-purple-300 rounded-md bg-blue-300 text-purple-900 p-1 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent dark:focus:ring-purple-300"
       />
