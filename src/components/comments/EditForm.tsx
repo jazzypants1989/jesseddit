@@ -7,6 +7,7 @@ export const [newMessage, setNewMessage] = createSignal("")
 export default function EditForm(props: { comment: Comment }) {
   const [text, setText] = createSignal(props.comment.body)
   const [error, setError] = createSignal("")
+  const [sleep, setSleep] = createSignal(false)
 
   createEffect(() => {
     if (text()) {
@@ -16,6 +17,10 @@ export default function EditForm(props: { comment: Comment }) {
 
   const onSubmit = (e: Event) => {
     e.preventDefault()
+    if (sleep()) {
+      setError("You are commenting too fast. Please wait a bit")
+      return
+    }
     if (text() === props.comment.body) {
       setError("You didn't change anything!")
       return
@@ -30,6 +35,9 @@ export default function EditForm(props: { comment: Comment }) {
 
       setText("")
 
+      setSleep(true)
+      setTimeout(() => setSleep(false), 5000)
+
       return updatedComment
     } catch (e) {
       setError((e as Error).message)
@@ -43,7 +51,7 @@ export default function EditForm(props: { comment: Comment }) {
       <textarea
         value={text() || props.comment.body}
         onInput={(e: Event) => setText((e.target as HTMLInputElement).value)}
-        class="border w-full border-gray-300 rounded-md bg-slate-600 text-slate-200 p-1"
+        class="border w-full border-purple-300 rounded-md bg-blue-300 text-purple-900 p-1 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent dark:focus:ring-purple-300"
       />
       <button
         class="p-2 self-end font-bold bg-green-500 text-slate-200 rounded-md text-xl hover:bg-green-800 hover:text-green-300"

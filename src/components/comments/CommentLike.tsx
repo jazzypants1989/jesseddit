@@ -16,14 +16,22 @@ export default function CommentLike(props: {
   )
   const [likes, setLikes] = createSignal(props.comment.likes || [])
   const [liked, setLiked] = createSignal(like()?.id ? true : false)
+  const [sleep, setSleep] = createSignal(false)
 
   const toggleLike = () => {
+    if (sleep()) {
+      console.log("sleeping")
+      return
+    }
+
     if (liked()) {
       try {
         unlikeComment(like()?.id).then((res) => {
           setLike(res)
           setLikes(likes().filter((l) => l.id !== like()?.id))
           setLiked(false)
+          setSleep(true)
+          setTimeout(() => setSleep(false), 1000)
         })
       } catch (e) {
         console.log(e)
@@ -35,6 +43,8 @@ export default function CommentLike(props: {
             setLike(res)
             setLikes([...likes(), res])
             setLiked(true)
+            setSleep(true)
+            setTimeout(() => setSleep(false), 1000)
           } else
             alert(
               "You must be logged in to like a post. You can log in with the nav bar on the top-left."
@@ -48,7 +58,7 @@ export default function CommentLike(props: {
 
   return (
     <button
-      class="flex justify-start bg-slate-600 text-slate-200 p-2 rounded-md w-fit"
+      class="flex justify-start bg-purple-300 p-2 rounded-md w-fit text-purple-900 dark:text-purple-100 dark:bg-slate-600"
       onClick={toggleLike}
     >
       {likes()?.length === 0

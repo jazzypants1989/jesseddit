@@ -67,7 +67,7 @@ export const put: APIRoute = async ({
     return redirect("/login")
   }
 
-  if (user.id !== "jazzypants" && user.id !== userId) {
+  if (user.id !== "jazzypants1989" && user.id !== userId) {
     return new Response("Unauthorized", {
       status: 401,
       headers: {
@@ -113,7 +113,7 @@ export const del: APIRoute = async ({
     return redirect("/login")
   }
 
-  if (user.id !== "jazzypants" && user.id !== userId) {
+  if (user.id !== "jazzypants1989" && user.id !== userId) {
     return new Response("Unauthorized", {
       status: 401,
       headers: {

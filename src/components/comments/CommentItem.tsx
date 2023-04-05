@@ -33,6 +33,7 @@ const CommentItem = (props: {
   const [showReply, setShowReply] = createSignal(false)
   const [showEdit, setShowEdit] = createSignal(false)
   const [showChildren, setShowChildren] = createSignal(true)
+  const [sleep, setSleep] = createSignal(false)
 
   createEffect(() => {
     const children = lookForChildren(comment, props.post.comments)
@@ -82,6 +83,11 @@ const CommentItem = (props: {
       return
     }
 
+    if (sleep()) {
+      setError("Please wait a few seconds before replying again")
+      return
+    }
+
     try {
       if (!props.user) throw new Error("You must be logged in to comment")
       if (!props.post) throw new Error("Post not found")
@@ -100,7 +106,11 @@ const CommentItem = (props: {
 
     setText("")
 
-    return false
+    setSleep(true)
+    setTimeout(() => {
+      setSleep(false)
+    }, 5000)
+    return
   }
 
   const onDelete = (comment: CommentItemProps) => {
@@ -173,7 +183,7 @@ const CommentItem = (props: {
           </svg>
         </a>
       )}
-      <div class="bg-slate-600 text-slate-200 p-2 rounded-md whitespace-pre-wrap">
+      <div class="dark:bg-slate-600 dark:text-slate-200 p-2 rounded-md whitespace-pre-wrap bg-purple-300 text-black">
         {comment.body}
       </div>
       <Show when={commentHasBeenEdited(comment) && !comment.softDelete}>
@@ -182,22 +192,27 @@ const CommentItem = (props: {
           {new Date(comment.updatedAt).toLocaleString()}.
         </div>
       </Show>
-      <div class="text-gray-400">
+      <div class="dark:text-gray-400 text-sm italic">
         {new Date(comment.createdAt).toLocaleString()}
       </div>
+      {comment?.user?.location && !comment.softDelete && (
+        <div class="dark:text-gray-400 text-sm italic">
+          {comment?.user?.location}
+        </div>
+      )}
       {!comment.softDelete && (
-        <div class="flex flex-wrap items-center justify-center bg-slate-600 text-slate-200 p-2 rounded-md text-lg md:text-2xl">
+        <div class="flex flex-wrap items-center justify-center dark:bg-slate-600 dark:text-slate-200 p-2 rounded-md text-lg md:text-2xl bg-purple-300 text-black">
           <CommentLike comment={comment} user={props.user} />
           <a
             href={`#${comment.id}`}
-            class="flex justify-start bg-slate-600 text-slate-200 p-2 rounded-md w-fit"
+            class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
           >
             🔗
           </a>
           <Show when={comment.user?.id === props.user.id}>
             <button
               onClick={() => setShowEdit((showEdit) => !showEdit)}
-              class="flex justify-start bg-slate-600 text-slate-200 p-2 rounded-md w-fit"
+              class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
             >
               📝
             </button>
@@ -205,7 +220,7 @@ const CommentItem = (props: {
           <Show when={comment.user?.id === props.user.id}>
             <button
               onclick={() => onDelete(comment)}
-              class="flex justify-start bg-slate-600 text-slate-200 p-2 rounded-md w-fit"
+              class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
             >
               🗑️
             </button>
@@ -215,7 +230,7 @@ const CommentItem = (props: {
             fallback={
               <a
                 href="/login"
-                class="flex justify-start bg-slate-600 text-slate-200 p-2 rounded-md w-fit"
+                class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
               >
                 Login to Reply
               </a>
@@ -223,7 +238,7 @@ const CommentItem = (props: {
           >
             <button
               onClick={() => setShowReply((showReply) => !showReply)}
-              class="flex justify-start bg-slate-600 text-purple-400 p-2 rounded-md w-fit"
+              class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
             >
               {showReply() ? "Close 🔺" : "Reply 🔻"}
             </button>
@@ -243,7 +258,7 @@ const CommentItem = (props: {
             onInput={(e: Event) =>
               setText((e.target as HTMLInputElement).value)
             }
-            class="border w-full border-gray-300 rounded-md bg-slate-600 text-slate-200 p-1"
+            class="border w-full border-purple-300 rounded-md bg-blue-300 text-purple-900 p-1 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent dark:focus:ring-purple-300"
           />
           <button
             class="p-2 self-end font-bold bg-purple-600 text-purple-200 rounded-md text-xl hover:bg-purple-800 hover:text-purple-300"
@@ -262,7 +277,7 @@ const CommentItem = (props: {
         <>
           <button
             onClick={() => setShowChildren((showChildren) => !showChildren)}
-            class="flex justify-start bg-slate-600 text-slate-200 p-2 rounded-md w-fit"
+            class="flex justify-start bg-purple-300 dark:bg-slate-600 text-black dark:text-purple-300 p-2 rounded-md w-fit"
           >
             <Show when={!showChildren()} fallback="Hide Replies">
               Show{" "}

@@ -15,6 +15,7 @@ const CommentList = (props: {
   const [commentsInState, setCommentsInState] = createStore(props.comments)
   const [text, setText] = createSignal("")
   const [error, setError] = createSignal("")
+  const [sleep, setSleep] = createSignal(false)
 
   createEffect(() => {
     if (text()) setError("")
@@ -24,6 +25,11 @@ const CommentList = (props: {
     e.preventDefault()
     if (!text()) {
       setError("Please enter a comment")
+      return
+    }
+
+    if (sleep()) {
+      setError("You are commenting too fast. Please wait a bit")
       return
     }
 
@@ -40,6 +46,9 @@ const CommentList = (props: {
 
     setText("")
 
+    setSleep(true)
+    setTimeout(() => setSleep(false), 5000)
+
     return false
   }
 
@@ -55,7 +64,7 @@ const CommentList = (props: {
             onInput={(e: Event) =>
               setText((e.target as HTMLInputElement).value)
             }
-            class="border w-full border-gray-300 rounded-md bg-slate-600 text-slate-200"
+            class="border w-full border-purple-300 rounded-md bg-blue-300 text-purple-900 p-1 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent dark:focus:ring-purple-300"
           />
           {error() && (
             <div class="text-red-300 animate-pulse bold self-center text-center text-4xl p-2 w-fit bg-red-700 rounded-xl">
