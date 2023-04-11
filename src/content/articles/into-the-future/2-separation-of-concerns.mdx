@@ -1,0 +1,174 @@
+---
+title: "Separation of Concerns"
+nextLink: "./3-ecmascript-modules"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+## Introduction
+
+So, we've got around 430 lines of code sitting in one HTML file. While it works perfectly fine, it's not very maintainable. We need to break this up into smaller, more manageable pieces. This has classically been referred to as "separation of concerns".
+
+Broadly, this just means splitting our code into different files, each with a single responsibility. In the past, this could be as simple as splitting our code into three files: one for our HTML, one for our CSS, and one for our JavaScript. Let's start there.
+
+Since the majority of the code will be the same here, There won't be many snippets. Instead, I'll just show you the file structure. But, we will be changing one function. To simplify our file structure, I will be using an external API to get our data. This also shows that these concepts work outside of our current project.
+
+<CodeBlock>
+new db function
+
+```js
+const db = async () => {
+  const response = await fetch("https://dummyjson.com/products")
+
+  if (!response.ok) {
+    alert("HTTP-Error: " + response.status)
+    console.error(response)
+    return Nope("Servers", "Down")
+  }
+
+  const data = await response.json()
+
+  return data
+}
+```
+
+</CodeBlock>
+
+So, here's our new file structure:
+
+<CodeBlock>
+
+```bash
+├── index.html
+├── public
+│   ├── App.js
+│   └── style.css
+```
+
+</CodeBlock>
+
+Now, we can link our CSS and JavaScript files in our HTML file.
+
+<CodeBlock>
+```html
+<!DOCTYPE html>
+<link rel="stylesheet" href="style.css" />
+<script src="App.js"></script>
+```
+</CodeBlock>
+
+So, instead of over 400 lines of code in one file, we have around 50 lines of HTML, 70 lines of CSS, and 300 lines of JavaScript. This is a lot better, but it's still not ideal. We have a lot of code in our JavaScript file, and it's not very clear what each part does. Let's break this up into smaller pieces.
+
+## Our New Architecture
+
+There are a million different ways to do this, and I'm not going to pretend that mine is the best. But, I will try to explain some of my decisions. I plan on splitting my files up into three folders: components, features, and pages. I'll explain what each of these folders are for, but first let's see what the file structure looks like:
+
+<CodeBlock>
+
+```bash
+├── index.html
+├── public
+│   ├── App.js
+│   └── style.css
+│   ├── components  # essential building blocks of our app
+│   │   ├── Link.js
+│   │   ├── Product.js
+│   │   ├── render.js
+│   │   ├── Router.js
+|   │   ├── Routes.js
+│   │   └── store.js
+└── │── features # additional functionality
+│   │   ├── cart.js
+│   │   ├── search.js
+│   │   └── theme.js
+└── │── pages # the actual view templates
+    │   ├── About.js
+    │   ├── Cart.js
+    │   ├── Home.js
+    │   ├── Nope.js
+    │   ├── ProductPage.js
+    │   └── Products.js
+```
+
+</CodeBlock>
+
+Hopefully, my comments and naming conventions make it clear what each folder is for. But, if not, I'll explain it here.
+
+## Components, Features, and Pages
+
+**Components** are the essential building blocks of our app. Generally, these are reusable visual elements, but I am also including anything that is necessary for our app to function. I want this folder structure to remain throughout every future iteration of this project, and I hope this will make more sense as we go along.
+
+**Features** in our application are anything extra that we want to add. While our app wouldn't be much without these features, they aren't essential to the functionality of our app. We don't need different themes or a search bar, but they are nice to have. So, anything like that will go in this folder.
+
+**Pages** are the actual files that our router will use to render our views. I am intentionally mirroring the structure of projects like Next.js and SvelteKit which we will be exploring in future articles. Although, considering Remix and recent changes, maybe I should have named this folder "app" or "routes" instead.
+
+## A House of Cards
+
+So, now our App.js is pretty barebones. It just needs to bootstrap our app, load up any additional features, and then pass control over to our router.
+
+<CodeBlock>
+App.js
+```js
+themeListener()
+
+searchListener()
+
+updateCart()
+
+let urlParams = new URLSearchParams(location.search)
+if (urlParams.has("search")) {
+urlSearchHandler()
+} else {
+Router(location.pathname)
+}
+
+````
+
+</CodeBlock>
+
+But, where are those functions coming from... Oh, no...
+
+<CodeBlock>
+index.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style.css" />
+    <title>Tell me this isn't a SPA</title>
+    <script src="/pages/Nope.js" defer></script>
+    <script src="/pages/ProductPage.js" defer></script>
+    <script src="/pages/Home.js" defer></script>
+    <script src="/pages/About.js" defer></script>
+    <script src="/pages/Products.js" defer></script>
+    <script src="/pages/Cart.js" defer></script>
+    <script src="/components/store.js" defer></script>
+    <script src="/components/Routes.js" defer></script>
+    <script src="/components/Router.js" defer></script>
+    <script src="/components/Product.js" defer></script>
+    <script src="/components/Link.js" defer></script>
+    <script src="/components/render.js" defer></script>
+    <script src="/features/search.js" defer></script>
+    <script src="/features/theme.js" defer></script>
+    <script src="/features/cart.js" defer></script>
+    <script src="/App.js" defer></script>
+  </head>
+</html>
+````
+
+</CodeBlock>
+
+Play close attention to the order of these scripts. Hopefully, our folder structure makes a bit more sense now. The view templates are mostly just strings of HTML and some event listeners. They don't rely on much, but they are relied on by a lot of other files. So, they have to come first.
+
+The components are the functions that actually do the work. So, they have to come next-- followed by the features that rely on them. Finally, we have our App.js file which is the entry point for our application. It's the first thing that runs when our page loads, but it needs all of the other files to be loaded first.
+
+## Conclusion
+
+So, now our code is much more nicely organized. But, we've built a bit of a house of cards. All it takes to break the entire app is moving one file-- or even one line of code.
+
+And, we're loading the entire app every time we navigate to a new page. Every time we click on a link, we're loading every single file again. Even with a small app like this, that's a lot of unnecessary code. Just imagine if we were loading in a bunch of third-party libraries. We'd be wasting a lot of bandwidth and slowing down our app.
+
+So, hopefully you can see why the web development world naturally drifted towards modules and bundlers. But, we'll get to that in the next article.

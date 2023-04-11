@@ -191,6 +191,41 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"into-the-future/1-introduction.mdx": {
+  id: "into-the-future/1-introduction.mdx",
+  slug: "into-the-future/1-introduction",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"into-the-future/2-separation-of-concerns.mdx": {
+  id: "into-the-future/2-separation-of-concerns.mdx",
+  slug: "into-the-future/2-separation-of-concerns",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"into-the-future/3-ecmascript-modules.mdx": {
+  id: "into-the-future/3-ecmascript-modules.mdx",
+  slug: "into-the-future/3-ecmascript-modules",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"into-the-future/4-navigation-api.mdx": {
+  id: "into-the-future/4-navigation-api.mdx",
+  slug: "into-the-future/4-navigation-api",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react/1-introduction.mdx": {
+  id: "react/1-introduction.mdx",
+  slug: "react/1-introduction",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 },
 
 	};

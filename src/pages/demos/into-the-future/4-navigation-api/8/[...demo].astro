@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>History API Demo</title>
+  </head>
+  <body>
+    <div id="home">
+      <h1>Welcome to the Home Page</h1>
+      <button id="contact-btn">Go to Contact Page</button>
+    </div>
+    <div id="contact" style="display: none;">
+      <h1>Contact Us</h1>
+      <button id="back-btn">Go Back to Home Page</button>
+    </div>
+    <script>
+      // Get elements from the DOM
+      const homePage = document.getElementById("home")
+      const contactPage = document.getElementById("contact")
+      const contactBtn = document.getElementById("contact-btn")
+      const backBtn = document.getElementById("back-btn")
+
+      // Set up event listeners
+      contactBtn.addEventListener("click", () => {
+        homePage.style.display = "none"
+        contactPage.style.display = "block"
+        history.pushState({ page: "contact" }, "", "/contact")
+      })
+
+      backBtn.addEventListener("click", () => {
+        homePage.style.display = "block"
+        contactPage.style.display = "none"
+        history.back()
+      })
+
+      window.addEventListener("popstate", (event) => {
+        if (event.state && event.state.page === "contact") {
+          homePage.style.display = "none"
+          contactPage.style.display = "block"
+        } else {
+          homePage.style.display = "block"
+          contactPage.style.display = "none"
+        }
+      })
+    </script>
+  </body>
+</html>

@@ -47,6 +47,10 @@ async function getPost() {
 
 const post = await getPost()
 
+if (!post) {
+  Astro.redirect("/")
+}
+
 let { title, body, likes, createdAt, updatedAt, comments } = post
 
 const userCookie = Astro.cookies.get("user")?.value ?? null
@@ -69,6 +73,10 @@ if (!userInDB && user.login) {
       id: user.id,
       avatar_url: user.avatar_url,
       html_url: user.html_url,
+      location: user.location,
+      name: user.name,
+      email: user.email,
+      twitter_username: user.twitter_username,
     },
   })
 }

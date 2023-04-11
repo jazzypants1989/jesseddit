@@ -2,6 +2,7 @@
 title: "The Router, The Link, and The Routes"
 nextLink: "./12-nested-and-dynamic-routes"
 video: "https://www.youtube.com/embed/cq8kQJH1Nn8"
+githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
@@ -191,14 +192,12 @@ Go ahead and spin up your app or play around with the demo below. To see the ful
 Because of the inherit limitations with the way that I am hosting these demos (Astro[^2] is incredible, but not able to bend time & space... yet...), each one will start with a 404 page from this point forward until the final demo. But, clicking on any of the links will bring you to each respective page as expected. It's a little hard to host multiple apps that are looking for a home route at the root of the domain, so I have to do a little bit of trickery to get them to work.
 
 <IFrame
-  src="/demos/csr/ch11/demo/"
+  src="/demos/client-side-routing/11-router-link-and-routes/demo/"
 />
 
 ## **Conclusion**
 
 We have now built a fully functional client-side routing app. We have also added a small dose of interactivity by adding a theme toggle button. But, I think you will agree that our app doesn't have much to offer the user at this point. In the next chapter, we will discuss how we will bring in outside data to populate our app, make that content interactive, and overcome the challenges that come with that.
-
-[As always, you can see the code for this demo on my Github here.](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch11)
 
 [^1]: 1: [Here's an article about popstate and how late it fires.](https://yedri.medium.com/popstate-and-history-api-the-missing-part-dc49f75676d)
 [^2]: 2: [Astro is super cool.](https://astro.build/)

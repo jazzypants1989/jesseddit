@@ -2,6 +2,7 @@
 title: "Introduction to State Management"
 nextLink: "./5-the-window-object"
 video: "https://www.youtube.com/embed/YPzjqMtOUqY"
+githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
@@ -48,7 +49,7 @@ I bet you thought we were going to do a counter? Nope, that's every other state 
 </CodeBlock>
 
 <IFrame
-  src="/demos/csr/ch4/brokenstate"
+  src="/demos/client-side-routing/4-state-management/brokenstate"
   id="demo1"
 />
 
@@ -86,7 +87,7 @@ Javascript is single-threaded[^1], meaning that it can only do one thing at a ti
 </CodeBlock>
 
 <IFrame
-  src="/demos/csr/ch4/fixedstate"
+  src="/demos/client-side-routing/4-state-management/fixedstate"
   id="demo2"
 />
 
@@ -152,7 +153,7 @@ So, enough about what state is and why we can't rely on it to last in client-sid
 Save the file, refresh the browser, and check it out! Our faithful, formerly boring button can now live a whole life in your browser.
 
 <IFrame
-  src="/demos/csr/ch4/jesseiscrazy"
+  src="/demos/client-side-routing/4-state-management/jesseiscrazy"
   id="demo3"
 />
 You may be wondering where the “state” and “pressed” properties that we used on the
@@ -222,7 +223,7 @@ When the entire publicly accessible part of your website lies in a single file, 
 
 There is a limit to the amount of state that we can keep in the URL, however. The URL is limited to 2,048 characters. That's a lot, but it's not infinite. And, things like user details need to be stored somewhere more private anyways. That's where the next chapter comes in. Next up, we'll learn more about something called the window object, and the tools that it gives us. 
 
-[But, first here's a link to this chapter on GitHub](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch4)
+As always, there's link to the code at the bottom of the page.
 
 [^1]: 1: [A great article by Lydia Halle about the JavaScript V8 engine.](https://dev.to/lydiahallie/javascript-visualized-event-loop-3dif)
 [^2]: 2: [I like how this similarly garish website describes the process of the browser parsing a document.](https://starkie.dev/blog/how-a-browser-renders-a-web-page)

@@ -2,6 +2,7 @@
 title: "The Window Object"
 nextLink: "./6-the-location-api-and-parameters#introduction-and-demo-one"
 video: "https://www.youtube.com/embed/HY8dPNFw-ic"
+githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
@@ -53,7 +54,7 @@ Save this code into our environment, and then load up something wild like:
 </CodeBlock>
 
 <IFrame
-  src="/demos/csr/ch5/demo/START-HERE/i/like/cheese?i-hate-nazis#controversial"
+  src="/demos/client-side-routing/5-the-window-object/demo/START-HERE/i/like/cheese?i-hate-nazis#controversial"
 />
 
 Press the button. Hmm, only part of that path was recorded. Where did everything after the question mark go? Press F12 again and check out that console log. Open the object. I purposefully logged the entire window object to the console so you could see how much is in here. Scroll down to “location” and look in there. Pretty crazy, right? But, there's a ton of really helpful information in there that we're gonna exploit as we continue our journey.
@@ -72,7 +73,7 @@ The main difference with hash fragments is that they are usually used by web des
 
 We're going to be exploring the location object and the various parameters in greater detail in the next chapter, but I hope that you can see how this will be useful in our app. We can use the URL as a way to store state-- both by storing the user's location in the pathname and by processing user input with search and hash parameters. This is just a taste of the power of the BOM, and we'll be using it extensively in the next few chapters. Next, we examine a few ways to use parameters to make our app more dynamic.
 
-[As always, here's a link to the code for this chapter!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch5)
+As always, there's link to the code at the bottom of the page.
 
 [^1]: 1: [This is a pretty decent resource for learning about the BOM.](https://www.javascripttutorial.net/javascript-bom/)
 [^2]: 2: To clarify, I think that Kanye West is an ass.

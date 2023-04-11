@@ -2,6 +2,7 @@
 title: "The Skeleton"
 nextLink: "./11-router-link-and-routes"
 video: "https://www.youtube.com/embed/tsHFUKKdy8Y"
+githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
@@ -182,11 +183,9 @@ As you can see, we're not implementing localStorage just yet. We're just cycling
 If you'd like to see all the code together, you can just check out the GitHub repo. Otherwise, we'll be doing things bit by bit from now on. Here's the app so far:
 
 <IFrame
-  src="/demos/csr/ch10/demo/heyhey"
+  src="/demos/client-side-routing/10-the-skeleton/demo/heyhey"
 />
 
 Go ahead and try it out. You can change the theme, but everything is destroyed if you click on any of the links. Even though our server ensures that the same page is loaded every time, our theme selection is forgotten every time and there is a big ugly white flash in between.
 
 As we learned, our state lives in that one version of the HTML file. So, clicking a link destroys the current state and builds a whole new version of the file from a different URL. Even though we haven't tied any state to the URL, the browser still has to reload the entire page. This is where the next chapter comes into play as we build our client-side routing system.
-
-[As always, you can see the code for this demo on my Github here!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch10)

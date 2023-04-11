@@ -1,0 +1,100 @@
+---
+title: "The Navigation API"
+nextLink: "./5-view-transitions-api"
+githubLink: true  
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+import Demo from "../../../components/Demo.astro"
+
+export const demoURL = "/demos/into-the-future/4-navigation-api/"
+export const githubURL = "https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/into-the-future/4-navigation-api"
+
+## Introduction
+
+As we learned in my [Brief History of Client-Side Routing](/articles/client-side-routing/2-a-brief-history-of-client-side-routing), we have come a long way from the days of the hash-based router. [Our router](/articles/client-side-routing/11-router-link-and-routes) has been built leveraging [the History API](/articles/client-side-routing/7-the-history-api), and it has served us well. But, in order to use it, we have to make sure that we put our special `Link` class on every single internal link. And, we had to do all kinds of gymnastics just to make sure that [popstate](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event) events were handled correctly.
+
+Wouldn't it be great if we could just put down a single event listener and let the browser do the work for us? Well, surprise! The [Navigation API](https://github.com/WICG/navigation-api) is here to do just that. It also smooths out a few other rough edges that we didn't encounter in our app, but are commonly encountered in larger apps. Let's take a look at how it works.
+
+## The `Navigate` Event
+
+As we learned, all of these web API's sit on the `window` object. The navigation API is no different, so we can call it just by typing `navigation` as long as we know our code will run on the browser. It has a few events, but the most important of all is the titular `navigate` event. This event is fired whenever **any** navigation occurs. Let's see how we can use it.
+
+<Demo id="demo-1" url={githubURL + "/1"}>
+<CodeBlock slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <main></main>
+    <p>The external link works if you open this outside the iframe.</p>
+  </body>
+</html>
+<script>
+  const main = document.querySelector("main")
+  console.log(navigation.currentEntry)
+  navigation.addEventListener("navigate", (event) => {
+    console.log(event)
+    event.intercept({
+      handler() {
+        const url = new URL(event.destination.url)
+        Router(url.pathname)
+    })
+  })
+
+  function Router(path){
+    if (path === "/one") {
+        main.innerHTML = `
+        <a href="/two">Internal Page #2</a>
+        <a href="https://developer.mozilla.org">MDN!</a>
+        `
+    } else {
+        main.innerHTML = `
+        <a href="/one">Internal Page #1</a>
+        <a href="https://www.w3schools.com">W3 Schools!</a>
+        `
+    }
+}
+
+</script>
+```
+
+</CodeBlock>
+<IFrame src={demoURL + "1"} slot="demo" small />
+</Demo>
+
+35 lines of code-- including unnecessary console logs-- and we have a fully functional client-side router. It even handles popstate events! Let's break it down.
+
+I logged out the currentEntry property of the navigation object and the navigateEvent object that fires on each navigation to show you what they look like. If you open the [developer tools](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Tools_and_setup/What_are_browser_developer_tools), you can take a look at them. Respectively, they represent where we are in the browser's history and where we are trying to go. 
+
+With these two pieces of information, we can intercept the navigation and do whatever we want. But, as you can see, if you [open the demo in another window](/demos/itf/ch4/1) and click the external links, they still work. This is because we are intercepting the navigation, but we are not preventing it from happening. We can do that by calling `event.preventDefault()` on the event object. Let's see what happens when we do that.
+
+<Demo id="demo-2">
+<CodeBlock slot="code">
+```js
+  navigation.addEventListener("navigate", (event) => {
+    event.preventDefault()
+    main.innerHTML = `<h1>NO! You can't go to ${event.destination.url}.</h1>
+     <small>I would miss you too much.</small>`
+  })
+```
+</CodeBlock>
+<IFrame src={demoURL + "2"} slot="demo" small />
+</Demo>
+
+Generally, the intercept method will be the preferred way to handle most navigation. But, things like form submissions will change the URL if you don't prevent the default behavior which isn't always what you want. So, it's good to know that you have the option to do either.
+
+<Demo id="demo-4">
+  <CodeBlock slot="code">
+    ```js
+    let cheese = "cheddar"
+    ```
+  </CodeBlock>
+  <IFrame src={demoURL + "4"} slot="demo" small />
+</Demo>

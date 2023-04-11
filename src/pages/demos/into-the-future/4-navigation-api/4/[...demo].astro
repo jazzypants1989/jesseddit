@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <a id="top" href="#bottom">Bottom</a>
+    <button id="btn-1"> State 1, URL 1</button>
+    <button id="btn-2"> State 2, URL 1</button>
+    <button id="btn-3"> State 1, URL 2</button>
+    <button id="btn-4"> State 2, URL 2</button>
+    <pre id="state"></pre>
+    <p id="url"></p>
+    <p>
+      With the state object, our app can store data that is not in the URL. This
+      is useful for storing data that is not relevant to the current page, but
+      is relevant to the user's experience. For example, if a user is filling
+      out a form, the app can store the user's input in the state object, so
+      that if the user navigates away from the page and then back, their input
+      is still there.
+    </p>
+    <a id="bottom" href="#top">Top</a>
+  </body>
+</html>
+
+<script>
+  const button1 = document.querySelector("#btn-1")
+  const button2 = document.querySelector("#btn-2")
+  const button3 = document.querySelector("#btn-3")
+  const button4 = document.querySelector("#btn-4")
+  const stateDisplay = document.querySelector("#state")
+  const urlDisplay = document.querySelector("#url")
+  const top = document.querySelector("#top")
+  const bottom = document.querySelector("#bottom")
+
+  top.addEventListener("click", () => {
+    updateStateDisplay()
+  })
+
+  bottom.addEventListener("click", () => {
+    updateStateDisplay()
+  })
+
+  urlDisplay!.textContent = "current URL: " + location.href
+
+  button1.addEventListener("click", () => {
+    history.pushState(
+      { name: "John", favColor: "blue", favNumber: 42 },
+      "",
+      "/url1"
+    )
+    urlDisplay!.textContent = "current URL: " + location.href
+    updateStateDisplay()
+  })
+
+  button2.addEventListener("click", () => {
+    history.pushState(
+      { name: "Jane", favColor: "red", favNumber: 7 },
+      "",
+      "/url1"
+    )
+    urlDisplay!.textContent = "current URL: " + location.href
+    updateStateDisplay()
+  })
+
+  button3.addEventListener("click", () => {
+    history.pushState(
+      { name: "John", favColor: "blue", favNumber: 42 },
+      "",
+      "/url2"
+    )
+    urlDisplay!.textContent = "current URL: " + location.href
+    updateStateDisplay()
+  })
+
+  button4.addEventListener("click", () => {
+    history.pushState(
+      { name: "Jane", favColor: "red", favNumber: 7 },
+      "",
+      "/url2"
+    )
+    urlDisplay!.textContent = "current URL: " + location.href
+    updateStateDisplay()
+  })
+
+  function updateStateDisplay() {
+    stateDisplay!.textContent = JSON.stringify(history.state, null, 2)
+  }
+
+  // // @ts-ignore
+  // navigation.addEventListener("navigate", navigationHandler)
+
+  // button1!.addEventListener("click", () => {
+  //   // @ts-ignore
+  //   navigation.navigate("/url1", {
+  //     state: { name: "John", favColor: "blue", favNumber: 42 },
+  //   })
+  //   urlDisplay!!.textContent = "current URL: " + location.href
+  //   // @ts-ignore
+  //   updateStateDisplay()
+  // })
+
+  // function updateStateDisplay() {
+  //   // @ts-ignore
+  //   stateDisplay!.textContent = JSON.stringify(
+  //     navigation.currentEntry.getState(),
+  //     null,
+  //     2
+  //   )
+  // }
+
+  // button2!.addEventListener("click", () => {
+  //   // @ts-ignore
+  //   navigation.navigate("/url1", {
+  //     state: { name: "Jane", favColor: "red", favNumber: 7 },
+  //   })
+  //   urlDisplay!.textContent = "current URL: " + location.href
+  //   // @ts-ignore
+  //   updateStateDisplay()
+  // })
+
+  // button3!.addEventListener("click", () => {
+  //   // @ts-ignore
+  //   navigation.navigate("/url2", {
+  //     state: { name: "John", favColor: "blue", favNumber: 42 },
+  //   })
+  //   urlDisplay!.textContent = "current URL: " + location.href
+  //   // @ts-ignore
+  //   updateStateDisplay()
+  // })
+
+  // button4!.addEventListener("click", () => {
+  //   // @ts-ignore
+  //   navigation.navigate("/url2", {
+  //     state: { name: "Jane", favColor: "red", favNumber: 7 },
+  //   })
+  //   urlDisplay!.textContent = "current URL: " + location.href
+  //   // @ts-ignore
+  //   updateStateDisplay()
+  // })
+
+  // // @ts-ignore
+  // function navigationHandler(event) {
+  //   event.intercept({
+  //     handler() {
+  //       console.log(navigation.entries())
+  //     },
+  //   })
+  // }
+</script>

@@ -54,7 +54,7 @@ colorCheck()
 </CodeBlock>
 
 <IFrame
-  src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2"
+  src="/demos/client-side-routing/6-the-location-api-and-parameters/demo2?color1=00f&color2=f00#container2"
 />
 
 As you can see, we are picking two random colors and adding them to the URL as search parameters. We are then using the pushState method of the window.history object to add a new entry to the history stack. This will allow us to press the back button and see the previous search parameters. We are also changing the background colors of the containers to match the new search parameters.
@@ -77,7 +77,7 @@ Finally, I will briefly mention the replaceState method of the history object. T
 
 We almost have all the tools necessary to build our app, but there are still a few missing puzzle pieces. Although we can maintain certain bits of state in our URL, this is extremely limited. Unless we have our users bookmark very exact URLs, the website will not remember anything about them after they close the page. Let's discuss how we will fix that.
 
-[As always, you can see the code for this demo on my Github here](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch7)
+[Here's the code for this chapter!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/client-side-routing/6-the-location-api-and-parameters)
 
 [^1]: 1:
 [^2]: 2:

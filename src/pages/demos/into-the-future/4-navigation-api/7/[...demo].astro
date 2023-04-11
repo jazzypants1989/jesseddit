@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>QUIZ GAME BITCHESS</title>
+  </head>
+  <body>
+    <h1>Quiz Game</h1>
+    <div id="question-container"></div>
+    <button id="prev-btn">Previous</button>
+    <button id="next-btn">Next</button>
+    <button id="submit-btn">Submit</button>
+
+    <script>
+      const quizQuestions = [
+        {
+          question: "What is the capital of France?",
+          choices: ["Paris", "Rome", "Madrid", "Berlin"],
+          answer: "Paris",
+        },
+        {
+          question: "What is the highest mountain in the world?",
+          choices: [
+            "Mount Kilimanjaro",
+            "Mount Everest",
+            "Mount Denali",
+            "Mount Fuji",
+          ],
+          answer: "Mount Everest",
+        },
+        {
+          question: "What is the largest ocean in the world?",
+          choices: [
+            "Atlantic Ocean",
+            "Indian Ocean",
+            "Pacific Ocean",
+            "Arctic Ocean",
+          ],
+          answer: "Pacific Ocean",
+        },
+      ]
+
+      let currentQuestion = 0
+      let userAnswers = []
+
+      // Display the current question
+      function displayQuestion() {
+        const questionContainer = document.getElementById("question-container")
+        questionContainer.innerHTML = `
+          <h2>${quizQuestions[currentQuestion].question}</h2>
+          ${quizQuestions[currentQuestion].choices
+            .map(
+              (choice) => `
+                <label>
+                  <input type="radio" name="answer" value="${choice}" ${
+                userAnswers[currentQuestion] === choice ? "checked" : ""
+              }>
+                  ${choice}
+                </label>
+              `
+            )
+            .join("")}
+        `
+      }
+
+      // Go to the next question
+      function nextQuestion() {
+        currentQuestion++
+        if (currentQuestion >= quizQuestions.length) {
+          currentQuestion = quizQuestions.length - 1
+        }
+        displayQuestion()
+        history.replaceState(
+          { questionIndex: currentQuestion },
+          "",
+          `?question=${currentQuestion}`
+        )
+      }
+
+      // Go to the previous question
+      function prevQuestion() {
+        currentQuestion--
+        if (currentQuestion < 0) {
+          currentQuestion = 0
+        }
+        displayQuestion()
+        history.replaceState(
+          { questionIndex: currentQuestion },
+          "",
+          `?question=${currentQuestion}`
+        )
+      }
+
+      // Submit the quiz
+      function submitQuiz() {
+        let correctAnswers = 0
+        for (let i = 0; i < quizQuestions.length; i++) {
+          if (userAnswers[i] === quizQuestions[i].answer) {
+            correctAnswers++
+          }
+        }
+        alert(
+          `You got ${correctAnswers} out of ${quizQuestions.length} correct!`
+        )
+        history.replaceState({ quizCompleted: true }, "", "?quiz-completed")
+      }
+
+      // Handle the user's answer
+      function handleAnswer() {
+        const answer = document.querySelector('input[name="answer"]:checked')
+        if (answer) {
+          userAnswers[currentQuestion] = answer.value
+        }
+      }
+
+      // Handle the user's click
+      function handleClick(e) {
+        if (e.target.id === "next-btn") {
+          handleAnswer()
+          nextQuestion()
+        } else if (e.target.id === "prev-btn") {
+          handleAnswer()
+          prevQuestion()
+        } else if (e.target.id === "submit-btn") {
+          handleAnswer()
+          submitQuiz()
+        }
+      }
+
+      // Handle the user's keypress
+      function handleKeypress(e) {
+        if (e.key === "ArrowRight") {
+          handleAnswer()
+          nextQuestion()
+        } else if (e.key === "ArrowLeft") {
+          handleAnswer()
+          prevQuestion()
+        } else if (e.key === "Enter") {
+          handleAnswer()
+          submitQuiz()
+        }
+      }
+
+      // Handle the user's history navigation
+      function handleHistoryNavigation(e) {
+        if (e.state) {
+          if (e.state.questionIndex) {
+            currentQuestion = e.state.questionIndex
+            displayQuestion()
+          } else if (e.state.quizCompleted) {
+            submitQuiz()
+          }
+        }
+      }
+
+      // Add event listeners
+      document.addEventListener("click", handleClick)
+      document.addEventListener("keypress", handleKeypress)
+      window.addEventListener("popstate", handleHistoryNavigation)
+
+      // Display the first question
+      displayQuestion()
+    </script>
+  </body>
+</html>

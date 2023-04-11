@@ -2,6 +2,7 @@
 title: "The Location API and Parameters"
 nextLink: "./7-the-history-api#introduction-and-demo"
 video: "https://www.youtube.com/embed/u6gW7se4QcE"
+githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
@@ -85,7 +86,7 @@ Save the script, now check this out:
 </CodeBlock>
 
 <IFrame
-  src="/demos/csr/ch6/demo/START-HERE/best/cheese?brie=okay&cheddar=better#gouda#mozzarella"
+  src="/demos/client-side-routing/6-the-location-api-and-parameters/demo/START-HERE/best/cheese?brie=okay&cheddar=better#gouda#mozzarella"
   id="demo1"
 />
 
@@ -204,9 +205,10 @@ Multiple hash fragments are much rarer, as you generally only have one value tha
 Alright! Now, we're really manipulating the DOM! I always feel dirty when I say that… Anyways… Let's explore this code. Save the file, and check out this link: http://localhost:3000/?color1=00f&color2=f00#container2
 
 <IFrame
-  src="/demos/csr/ch6/demo2?color1=00f&color2=f00#container2"
+  src="/demos/client-side-routing/6-the-location-api-and-parameters/demo2?color1=00f&color2=f00#container2"
   id="demo2"
 />
+
 
 So, as you can see, the hash fragment in the URL tells the browser to scroll to the second container upon page load, and the colors are determined by the search parameters. We can use the hash fragments as links within single pages, and we can use the search parameters to determine how that page looks and acts. When we use JavaScript to dynamically change these values, we can create a single page application that feels like a traditional website.
 
@@ -215,8 +217,6 @@ So, as you can see, the hash fragment in the URL tells the browser to scroll to 
 Now, to really start grasping the power of client-side routing, you have to press the button on the bottom. The colors change, the url changes, but the page doesn't have to reload. Press the button a few more times. Now, press back on your browser (or right click on the demo, then click back). The history has been saved, allowing us to replay the previous state of the user's experience, and allowing them to navigate in a natural fashion-- as if these were actually separate pages.
 
 This is because we employed the History API. That's what all the popState business at the end was about. We'll learn more about it in the next chapter. But for now, just know that it's a powerful tool that allows us to manipulate the browser's history and the URL without reloading the page. 
-
-[Here's the code for this chapter!](https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/csr/ch6)
 
 [^1]: 1:
 [^2]: 2:

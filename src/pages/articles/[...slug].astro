@@ -17,18 +17,20 @@ if (entry === undefined) {
   return Astro.redirect("/404")
 }
 
-const { title, nextLink, video } = entry.data
+const { title, nextLink, video, githubLink } = entry.data
 
 const { Content } = await entry.render()
 
 const blog = slug.split("/")[0]
 const article = slug.split("/")[1]
+
+const githubURL = `https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/${blog}/${article}/`
 ---
 
 <title>{title}</title>
 <ArticleLayout>
   <a
-    class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1 my-1"
+    class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1 my-2"
     href={`/blog/${blog}`}
   >
     Back to Table of Contents
@@ -55,11 +57,22 @@ const article = slug.split("/")[1]
   </article>
   <div class="flex items-center justify-between w-full h-24 mt-4 text-center">
     <a
-      class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-3"
+      class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-2"
       href={`/blog/${blog}`}
     >
       Back to Table of Contents (with comments)
     </a>
+    {
+      githubLink && (
+        <a
+          class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1"
+          href={githubURL}
+          id="github-link"
+        >
+          View Source Code
+        </a>
+      )
+    }
     {
       nextLink === "/blog" ? (
         <a

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Why store state in history object?</title>
+  </head>
+  <body>
+    <h1>Why store state in history object?</h1>
+    <p>
+      Sometimes you don't want to store state in the URL:
+      <ul>
+        <li>When you don't want to expose the state to the user</li>
+        <li>When you don't want to store the state in the browser history</li>
+        <li>When you don't want to store the state in the browser history</li>
+      </ul>
+      <p>
+        For example, when you want to store the state of a form that the user
+        has not submitted yet.
+      </p>
+      <p>
+        Here is an example of a form that stores the state in the history
+        object:
+      </p>
+      <form id="myForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="John Doe" />
+        <label for="email">Email:</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value="johndoe@johndoe.com"
+        />
+        <label for="phone">Phone:</label>
+        <input type="tel" id="phone" name="phone" value="555-555-5555" />
+        <input type="submit" value="Submit" />
+      </form>
+
+      <script>
+        const form = document.getElementById("myForm")
+        const state = history.state || {}
+        const formData = state.formData || {}
+
+        form.name.value = formData.name || ""
+        form.email.value = formData.email || ""
+        form.phone.value = formData.phone || ""
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault()
+          const formData = {
+            name: form.name.value,
+            email: form.email.value,
+            phone: form.phone.value,
+          }
+          history.pushState({ formData }, "", "")
+        })
+
+        window.addEventListener("popstate", (event) => {
+          const state = event.state || {}
+          const formData = state.formData || {}
+          form.name.value = formData.name || ""
+          form.email.value = formData.email || ""
+          form.phone.value = formData.phone || ""
+        })
+
+        window.addEventListener("beforeunload", (event) => {
+          const formData = {
+            name: form.name.value,
+            email: form.email.value,
+            phone: form.phone.value,
+          }
+          history.replaceState({ formData }, "", "")
+        })
+
+        window.addEventListener("unload", (event) => {
+          history.replaceState(null, "", "")
+        })
+      </script>
+    </p>
+  </body>
+</html>

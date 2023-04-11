@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <main></main>
+    <p>The external link works if you open this outside the iframe.</p>
+    <span id="count"></span>
+  </body>
+</html>
+
+<script>
+  const main = document.querySelector("main")
+  const count = document.querySelector("#count")
+  console.log(navigation.currentEntry)
+  navigation.addEventListener("navigate", (event) => {
+    console.log(event)
+    console.log(navigation.entries())
+    event.intercept({
+      handler() {
+        const url = new URL(event.destination.url)
+        Router(url.pathname)
+        count.innerHTML = `The history stack now has ${
+          navigation.entries().length
+        } entries`
+      },
+    })
+  })
+
+  function Router(path) {
+    if (path === "/special") {
+      main.innerHTML = `<h1>This page is special</h1>
+    <a href="/boring">Make it boring</a>
+    <a href="https://developer.mozilla.org">External link #1</a>
+    `
+    } else {
+      main.innerHTML = `<h1>This page is boring</h1>
+    <a href="/special">Make it special</a>
+    <a href="https://www.w3schools.com">External link #2</a>
+    `
+    }
+  }
+
+  Router("/" + location.pathname.split("/")[5]) // this is the path of the iframe
+</script>

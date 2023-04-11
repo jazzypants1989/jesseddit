@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <form>
+      <input type="text" name="search" />
+      <button type="submit">Search</button>
+    </form>
+    <button id="mode-button"> Current mode: preventDefault</button>
+    <p id="url"></p>
+    <a href="https://www.google.com">Google</a>
+    <h3 id="boring-text">
+      The URL doesn't change when using event.preventDefault(). However, you
+      cannot leave the page because we are not doing any checks on our listener.
+    </h3>
+  </body>
+</html>
+
+<script>
+  const button = document.querySelector("#mode-button")
+  const urlDisplay = document.querySelector("#url")
+  const mainText = document.querySelector("#boring-text")
+
+  if (!urlDisplay) throw new Error("No url display")
+
+  urlDisplay.textContent = "current URL: " + location.href
+
+  let mode = "preventDefault"
+
+  const fakeAPISearchURL = "https://dummyjson.com/products/search?q="
+
+  button?.addEventListener("click", modeSwap)
+
+  //@ts-ignore
+  navigation.addEventListener("navigate", await navigationHandler)
+
+  function modeSwap() {
+    if (!button || !mainText) return console.log("no button or mainText")
+    if (mode === "preventDefault") {
+      mode = "intercept"
+      button.textContent = "Current mode: intercept"
+      mainText.innerHTML = `<h6>Okay, you can leave if you want to. But, I'll miss you.</h6>`
+    } else {
+      mode = "preventDefault"
+      button.textContent = "Current mode: preventDefault"
+      mainText.innerHTML = `<h1>I'll never let you leave!</h1>`
+    }
+  }
+
+  async function navigationHandler(event: any) {
+    if (!button || !urlDisplay || !mainText) return
+    if (mode === "preventDefault") {
+      event.preventDefault()
+      console.log(event)
+      const formData = new FormData(event.destination.form)
+      try {
+        const response = await fetch(fakeAPISearchURL + search)
+        const products = await response.json()
+        if (products.length > 0) {
+          mainText.innerHTML = `<h3>You searched for ${search}. Here are the results:</h3>`
+          products.forEach((product: any) => {
+            const productDiv = document.createElement("div")
+            productDiv.innerHTML = `<h4>${product.title}</h4>
+            <p>${product.description}</p>
+            <p>Price: $${product.price}</p>
+            <img src="${product.image}" alt="${product.title}" />`
+            mainText.appendChild(productDiv)
+          })
+          return
+        }
+      } catch (error) {
+        console.log(error)
+      }
+      //   search
+      //     ? (mainText.innerHTML = `<h3>You searched for ${search}. It's not here. Why don't you try Google?</h3>`)
+      //     : url.pathname === location.pathname
+      //     ? (mainText.innerHTML = `<h3>You'll never leave this page.</h3>`)
+      //     : (mainText.innerHTML = `<h2>NO! You can't go to ${event.destination.url}.</h2>
+      //  <small>I would miss you too much.</small>`)
+    } else {
+      event.intercept({
+        handler() {
+          console.log(event)
+          console.log(navigation.transition)
+          const url = new URL(event.destination.url)
+          const search = url.searchParams.get("search")
+          if (search?.length === 0) {
+            mainText.innerHTML = `You didn't search for anything.`
+            return
+          } else {
+            mainText.innerHTML = `<h6>No ${search} here... I guess you can try Google if you want to.</h6>`
+          }
+        },
+      })
+    }
+    setTimeout(() => {
+      urlDisplay.textContent = "current URL: " + location.href
+    })
+  }
+</script>

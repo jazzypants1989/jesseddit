@@ -1,18 +1,30 @@
 ---
-let { extraStyle, src, id } = Astro.props as {
-  extraStyle: string
+let { extraStyle, src, id, small } = Astro.props as {
+  extraStyle: string | undefined
   src: string | undefined
   id: string | undefined
+  small: boolean
 }
 
-extraStyle = extraStyle || "background-color: #ccc;"
+extraStyle = small
+  ? "height: 200px; background-color: #ccc;" + extraStyle
+  : "height: fit-content; background-color: #ccc;" + extraStyle
 
-id = id || "demo"
+let randomID = Math.random().toString(36).substring(2, 15)
+
+id = id || randomID
 ---
 
 <iframe
-  style={`height: fit-content; aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
+  style={`aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
   src={src}
   id={id}
 >
 </iframe>
+{
+  !src?.startsWith("https://www.youtube.com") && (
+    <a class="text-sm" href={src} target="_blank" rel="noopener noreferrer">
+      Click here to open in a new tab
+    </a>
+  )
+}
