@@ -18,6 +18,7 @@ export default function SolidPicker(props: {
         id={props.id || randomID}
         code={props.code}
         setActive={setActive}
+        url={props.url}
       />
       <div class="flex items-center justify-center w-full mx-auto">
         <Show when={active() === "code"}>
@@ -69,7 +70,7 @@ const Buttons = (props: {
         Demo
       </button>
       <a
-        class="
+        class="cursor-pointer
       bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-r"
         href={props.url}
         target="_blank"

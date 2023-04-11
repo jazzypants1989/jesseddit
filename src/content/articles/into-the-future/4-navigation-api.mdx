@@ -9,7 +9,10 @@ import IFrame from "../../../components/IFrame.astro"
 import Demo from "../../../components/Demo.astro"
 
 export const demoURL = "/demos/into-the-future/4-navigation-api/"
-export const githubURL = "https://www.github.com/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/into-the-future/4-navigation-api"
+export const githubURL = "https://www.github.dev/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/into-the-future/4-navigation-api/"
+export function makeGithubURL(number) {
+  return githubURL + number + "/[...demo].astro"
+}
 
 ## Introduction
 
@@ -21,7 +24,7 @@ Wouldn't it be great if we could just put down a single event listener and let t
 
 As we learned, all of these web API's sit on the `window` object. The navigation API is no different, so we can call it just by typing `navigation` as long as we know our code will run on the browser. It has a few events, but the most important of all is the titular `navigate` event. This event is fired whenever **any** navigation occurs. Let's see how we can use it.
 
-<Demo id="demo-1" url={githubURL + "/1"}>
+<Demo id="demo-1" url={makeGithubURL(1)}>
 <CodeBlock slot="code">
 ```html
 <!DOCTYPE html>
