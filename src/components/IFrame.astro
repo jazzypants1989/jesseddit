@@ -7,7 +7,7 @@ let { extraStyle, src, id, small } = Astro.props as {
 }
 
 extraStyle = small
-  ? "height: 200px; background-color: #ccc;" + extraStyle
+  ? "height: 250px; background-color: #ccc;" + extraStyle
   : "height: fit-content; background-color: #ccc;" + extraStyle
 
 let randomID = Math.random().toString(36).substring(2, 15)

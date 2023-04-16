@@ -1,30 +1,25 @@
 ---
 title: "The Navigation API"
 nextLink: "./5-view-transitions-api"
-githubLink: true  
+githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
 import IFrame from "../../../components/IFrame.astro"
 import Demo from "../../../components/Demo.astro"
-
 export const demoURL = "/demos/into-the-future/4-navigation-api/"
-export const githubURL = "https://www.github.dev/jazzypants1989/astro-solid-blog/tree/main/src/pages/demos/into-the-future/4-navigation-api/"
-export function makeGithubURL(number) {
-  return githubURL + number + "/[...demo].astro"
-}
 
 ## Introduction
 
 As we learned in my [Brief History of Client-Side Routing](/articles/client-side-routing/2-a-brief-history-of-client-side-routing), we have come a long way from the days of the hash-based router. [Our router](/articles/client-side-routing/11-router-link-and-routes) has been built leveraging [the History API](/articles/client-side-routing/7-the-history-api), and it has served us well. But, in order to use it, we have to make sure that we put our special `Link` class on every single internal link. And, we had to do all kinds of gymnastics just to make sure that [popstate](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event) events were handled correctly.
 
-Wouldn't it be great if we could just put down a single event listener and let the browser do the work for us? Well, surprise! The [Navigation API](https://github.com/WICG/navigation-api) is here to do just that. It also smooths out a few other rough edges that we didn't encounter in our app, but are commonly encountered in larger apps. Let's take a look at how it works.
+Wouldn't it be great if we could just put down a single event listener and let the browser do the work for us? Well, hooray! The [Navigation API](https://github.com/WICG/navigation-api) is here to do just that. It also smooths out a few additional rough edges that we didn't encounter in our app. Let's take a look at how it works.
 
-## The `Navigate` Event
+## The `navigation` Object
 
-As we learned, all of these web API's sit on the `window` object. The navigation API is no different, so we can call it just by typing `navigation` as long as we know our code will run on the browser. It has a few events, but the most important of all is the titular `navigate` event. This event is fired whenever **any** navigation occurs. Let's see how we can use it.
+As we learned, all of these web API's sit on the `window` object. The navigation API is no different, so we can call it by just typing `navigation` as long as we know our code will run on the browser. It has a few events, but the most important of all is the titular `navigate` event. This event is fired whenever **any** navigation occurs. Let's see how we can use it.
 
-<Demo id="demo-1" url={makeGithubURL(1)}>
+<Demo id="demo-1" slug="RweWomZ">
 <CodeBlock slot="code">
 ```html
 <!DOCTYPE html>
@@ -37,33 +32,42 @@ As we learned, all of these web API's sit on the `window` object. The navigation
   <body>
     <main></main>
     <p>The external link works if you open this outside the iframe.</p>
+    <p id="count"></p>
   </body>
 </html>
 <script>
-  const main = document.querySelector("main")
-  console.log(navigation.currentEntry)
-  navigation.addEventListener("navigate", (event) => {
-    console.log(event)
-    event.intercept({
-      handler() {
-        const url = new URL(event.destination.url)
-        Router(url.pathname)
-    })
-  })
+const main = document.querySelector("main");
+const count = document.querySelector("#count");
+console.log(navigation.currentEntry);
+navigation.addEventListener("navigate", (event) => {
+  console.log(event);
+  console.log(navigation.entries());
+  event.intercept({
+    handler() {
+      const url = new URL(event.destination.url);
+      Router(url.pathname);
+      count.innerHTML = `The history stack now has ${
+        navigation.entries().length
+      } entries`;
+    }
+  });
+});
 
-  function Router(path){
-    if (path === "/one") {
-        main.innerHTML = `
-        <a href="/two">Internal Page #2</a>
-        <a href="https://developer.mozilla.org">MDN!</a>
-        `
+function Router(path) {
+    if (path === "/special") {
+        main.innerHTML = `<h1>This page is special 🎉</h1>
+        <a href="/boring">Make it boring</a>
+        <a href="https://developer.mozilla.org">External link #1</a>
+        `;
     } else {
-        main.innerHTML = `
-        <a href="/one">Internal Page #1</a>
-        <a href="https://www.w3schools.com">W3 Schools!</a>
-        `
+        main.innerHTML = `<h1>This page is boring</h1>
+        <a href="/special">Make it special</a>
+        <a href="https://www.w3schools.com">External link #2</a>
+        `;
     }
 }
+
+Router(location.pathname)
 
 </script>
 ```
@@ -72,32 +76,1192 @@ As we learned, all of these web API's sit on the `window` object. The navigation
 <IFrame src={demoURL + "1"} slot="demo" small />
 </Demo>
 
-35 lines of code-- including unnecessary console logs-- and we have a fully functional client-side router. It even handles popstate events! Let's break it down.
+Around 20 lines of actual code and one event listener later, and we have a fully functional client-side router. It even handles [popstate events](https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event)! So, let's explore how this works and see what else we need to think about.
 
-I logged out the currentEntry property of the navigation object and the navigateEvent object that fires on each navigation to show you what they look like. If you open the [developer tools](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Tools_and_setup/What_are_browser_developer_tools), you can take a look at them. Respectively, they represent where we are in the browser's history and where we are trying to go. 
+## The `navigate` Event
 
-With these two pieces of information, we can intercept the navigation and do whatever we want. But, as you can see, if you [open the demo in another window](/demos/itf/ch4/1) and click the external links, they still work. This is because we are intercepting the navigation, but we are not preventing it from happening. We can do that by calling `event.preventDefault()` on the event object. Let's see what happens when we do that.
+As soon as the page loads, I log the `currentEntry` property. I also log the `NavigateEvent` interface and the `entries` method of the `navigation` object on each navigation. If you open the [developer tools](https://developer.mozilla.org/en-US/docs/Learn/Common_questions/Tools_and_setup/What_are_browser_developer_tools), you can take a look at them. Respectively, they represent where we are in the browser's history, where we are trying to go, and all the pages that have been visited in the current session.
 
-<Demo id="demo-2">
+Using these three, we can intercept the navigation and do whatever we want. The `key` property of each entry is what we can use to go to a specific page in the history. It's a UUID that is generated by the browser for each instance of each page in the user's history. The `id` property is similar, but [it's a little more likely to change](https://github.com/WICG/navigation-api#the-current-entry) so usually it's best to use the `key` property. The `navigation.entries` method is our way of seeing the current state of the history stack. Using the `key` property, we can go back to any page in this stack.
+
+Finally, the [NavigateEvent has a lot of properties](https://github.com/WICG/navigation-api#navigation-monitoring-and-interception), but the one you'll be checking most often is `destination`-- specifically, `destination.url`. This is the URL that we are trying to go to. With just that and a few other important things, you have all the information you need to hand things off to an internal router. Usually, the best way to do this is with the `intercept` method on the event. This method takes an object with a `handler` property. This handler is the function that we can use to route each navigation event.
+
+## Intercepting Navigation
+
+As you can see, if you [open the demo in another window](/demos/into-the-future/4-navigation-api/1) and click the external links, they still work as the intercept method doesn't prevent the default behavior on its own. While you usually want to allow your users to leave your site, there are times when you don't-- like when a user is in the middle of a form submission. We also may want to prevent the URL from changing during [form submissions.](https://github.com/whatwg/html/issues/6600) Let's see how we can do that.
+
+<Demo id="demo-2" slug="oNajZwQ">
 <CodeBlock slot="code">
 ```js
-  navigation.addEventListener("navigate", (event) => {
-    event.preventDefault()
-    main.innerHTML = `<h1>NO! You can't go to ${event.destination.url}.</h1>
-     <small>I would miss you too much.</small>`
-  })
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <form action="/search">
+      <input type="text" name="search" placeholder="GET search" />
+      <button type="submit">Search</button>
+    </form>
+    <form method="POST" action="/search">
+      <input type="text" name="search" placeholder="POST search" />
+      <button type="submit">Search</button>
+    </form>
+    <button id="mode-button"> Current mode: preventDefault</button>
+    <p id="url"></p>
+    <a href="https://www.google.com">Google</a>
+    <a href="/internal">Internal</a>
+    <h3 id="mainText">
+      The URL doesn't change when using event.preventDefault(). However, you
+      cannot leave the page because we are not doing any checks on our listener.
+    </h3>
+    <script defer>
+      const button = document.querySelector("#mode-button")
+      const urlDisplay = document.querySelector("#url")
+      const mainText = document.querySelector("#mainText")
+      const inputs = document.querySelectorAll("input")
+
+      if (!urlDisplay) throw new Error("No url display")
+      urlDisplay.textContent = "current URL: " + location.href
+
+      let mode = "preventDefault"
+
+      button?.addEventListener("click", modeSwap)
+      navigation.addEventListener("navigate", navigationHandler)
+
+      function modeSwap() {
+        if (!button || !mainText) return console.log("no button or mainText")
+        if (mode === "preventDefault") {
+          mode = "intercept"
+          button.textContent = "Current mode: intercept"
+          mainText.innerHTML = `<h6>Okay, you can leave if you want to. But, I'll miss you.</h6>`
+        } else {
+          mode = "preventDefault"
+          button.textContent = "Current mode: preventDefault"
+          mainText.innerHTML = `<h1>I'll never let you leave!</h1>`
+        }
+      }
+
+      async function navigationHandler(event) {
+        if (!button || !urlDisplay || !mainText) return
+
+        const url = new URL(event.destination.url)
+
+        const path = url.pathname
+        const searchParams = url.searchParams
+
+        if (mode === "preventDefault") {
+          event.preventDefault()
+          const formData = event.formData
+          if (path === "/search" && searchParams.has("search")) {
+            const search = searchParams.get("search")
+            mainText.textContent = `You searched for ${search} with a GET request. That's so cool.`
+            return
+          }
+          if (formData) {
+            const search = formData.get("search")
+            mainText.textContent = `You searched for ${search} with a POST request. I love that about you.`
+            return
+          }
+          if (url.origin === location.origin) {
+            mainText.innerHTML = `<h1>Yeah, just stay here. It's nice here.</h1>`
+            return
+          } else {
+            if (checkInputs()) {
+              if (
+                !confirm(
+                  "You have unsaved changes. Are you sure you want to leave?"
+                )
+              ) {
+                mainText.innerHTML = `<h1>I mean, you can't leave anyway, but I'm glad you're staying.</h1>`
+                return
+              }
+            }
+            mainText.innerHTML = `<h1>NO! You can't go to ${url.href}.</h1>
+            <small>I would miss you too much.</small>`
+          }
+        } else {
+          // You don't need a whole different handler.
+          // This is all you need to do to check for unsaved changes.
+          // if (checkInputs()) {
+          //   if(!confirm("You have unsaved changes. Are you sure you want to leave?")) {
+          //     event.preventDefault()
+          //     return
+          //   }
+          // }
+          event.intercept({
+            handler() {
+              if (path === "/internal") {
+                mainText.innerHTML = `<h1>Yeah, you can stay here... But, really... you can leave now.</h1>`
+              }
+              if (path === "/search" && searchParams.has("search")) {
+                const search = searchParams.get("search")
+                mainText.textContent = `You searched for ${search} with a GET request. How original.`
+              }
+              const formData = event.formData
+              const search = formData.get("search")
+              mainText.textContent = `You searched for ${search} with a POST request. Boooring. Just go to Google already.`
+            },
+          })
+        }
+        setTimeout(() => {
+          urlDisplay.textContent = "current URL: " + location.href
+        }) // this is just to wait until after the promise resolves
+        // we'll explore better ways to do this later
+      }
+
+      function checkInputs() {
+        for (const input of inputs) {
+          if (input.value) {
+            return true
+          }
+        }
+        return false
+      }
+    </script>
+
+  </body>
+</html>
 ```
 </CodeBlock>
 <IFrame src={demoURL + "2"} slot="demo" small />
 </Demo>
 
-Generally, the intercept method will be the preferred way to handle most navigation. But, things like form submissions will change the URL if you don't prevent the default behavior which isn't always what you want. So, it's good to know that you have the option to do either.
+Click around to see the differences between the two modes. If you have anything in the search fields while in preventDefault mode, you will see a prompt when you try to leave. Also, when you search, notice how the formData is automatically included any time it is a part of a navigation event. This is one of the key things to keep in mind when deciding whether or not to intercept each navigation. There are a few other times when you might not want to intercept the navigation and just let the browser do its thing. Here's [an example function provided by the Chrome team](https://developer.chrome.com/docs/web-platform/navigation-api/) for how you might want to check.
 
-<Demo id="demo-4">
-  <CodeBlock slot="code">
-    ```js
-    let cheese = "cheddar"
-    ```
-  </CodeBlock>
-  <IFrame src={demoURL + "4"} slot="demo" small />
+<CodeBlock>
+```js
+function shouldNotIntercept(navigationEvent) {
+  return (
+    !navigationEvent.canIntercept ||
+    // If this is just a hashChange,
+    // just let the browser handle scrolling to the content.
+    navigationEvent.hashChange ||
+    // If this is a download,
+    // let the browser perform the download.
+    navigationEvent.downloadRequest ||
+    // If this is a form submission,
+    // let that go to the server.
+    navigationEvent.formData
+  );
+}
+```
+</CodeBlock>
+
+The canIntercept property is a boolean that tells us whether or not we're even allowed to intercept the navigation. As you saw, any "cross-origin or cross-document" (a different website or completely replacing the current document) navigation cannot be intercepted. We check for this to avoid unnecessary errors. The others are just situations where the browser can usually handle things better than we can.
+
+## Navigation State
+
+One feature of the History API that I elected not to use in my original implementation was the ability to set the state object. This is a way to store data inside of the browser's history. While having an in-memory cache that persists between history entries seems like something too good to deny, there are a few reasons why I didn't use it.
+
+The history state is notoriously fickle, and even something as simple as a single hashChange event can cause it all to be lost. And, if you want events to be exactly like they were at one point in history, you have to be extremely careful about how you set the state. Usually, you end up storing your desired state in a separate variable anyways to protect it. In this next demo, we will explore some of these issues to see how the Navigation API improves upon them.
+
+<Demo id="demo-3" slug="LYgpwLB">
+<CodeBlock slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <a id="top" href="#bottom">Bottom</a>
+    <button id="btn-1"> State 1, URL 1</button>
+    <button id="btn-3"> State 1, URL 2</button>
+    <button id="btn-2"> State 2, URL 1</button>
+    <button id="btn-4"> State 2, URL 2</button>
+    <pre
+      id="state">
+      With the state object, our app can store data that is not in the URL. This
+      is useful for storing data that is not relevant to the current page, but
+      is relevant to the user's experience. This can be anything from user preferences
+      to the state of a form.
+    </pre>
+    <p id="url"></p>
+    <a id="bottom" href="#top">Top</a>
+    <button id="navigationMode"
+      >Toggle navigation API mode - Currently Off</button
+    >
+    <button id="markStateAsFavorite"> Mark current state as favorite</button>
+    <button id="goToFavoriteState">Go to favorite state</button>
+    <button id="back">Back</button>
+    <script defer>
+    const button1 = document.querySelector("#btn-1")
+    const button2 = document.querySelector("#btn-2")
+    const button3 = document.querySelector("#btn-3")
+    const button4 = document.querySelector("#btn-4")
+    const navigationModeButton = document.querySelector("#navigationMode")
+    const markFavoriteStateButton = document.querySelector("#markStateAsFavorite")
+    const goToFavoriteStateButton = document.querySelector("#goToFavoriteState")
+    const back = document.querySelector("#back")
+    const stateDisplay = document.querySelector("#state")
+    const urlDisplay = document.querySelector("#url")
+    const topA = document.querySelector("#top")
+    const bottomA = document.querySelector("#bottom")
+
+    const state1 = { name: "John", favColor: "blue", favNumber: 42 }
+    const state2 = { name: "Jane", favColor: "red", favNumber: 7 }
+
+    let navigationMode = "off"
+    let favoriteState = {
+      name: "Dick",
+      favColor: "green",
+      favNumber: 69,
+      key: 420,
+    }
+
+    urlDisplay.textContent = "current URL: " + location.href
+
+    topA?.addEventListener("click", () => {
+      setTimeout(() => {
+        updateUI()
+      }, 10)
+    })
+
+    bottomA?.addEventListener("click", () => {
+      setTimeout(() => {
+        updateUI()
+      }, 10)
+    })
+
+    navigationModeButton?.addEventListener("click", () => {
+      if (navigationMode === "off") {
+        navigationMode = "on"
+        navigationModeButton.textContent =
+          "Toggle navigation API mode - Currently On"
+        navigation.addEventListener("navigate", navigationHandler)
+      } else {
+        navigationMode = "off"
+        navigationModeButton.textContent =
+          "Toggle navigation API mode - Currently Off"
+        // @ts-ignore
+        navigation.removeEventListener("navigate", navigationHandler)
+      }
+    })
+
+    function navigationHandler(event) {
+      if (event.hashChange) {
+        return
+      }
+      event.intercept({
+        handler() {
+          updateUI()
+          console.log(event.navigationType)
+        },
+      })
+    }
+
+    button1?.addEventListener("click", () => {
+      if (navigationMode === "on") {
+        navigation.navigate("/ONE", { state: state1 })
+      } else {
+        history.pushState(state1, "", "/ONE")
+        updateUI()
+      }
+    })
+
+    button2?.addEventListener("click", () => {
+      if (navigationMode === "on") {
+        navigation.navigate("/ONE", { state: state2 })
+      } else {
+        history.pushState(state2, "", "/ONE")
+        updateUI()
+      }
+    })
+
+    button3?.addEventListener("click", () => {
+      if (navigationMode === "on") {
+        navigation.navigate("/TWO", { state: state1 })
+      } else {
+        history.pushState(state1, "", "/TWO")
+        updateUI()
+      }
+    })
+
+    button4?.addEventListener("click", () => {
+      if (navigationMode === "on") {
+        navigation.navigate("/TWO", { state: state2 })
+      } else {
+        history.pushState(state2, "", "/TWO")
+        updateUI()
+      }
+    })
+
+    back?.addEventListener("click", () => {
+      if (navigationMode === "on") {
+        navigation.back()
+      } else {
+        history.back()
+        updateUI()
+      }
+    })
+
+    markFavoriteStateButton?.addEventListener("click", markStateAsFavorite)
+    goToFavoriteStateButton?.addEventListener("click", goToFavoriteState)
+
+    function updateStateDisplay() {
+      if (navigationMode === "on") {
+        stateDisplay.textContent = JSON.stringify(
+          navigation.currentEntry.getState(),
+          null,
+          2
+        )
+      } else {
+        stateDisplay.textContent = JSON.stringify(history.state, null, 2)
+      }
+    }
+
+    function updateUI() {
+      urlDisplay.textContent = "current URL: " + location.href
+      updateStateDisplay()
+    }
+
+    function markStateAsFavorite() {
+      if (navigationMode === "on") {
+        const key = navigation.currentEntry.key
+        favoriteState = {
+          state: navigation.currentEntry.getState(),
+          key,
+        }
+      } else {
+        const key = history.state
+        favoriteState = key
+      }
+      console.log("marked", favoriteState)
+    }
+
+    async function goToFavoriteState() {
+      if (navigationMode === "on") {
+        const entries = navigation.entries()
+        const entry = entries.find(
+          (entry) => entry.key === favoriteState.key
+        )
+        if (!entry) {
+          stateDisplay.textContent =
+            "You have to save a favorite in navigation mode first"
+          return
+        }
+        if (location.href === entry.url) {
+          console.log("replace state automatically triggered")
+          navigation.updateCurrentEntry({ state: favoriteState.state })
+        }
+        await navigation.traverseTo(entry.key)
+        console.log(navigation.currentEntry)
+        updateUI()
+      } else {
+        history.replaceState(favoriteState, "", location.href)
+        updateUI()
+      }
+      console.log("updated", favoriteState)
+    }
+
+    window.addEventListener("popstate", () => {
+      updateUI()
+    })
+    </script>
+
+  </body>
+</html>
+```
+</CodeBlock>
+<IFrame src={demoURL + "3"} slot="demo" small />
+</Demo>
+
+This demo starts out using the History API. As you can see, it mostly works well enough. The problems only start to arise when you do something like selecting a state and then clicking on the hash links. As you can see, each hashChange counts as a new entry with completely separate state from the previous entry.
+
+Also, although we can go back to a selected state if we favorite it, it is completely out of context from the decisions made before and after that particular state was selected. We have no access into the history stack other than blindly traversing by a number of entries, so we can't see **when** exactly the user wants to go back to. All we can do is hope that they hit the markFavoriteStateButton before changing their mind more than once. And, we are only updating the state--not the URL--so we can only partially reflect what the user wants to see.
+
+Now, switch over to the Navigation API. When you mark a state as your favorite, we are saving the key of that specific entry. Then, we are using the "traverseTo" method to go to that specific entry. Because the Navigation API gives us access to the entire history stack of our current session, we can go back to any specific state in time. When you go to the favorite state, notice how your forwards button on your browser has been filled with all of the entries after you favorited the state. And, it's even smart enough to know if it should make a new entry or replace the current entry based on the URL!
+
+## Navigation Types and iFrames
+
+If you check the console, you can see that each navigation event is categorized into one of four navigationType's: `traverse`, `push`, `replace`, and `reload`. In the History API code, we had to imperatively create a new history entry with each navigation. The Navigation API automatically detects this ([although this can be overridden in certain situations.](https://github.com/WICG/navigation-api#the-current-entry)) In summary, a navigation to the same URL is automatically categorized as a `replace` navigation, a navigation to a new URL is automatically categorized as a `push` navigation, and a navigation to a specific entry in the history stack is categorized as a `traverse` navigation. You can guess what `reload` means.
+
+One issue with the History API is that a session's history is shared across all the websites visited. Unfortunately, they did not have the foresight when designing it to consider multiple iFrames on a single page. This next demo is the same as the previous one, but with an iframe of itself inside itself.
+
+<Demo id="demo-4" slug="NWOxKWp">
+<CodeBlock slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <a id="top" href="#bottom">Bottom</a>
+    <button id="btn-1"> State 1, URL 1</button>
+    <button id="btn-3"> State 1, URL 2</button>
+    <button id="btn-2"> State 2, URL 1</button>
+    <button id="btn-4"> State 2, URL 2</button>
+    <pre
+      id="state">
+      With the state object, our app can store data that is not in the URL. 
+      This is useful for storing data that is not relevant to the current page, 
+      but is relevant to the user's experience. 
+      This can be anything from user preferences to the state of a form.
+    </pre>
+    <p id="url"></p>
+    <a id="bottom" href="#top">Top</a>
+    <button id="navigationMode"
+      >Toggle navigation API mode - Currently Off</button
+    >
+    <button id="markStateAsFavorite"> Mark current state as favorite</button>
+    <button id="goToFavoriteState">Go to favorite state</button>
+    <button id="back">Back</button>
+  </body>
+</html>
+
+<script>
+  const button1 = document.querySelector("#btn-1")
+  const button2 = document.querySelector("#btn-2")
+  const button3 = document.querySelector("#btn-3")
+  const button4 = document.querySelector("#btn-4")
+  const navigationModeButton = document.querySelector("#navigationMode")
+  const markFavoriteStateButton = document.querySelector("#markStateAsFavorite")
+  const goToFavoriteStateButton = document.querySelector("#goToFavoriteState")
+  const back = document.querySelector("#back")
+  const stateDisplay = document.querySelector("#state")
+  const urlDisplay = document.querySelector("#url")
+  const top = document.querySelector("#top")
+  const bottom = document.querySelector("#bottom")
+
+  const state1 = { name: "John", favColor: "blue", favNumber: 42 }
+  const state2 = { name: "Jane", favColor: "red", favNumber: 7 }
+
+  let navigationMode = "off"
+  let favoriteState = {
+    name: "Dick",
+    favColor: "green",
+    favNumber: 69,
+    key: 420,
+  }
+
+  urlDisplay!.textContent = "current URL: " + location.href
+
+  top?.addEventListener("click", () => {
+    setTimeout(() => {
+      updateUI()
+    }, 10)
+  })
+
+  bottom?.addEventListener("click", () => {
+    setTimeout(() => {
+      updateUI()
+    }, 10)
+  })
+
+  navigationModeButton?.addEventListener("click", () => {
+    if (navigationMode === "off") {
+      navigationMode = "on"
+      navigationModeButton!.textContent =
+        "Toggle navigation API mode - Currently On"
+      // @ts-ignore
+      navigation.addEventListener("navigate", navigationHandler)
+    } else {
+      navigationMode = "off"
+      navigationModeButton!.textContent =
+        "Toggle navigation API mode - Currently Off"
+      // @ts-ignore
+      navigation.removeEventListener("navigate", navigationHandler)
+    }
+  })
+
+  function navigationHandler(event: any) {
+    if (event.hashChange) {
+      return
+    }
+    event.intercept({
+      handler() {
+        updateUI()
+        console.log(event.navigationType)
+      },
+    })
+  }
+
+  button1?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/ONE", { state: state1 })
+    } else {
+      history.pushState(state1, "", "/ONE")
+      updateUI()
+    }
+  })
+
+  button2?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/ONE", { state: state2 })
+    } else {
+      history.pushState(state2, "", "/ONE")
+      updateUI()
+    }
+  })
+
+  button3?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/TWO", { state: state1 })
+    } else {
+      history.pushState(state1, "", "/TWO")
+      updateUI()
+    }
+  })
+
+  button4?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/TWO", { state: state2 })
+    } else {
+      history.pushState(state2, "", "/TWO")
+      updateUI()
+    }
+  })
+
+  back?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.back()
+    } else {
+      history.back()
+      updateUI()
+    }
+  })
+
+  markFavoriteStateButton?.addEventListener("click", markStateAsFavorite)
+  goToFavoriteStateButton?.addEventListener("click", goToFavoriteState)
+
+  function updateStateDisplay() {
+    if (navigationMode === "on") {
+      stateDisplay!.textContent = JSON.stringify(
+        // @ts-ignore
+        navigation.currentEntry.getState(),
+        null,
+        2
+      )
+    } else {
+      stateDisplay!.textContent = JSON.stringify(history.state, null, 2)
+    }
+  }
+
+  function updateUI() {
+    urlDisplay!.textContent = "current URL: " + location.href
+    stateDisplay!.textContent = `Items on the history stack: ${history.length}, Items on THIS FRAME's Navigation stack: ${navigation.entries().length}`
+  }
+
+  function markStateAsFavorite() {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      const key = navigation.currentEntry.key
+      favoriteState = {
+        // @ts-ignore
+        state: navigation.currentEntry.getState(),
+        key,
+      }
+    } else {
+      const key = history.state
+      favoriteState = key
+    }
+    console.log("marked", favoriteState)
+  }
+
+  async function goToFavoriteState() {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      const entries = navigation.entries()
+      const entry = entries.find(
+        (entry: any) => entry.key === favoriteState.key
+      )
+      if (!entry) {
+        stateDisplay!.textContent =
+          "You have to save a favorite in navigation mode first"
+        return
+      }
+      if (location.href === entry.url) {
+        console.log("replace state automatically triggered")
+        // @ts-ignore
+        navigation.updateCurrentEntry({ state: favoriteState.state })
+      }
+      // @ts-ignore
+      await navigation.traverseTo(entry.key)
+      // @ts-ignore
+      console.log(navigation.currentEntry)
+      updateUI()
+    } else {
+      history.replaceState(favoriteState, "", location.href)
+      updateUI()
+    }
+    console.log("updated", favoriteState)
+  }
+
+  window.addEventListener("popstate", () => {
+    updateUI()
+  })
+</script>
+
+````
+</CodeBlock>
+<IFrame src={demoURL + "4"} slot="demo" small />
+</Demo>
+
+Notice how all your interactions between both iframes get put on the same history stack? This is because the history stack is global to the whole browser. With the Navigation API, each iFrame gets a stack of its own that the app developer can inspect at their leisure. Unlike the History API where we can only go backwards and forwards an arbitrary number of entries across one stack, each of these stacks can be independepently traversed. Generally, I haven't had much of an issue with this, but it is a [recurring](https://github.com/WICG/webcomponents/issues/184) [complaint](https://github.com/dvoytenko/web-history-api/blob/master/problem.md) of more experienced developers than me so I felt the need to mention it.
+
+One easy way to see the improvement is to notice how the navigation stack doesn't grow when clicking on the same URL when using the app in navigation API mode. This is because it is logging those entries with `replace` navigation types. We use the `updateCurrentEntry` method to update the state of the current entry in these cases. You will rarely need to do this, but it is useful in situations when you still need to update the state. Multi-step forms with sensitive information come to mind.
+
+## Loading and Error States
+
+One issue that has plagued developers when working with the History API is that all changes to the history stack are synchronous. However, since most apps don't have all of their data loaded into the browser at once, you need to prepare for what happens in between the time the user clicks a link and the time the data is loaded. Not only do you need to know when the data is loaded, but you must know that it has been loaded correctly. And, if a user changes their mind in the middle of stuff happening, you need to be able to cancel the loading process or else you end up with a lot of unnecessary data.
+
+While the [`AbortController` interface](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) has been introduced to help with this, it's not always easy to plug it into your existing routing solution. Luckily, the NavigateEvent interface has a `signal` property that is an `AbortSignal` that you can use to cancel the loading process. We can use this to track whether or not the user has changed their mind while data is loading.
+
+Although it is still synchronous by default, most of the traversal methods provided by the Navigation API return a pair of promises that you can use to track the navigation-- `committed` and `finished`. The `committed` promise resolves when the navigation has been initiated and the URL changes in the address bar. The `finished` promise resolves when the navigation has been completed and the page has been rendered. Between the two, you can track the loading state of your app. Let's see how this works in practice.
+
+<Demo id="demo-5" slug="WNaQVxv">
+<CodeBlock slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+    <style is:global>
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border-radius: 100%;
+        border: 5px solid #ccc;
+        border-top-color: #333;
+        animation: spinner 0.8s infinite linear;
+      }
+
+      .dark {
+        border: 10px solid #333;
+        border-top-color: #c06;
+      }
+
+      @keyframes spinner {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message">
+      <h1>Click the link below to load the page.</h1>
+      <p>Nothing is happening yet...</p>
+    </div>
+    <a id="link">Click me!</a>
+    <button id="navigate">Navigate</button>
+    <button id="force-error">Force an error: false</button>
+    <button id="abort" style="display: none;">Stop</button>
+    <script>
+      const message = document.querySelector("#message")
+      const abort = document.querySelector("#abort")
+      const link = document.querySelector("#link")
+      const navigateBtn = document.querySelector("#navigate")
+      const forceError = document.querySelector("#force-error")
+
+      let error = false // Initial value for the error button
+
+      link.href = window.location.href // Setting the link's URL to the current page
+
+      abort?.addEventListener("click", () => {
+        // The equivalent of hitting the stop button in your browser
+        window.stop()
+        abort.style.display = "none"
+      })
+
+      forceError?.addEventListener("click", () => {
+        // To show that your error handling can be separated from the abort signal
+        error = !error
+        forceError.innerHTML = `Force an error: ${error}`
+      })
+
+      navigateBtn.addEventListener("click", async () => {
+        if (!message) return
+
+        const { committed, finished } = navigation.navigate(link.href)
+        // Almost all of the navigation functions return two promises
+        // "committed" is resolved at the beginning of the navigation
+        // "finished" is resolved when the navigation is finished
+        // In between, we add some loading state until the finished promise is resolved
+
+        console.log(
+          "this log is right before we await the 'committed' promise-- as far as I can tell, this is kind of like doing something on the 'beforeunload' event except for local navigation"
+        )
+        await committed
+
+        message.innerHTML = "<h3>Different loading screen...</h3>"
+        addSpinner("dark")
+
+        try {
+          if (error) throw new Error("Error: YOU DID THIS")
+          await finished
+        } catch (e) {
+          if (e instanceof DOMException) return
+          message.innerHTML = `<h1>${e.message}</h1>`
+        }
+      })
+
+      navigation.addEventListener("navigate", navigationHandler)
+
+      // // We can do a global error listener, but it's overrules the error listener in the handler function
+      // // This would be best for something like a global 404 page
+      // navigation.addEventListener("navigateerror", (e) => {
+      //   document.body.textContent = `Could not load ${location.href}: ${e.error}, ${e.message}`
+      // })
+
+      function navigationHandler(event: any) {
+        if (!message) return
+        const signal = event.signal
+
+        signal.onabort = () => {
+          console.log(
+            "This log is coming from the 'onabort' event that is fired by the abort signal. You can do anything you want in this function-- including updating the DOM. I just chose to use the catch block to show you all your options."
+          )
+        }
+
+        event.intercept({
+          async handler() {
+            message.innerHTML = "<h1>The page is loading...</h1>"
+            !error ? (abort.style.display = "block") : null
+            addSpinner()
+            try {
+              await delay(3000, { signal })
+            } catch (error) {
+              console.log(signal)
+              signal.aborted
+                ? (message.innerHTML = `<h1>${signal.reason}</h1>
+              <h4>You can click the link again if you want</h4>`)
+                : (message.innerHTML = `<h1>${error.message}</h1>`)
+              return
+            }
+            message.innerHTML = `<h1>Page loaded! You can click the link again.</h1`
+            abort.style.display = "none"
+          },
+        })
+      }
+
+      // I stole the meat of this function from https://gigantic-honored-octagon.glitch.me/
+      // Thanks to the Google Chrome team
+      function delay(ms: number, { signal = null } = {}) {
+        signal?.throwIfAborted()
+        return new Promise((resolve, reject) => {
+          const id = setTimeout(resolve, ms)
+
+          error && reject(new Error("Error: ALL YOUR FAULT"))
+
+          signal.addEventListener("abort", () => {
+            clearTimeout(id)
+            reject(new DOMException("Aborted", "AbortError"))
+          })
+        })
+      }
+
+      function addSpinner(style) {
+        const spinner = document.createElement("div")
+        spinner.classList.add("spinner")
+        style && spinner.classList.add(style)
+        message?.appendChild(spinner)
+      }
+    </script>
+  </body>
+</html>
+
+````
+
+</CodeBlock>
+<IFrame src={demoURL + "5"} slot="demo" small />
+</Demo>
+
+So, as usual, we're using the intercept method to handle the navigation. Our handler function just delays everything by three seconds to simulate a slow API call. You can do whatever you want in the handler function. I included the "navigate" button to show that elaborating on top of the core loading strategy is extremely simple. I used this to incorporate a different loading spinner which I explicitly put between the `committed` and `finished` promises, but you can take advantage of this transition without naming them (as I do in the intercept handler function). They are just handy for when the timing of your loading and cleanup operations are important.
+
+Deferring to the global abort signal is managed in the error handling here with the line `if (e instanceof DOMException) return`. Also, if you look at the console.log's, you can see that an abort signal is fired every time that you click on a link while the `finished` promise is still resolving. This shows that we are not loading any unnecessary pages as we reject any extra, unresolved promises.
+
+## Converting our App
+
+Now that we have explored some simple demonstrations of these core concepts, let's put them to work in our application. Unlike the previous chapters in this series, this time we will actually be removing files thanks to the Navigation API. Specifically, we'll be saying goodbye to `Link.js` because we no longer need to specifically target internal links.
+
+As we've seen, all I really need to do is add this event listener and we're done.
+
+<CodeBlock>
+
+```js
+navigation.addEventListener("navigate", (event) =>
+  event.intercept({
+    async handler() {
+      const url = event.destination.url
+      const newUrl = new URL(url)
+      Router(newUrl.pathname)
+    },
+  })
+) 
+
+```
+</CodeBlock>
+
+But, that wouldn't be a very exciting tutorial if that was all we did. And, we're not really taking full advantage of the asychronous nature of the Navigation API this way. So, let's add some more functionality to our app.
+
+As it is, even though we're now fetching our products from a remote API, we aren't presenting any loading state to the user. And, when users click on multiple things, we're loading everything even though we only show the last thing that was clicked. All of this can be easily fixed by adding a few things to our central event listener. Here's the updated version:
+
+<CodeBlock>
+```js
+import { Route } from "./Routes.js"
+import { searchHandler, search } from "../features/search.js"
+export const main = document.querySelector(".main")
+
+export default function Router(navigateEvent) {
+  if (shouldNotIntercept(navigateEvent)) return
+
+  // Get URL
+  const url = navigateEvent ? navigateEvent.destination.url : location.href
+  const newURL = new URL(url)
+  const path = newURL.pathname
+  const searchParams = new URLSearchParams(newURL.search)
+  const searchValue = searchParams.get("search")
+
+  // Start Spinner
+  const spinner = createSpinner()
+  const mainHTML = main.innerHTML
+  checkAndReplaceHTML(navigateEvent, mainHTML, spinner, 300)
+
+  // Check for search
+  if (searchValue) {
+    Route(path)
+    search.value = searchValue
+    return searchHandler()
+  }
+
+  // Route
+  navigateEvent
+    ? navigateEvent.intercept({
+        async handler() {
+          navigateEvent.signal.onabort = () => {
+            console.log("aborted")
+            main.innerHTML = mainHTML
+          }
+          try {
+            await Route(path)
+          } catch (error) {
+            console.log("error", error)
+            main.innerHTML = Nope("error", error)
+          }
+        },
+      })
+    : Route(path)
+}
+
+navigation.addEventListener("navigate", Router)
+
+function checkAndReplaceHTML(event, mainHTML, spinner, time) {
+  if (event && event.destination.url === location.href) return
+  setTimeout(() => {
+    if (mainHTML === main.innerHTML) {
+      main.innerHTML = spinner.outerHTML
+    }
+  }, time)
+}
+
+function shouldNotIntercept(navigateEvent) {
+  if (!navigateEvent) return
+  return (
+    !navigateEvent.canIntercept ||
+    navigateEvent.hashChange ||
+    navigateEvent.downloadRequest ||
+    navigateEvent.formData
+  )
+}
+
+function createSpinner() {
+  const spinner = document.createElement("div")
+  // Nothing crazy, you can check the CSS for this
+  spinner.classList.add("spinner")
+  return spinner
+}
+```
+</CodeBlock>
+
+So, instead of creating a separate function for our event listener, we simply have it call our central Router. In the router, we check to see if it is the first load by checking for the presence of a NavigateEvent. We just need to know where to get our URL, because the rest of the logic is the same from there.
+
+Instead of an entirely separate function to check for the presence of a search query, we just check for it in the Router. If it is present, we call the search handler and return. Otherwise, we continue to our main logic.
+
+Like I said, you don't need to explicitly name the `{committed, finished}` promise pair to take advantage of asychronous loading. Here, I am simply replacing the main content with a spinner as part of the loading process. However, it would be jarring to see this spinner on every navigation.
+
+So, I created a function to determine how long the main content has been loading by simply checking to see if the HTML has changed. If it has been loading for more than 300ms, then we replace the main content with the spinner. Otherwise, we just leave it alone. This was inspired by [this tweet conversation](https://twitter.com/kentcdodds/status/1645796797435215875?s=20).
+
+The last thing we need to do is add a little bit of error handling. If the user clicks on a link while the previous page is still loading, we want to abort the previous page. For this, I opted to use the `onabort` property of the included AbortSignal. If the signal is aborted, we simply replace the main content with the original HTML. If it is a real error, we call the 404 page and embed the error message.
+
+As for our dynamic routes and 404 handling, I moved all of that to our `Route` function because it makes sense to keep all of this logic near our source of truth: the Routes array. This is what it looks like now:
+
+<CodeBlock>
+```js
+import Nope from "../pages/Nope.js"
+
+const Routes = [
+  { path: "/", component: "home" },
+  { path: "/about", component: "about" },
+  { path: "/products", component: "Products" },
+  { path: "/product", component: "ProductPage", dynamic: true },
+  { path: "/cart", component: "cart" },
+  { path: "/checkout", component: "checkout" },
+]
+
+export async function Route(path) {
+  const route = Routes.find(
+    (route) => route.path.split("/")[1] === path.split("/")[1]
+  )
+  if (!route) return Nope()
+
+  const component = await import(`../pages/${route.component}.js`)
+  if (route.dynamic) {
+    const id = path.split("/")[path.split("/").length - 1]
+    return component.default(id)
+  }
+  return component.default()
+}
+```
+</CodeBlock>
+
+## Conclusion
+
+The Navigation API has been carefully crafted to build on top of the foundation laid by the History API. As I repeatedly demonstrated, all that you have to do is place a single event listener, and all of the previous tricks still work. This was intentional to support gradual adoption.
+
+While the most attractive feature may be that everything is routed through a central event listener, that initial appeal is hiding a whole host of other quality-of-life improvements. Being able to detect the presence of formData, download requests, and hash changes is a huge win, and the ability to inspect each history entry is a game-changer. It is much easier to create conditional routing logic when all of the information is in one place.
+
+Although this is only available in Chromium-based browsers, I think you can see that I'm really excited about the potential of this API-- especially when combined with the topic of our next chapter: the View Transitions API. As a parting note, here is one more demo that I couldn't find an excuse to include in the article. 
+
+This cat picture gallery is inspired by the idea of intercepting routes-- a feature recently introduced in Next.JS. While I understand the concept, I don't personally think it leads to the best UX when a user doesn't know what to expect from a specific URL.
+
+So, in my version, the only way to see a full-screen cat picture on load with the base URL is if you refresh the page while the picture is active, or leave then navigate back to it in the back/forwards cache. Alternatively, you can share the link to a full-screen picture by pressing the button that gives you a URL with a search query.
+
+See you next time!
+
+<Demo id="demo-6" slug="xxyZaEX">
+<CodeBlock slot="code">
+```js
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Gallery</title>
+    <style>
+          body {
+        font-family: sans-serif;
+        margin: 0;
+      }
+
+      .gallery {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .gallery span {
+        font-size: 1.5rem;
+        margin: 1rem 0;
+        color: #88f;
+      }
+
+      .gallery img {
+        width: 300px;
+        height: 150px;
+        object-fit: cover;
+        cursor: pointer;
+      }
+      .gallery img.active {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        aspect-ratio: 1/1;
+      }
+
+      form,
+      button,
+      p,
+      #favorite {
+        position: fixed;
+        background: white;
+        padding: 1rem;
+        border-bottom: 3px solid #88f;
+        max-width: 50%;
+        opacity: 0.7;
+      }
+      button {
+        bottom: 0;
+        right: 0;
+        border: 2px dotted #88f;
+        cursor: pointer;
+      }
+      form {
+        bottom: 0;
+        left: 0;
+      }
+      p {
+        top: 0;
+        left: 0;
+      }
+      #favorite {
+        top: 0;
+        right: 0;
+        z-index: -1;
+      }
+      #link {
+        right: 100px;
+      }
+      #link,
+      #close {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <p>
+      Which kitty is your favorite? You can click on each image to take a closer
+      look.
+    </p>
+    <form>
+      <label for="kitty">Favorite Kitty:</label>
+      <input type="radio" name="kitty" value="Meowzer" /> Meowzer
+      <input type="radio" name="kitty" value="Dingle Dan" /> Dingle Dan
+      <input type="radio" name="kitty" value="Fluffernutter" /> Fluffernutter
+    </form>
+    <div class="gallery">
+      <span>Meowzer</span>
+      <img src="https://placekitten.com/400/200" alt="Image 1" id="image1" />
+      <span>Dingle Dan</span>
+      <img src="https://placekitten.com/400/201" alt="Image 2" id="image2" />
+      <span>Fluffernutter</span>
+      <img src="https://placekitten.com/400/202" alt="Image 3" id="image3" />
+    </div>
+    <button id="link">Link to Image</button>
+    <button id="close">Close</button>
+    <span id="favorite"></span>
+    <script defer>
+    const gallery = document.querySelector(".gallery")
+    const images = gallery?.querySelectorAll("img")
+    const params = new URLSearchParams(window.location.search)
+    const linkButton = document.getElementById("link")
+    const closeButton = document.getElementById("close")
+    const form = document.querySelector("form")
+    const favorite = document.getElementById("favorite")
+
+    let favoriteState = navigation.currentEntry.getState()?.favorite || "all de cats"
+
+    if (favoriteState) {
+      favorite.textContent = `Your favorite kitty is ${favoriteState}`
+      if (favoriteState !== "all de cats") {
+      const favoriteInput = document.querySelector(`input[value="${favoriteState}"]`)
+      favoriteInput.checked = true
+      }
+    }
+
+    let imageIndex =
+      params.get("image") ||
+      navigation.currentEntry.getState()?.imageIndex ||
+      null
+
+    closeButton.addEventListener("click", closeImage)
+
+    linkButton.addEventListener("click", linkImage)
+
+    form?.addEventListener("change", kittyUpdate)
+
+    document.addEventListener("click", onClickOutside)
+
+    if (imageIndex) {
+      openImage(imageIndex)
+    }
+
+    function openImage(index) {
+      images.forEach((image) => image.classList.remove("active"))
+      images[parseInt(index)].classList.add("active")
+      closeButton.style.display = "block"
+      linkButton.style.display = "block"
+    }
+
+    function closeImage() {
+      images.forEach((image) => image.classList.remove("active"))
+      closeButton.style.display = "none"
+      linkButton.style.display = "none"
+      navigation.updateCurrentEntry({
+        state: { ...navigation.currentEntry.getState(), imageIndex: null },
+      })
+    }
+
+    function linkImage() {
+      imageIndex = navigation.currentEntry.getState().imageIndex
+      console.log(imageIndex, "imageIndex")
+      if (imageIndex === -1) return
+      const url = new URL(window.location.href)
+      url.searchParams.set("image", imageIndex || "0")
+      navigator.clipboard.writeText(url.toString())
+      alert("Link copied to clipboard!")
+    }
+
+    function onImageClick(event) {
+      const image = event.currentTarget
+      const index = Array.from(images).indexOf(image)
+      openImage(index.toString())
+
+      navigation.navigate(window.location.pathname, {
+
+        state: { ...navigation.currentEntry.getState(), imageIndex: index },
+      })
+    }
+
+    function onClickOutside(event) {
+      const target = event.target
+      if (target.closest(".gallery")) return
+      closeImage()
+    }
+
+    function kittyUpdate(event) {
+      const target = event.target
+      favorite.textContent = `Your favorite kitty is ${target.value}`
+      navigation.updateCurrentEntry({
+
+        state: {
+          ...navigation.currentEntry.getState(),
+          favorite: target.value,
+        },
+      })
+    }
+
+    images.forEach((image) => {
+      image.addEventListener("click", onImageClick)
+    })
+
+    navigation.addEventListener("navigate", (event) => {
+      console.log(event, "event")
+      const state = event.currentTarget.currentEntry.getState()
+      if (state?.imageIndex) {
+        openImage(state.imageIndex.toString())
+      }
+      if (state?.favorite) {
+        favorite.textContent = `Your favorite kitty is ${state.favorite}`
+      }
+      event.intercept({
+        handler() {
+          event.preventDefault()
+        },
+      })
+    })
+    </script>
+  </body>
+</html>
+```
+</CodeBlock>
+<IFrame src={demoURL + "6"} slot="demo" />
 </Demo>

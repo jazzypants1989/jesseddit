@@ -6,14 +6,19 @@
     <title>Navigation API demo 1</title>
   </head>
   <body>
-    <form>
-      <input type="text" name="search" />
+    <form action="/search">
+      <input type="text" name="search" placeholder="GET search" />
+      <button type="submit">Search</button>
+    </form>
+    <form method="POST" action="/search">
+      <input type="text" name="search" placeholder="POST search" />
       <button type="submit">Search</button>
     </form>
     <button id="mode-button"> Current mode: preventDefault</button>
     <p id="url"></p>
     <a href="https://www.google.com">Google</a>
-    <h3 id="boring-text">
+    <a href="/internal">Internal</a>
+    <h3 id="mainText">
       The URL doesn't change when using event.preventDefault(). However, you
       cannot leave the page because we are not doing any checks on our listener.
     </h3>
@@ -23,15 +28,14 @@
 <script>
   const button = document.querySelector("#mode-button")
   const urlDisplay = document.querySelector("#url")
-  const mainText = document.querySelector("#boring-text")
+  const mainText = document.querySelector("#mainText")
+  const inputs = document.querySelectorAll("input")
 
   if (!urlDisplay) throw new Error("No url display")
 
   urlDisplay.textContent = "current URL: " + location.href
 
   let mode = "preventDefault"
-
-  const fakeAPISearchURL = "https://dummyjson.com/products/search?q="
 
   button?.addEventListener("click", modeSwap)
 
@@ -53,46 +57,65 @@
 
   async function navigationHandler(event: any) {
     if (!button || !urlDisplay || !mainText) return
+
+    const url = new URL(event.destination.url)
+
+    const path = url.pathname
+    const searchParams = url.searchParams
+
     if (mode === "preventDefault") {
       event.preventDefault()
-      console.log(event)
-      const formData = new FormData(event.destination.form)
-      try {
-        const response = await fetch(fakeAPISearchURL + search)
-        const products = await response.json()
-        if (products.length > 0) {
-          mainText.innerHTML = `<h3>You searched for ${search}. Here are the results:</h3>`
-          products.forEach((product: any) => {
-            const productDiv = document.createElement("div")
-            productDiv.innerHTML = `<h4>${product.title}</h4>
-            <p>${product.description}</p>
-            <p>Price: $${product.price}</p>
-            <img src="${product.image}" alt="${product.title}" />`
-            mainText.appendChild(productDiv)
-          })
-          return
-        }
-      } catch (error) {
-        console.log(error)
+      const formData = event.formData
+      if (path === "/search" && searchParams.has("search")) {
+        const search = searchParams.get("search")
+        mainText.textContent = `You searched for ${search} with a GET request. That's so cool.`
+        return
       }
-      //   search
-      //     ? (mainText.innerHTML = `<h3>You searched for ${search}. It's not here. Why don't you try Google?</h3>`)
-      //     : url.pathname === location.pathname
-      //     ? (mainText.innerHTML = `<h3>You'll never leave this page.</h3>`)
-      //     : (mainText.innerHTML = `<h2>NO! You can't go to ${event.destination.url}.</h2>
-      //  <small>I would miss you too much.</small>`)
+      if (formData) {
+        const search = formData.get("search")
+        mainText.textContent = `You searched for ${search} with a POST request. I love that about you.`
+        return
+      }
+      if (url.origin === location.origin) {
+        mainText.innerHTML = `<h1>Yeah, just stay here. It's nice here.</h1>`
+        return
+      } else {
+        if (checkInputs()) {
+          if (
+            !confirm(
+              "You have unsaved changes. Are you sure you want to leave?"
+            )
+          ) {
+            mainText.innerHTML = `<h1>I mean, you can't leave anyway, but I'm glad you're staying.</h1>`
+            return
+          }
+        }
+        mainText.innerHTML = `<h1>NO! You can't go to ${url.href}.</h1>
+        <small>I would miss you too much.</small>`
+      }
     } else {
+      // You don't need a whole different handler.
+      // This is all you need to do to check for unsaved changes
+      // if (checkInputs()) {
+      //   if(!confirm("You have unsaved changes. Are you sure you want to leave?")) {
+      //     event.preventDefault()
+      //     return
+      //   }
+      // }
       event.intercept({
         handler() {
-          console.log(event)
-          console.log(navigation.transition)
-          const url = new URL(event.destination.url)
-          const search = url.searchParams.get("search")
-          if (search?.length === 0) {
-            mainText.innerHTML = `You didn't search for anything.`
-            return
-          } else {
-            mainText.innerHTML = `<h6>No ${search} here... I guess you can try Google if you want to.</h6>`
+          if (path === "/internal") {
+            mainText.innerHTML = `<h1>Yeah, you can stay here... But, really... you can leave now.</h1>`
+          }
+          if (path === "/search" && searchParams.has("search")) {
+            const search = searchParams.get("search")
+            mainText.textContent = `You searched for ${search} with a GET request. How original.`
+          }
+          const formData = event.formData
+          const search = formData.get("search")
+          mainText.textContent = `You searched for ${search} with a POST request. Boooring. Just go to Google already.`
+          if (checkInputs()) {
+            console.log("THIS WILL NEVER RUN!")
           }
         },
       })
@@ -100,5 +123,14 @@
     setTimeout(() => {
       urlDisplay.textContent = "current URL: " + location.href
     })
+  }
+
+  function checkInputs() {
+    for (const input of inputs) {
+      if (input.value) {
+        return true
+      }
+    }
+    return false
   }
 </script>

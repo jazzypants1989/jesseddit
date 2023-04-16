@@ -1,10 +1,13 @@
 ---
+import CodePen from "./CodePen.astro"
 import SolidPicker from "./SolidPicker"
 
-const { id, url } = Astro.props
+const { id, slug } = Astro.props
 
 const code = await Astro.slots.render("code")
 const demo = await Astro.slots.render("demo")
 ---
 
-<SolidPicker code={code} demo={demo} id={id} url={url} client:load />
+<SolidPicker code={code} demo={demo} id={id} client:load>
+  <CodePen slug={slug} />
+</SolidPicker>

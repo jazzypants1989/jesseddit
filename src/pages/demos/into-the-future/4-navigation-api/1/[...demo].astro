@@ -32,7 +32,7 @@
 
   function Router(path) {
     if (path === "/special") {
-      main.innerHTML = `<h1>This page is special</h1>
+      main.innerHTML = `<h1>This page is special 🎉</h1>
     <a href="/boring">Make it boring</a>
     <a href="https://developer.mozilla.org">External link #1</a>
     `
@@ -44,5 +44,5 @@
     }
   }
 
-  Router("/" + location.pathname.split("/")[5]) // this is the path of the iframe
+  Router(location.pathname)
 </script>

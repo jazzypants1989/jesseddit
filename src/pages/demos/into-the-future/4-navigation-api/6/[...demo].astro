@@ -3,116 +3,223 @@
   <head>
     <title>Gallery</title>
     <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+      }
+
       .gallery {
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: center;
       }
+
+      .gallery span {
+        font-size: 1.5rem;
+        margin: 1rem 0;
+        color: #88f;
+      }
+
       .gallery img {
-        width: 200px;
-        height: 200px;
+        width: 300px;
+        height: 150px;
         object-fit: cover;
-        margin: 5px;
-        border-radius: 5px;
         cursor: pointer;
       }
       .gallery img.active {
+        width: 100%;
+        height: 100%;
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        z-index: 1;
+        aspect-ratio: 1/1;
+      }
+
+      form,
+      button,
+      p,
+      #favorite {
+        position: fixed;
+        background: white;
+        padding: 1rem;
+        border-bottom: 3px solid #88f;
+        max-width: 50%;
+        opacity: 0.7;
+      }
+      button {
+        bottom: 0;
+        right: 0;
+        border: 2px dotted #88f;
+        cursor: pointer;
+      }
+      form {
+        bottom: 0;
+        left: 0;
+      }
+      p {
+        top: 0;
+        left: 0;
+      }
+      #favorite {
+        top: 0;
+        right: 0;
+        z-index: -1;
+      }
+      #link {
+        right: 100px;
+      }
+      #link,
+      #close {
+        display: none;
       }
     </style>
   </head>
   <body>
+    <p>
+      Which kitty is your favorite? You can click on each image to take a closer
+      look.
+    </p>
+    <form>
+      <label for="kitty">Favorite Kitty:</label>
+      <input type="radio" name="kitty" value="Meowzer" /> Meowzer
+      <input type="radio" name="kitty" value="Dingle Dan" /> Dingle Dan
+      <input type="radio" name="kitty" value="Fluffernutter" /> Fluffernutter
+    </form>
     <div class="gallery">
-      <img src="https://placekitten.com/200/200" alt="Image 1" />
-      <img src="https://placekitten.com/200/201" alt="Image 2" />
-      <img src="https://placekitten.com/200/202" alt="Image 3" />
+      <span>Meowzer</span>
+      <img src="https://placekitten.com/400/200" alt="Image 1" id="image1" />
+      <span>Dingle Dan</span>
+      <img src="https://placekitten.com/400/201" alt="Image 2" id="image2" />
+      <span>Fluffernutter</span>
+      <img src="https://placekitten.com/400/202" alt="Image 3" id="image3" />
     </div>
-
-    <script>
-      const gallery = document.querySelector(".gallery")
-      const images = gallery.querySelectorAll("img")
-      const params = new URLSearchParams(window.location.search)
-
-      if (params.has("image")) {
-        const index = parseInt(params.get("image"))
-        if (!isNaN(index)) {
-          openImage(index)
-        }
-      }
-
-      function openImage(index) {
-        images[index].classList.add("active")
-        history.pushState({ imageIndex: index }, "", "")
-        window.addEventListener("popstate", onPopState)
-        window.addEventListener("click", onClickOutside)
-      }
-
-      function closeImage() {
-        const activeImage = gallery.querySelector(".active")
-        const index = Array.from(images).indexOf(activeImage)
-        activeImage.classList.remove("active")
-        history.pushState({ imageIndex: null }, "", "")
-        window.removeEventListener("popstate", onPopState)
-        window.removeEventListener("click", onClickOutside)
-      }
-
-      function onPopState() {
-        const index = history.state?.imageIndex
-        if (index !== undefined && index !== null) {
-          openImage(index)
-        } else {
-          closeImage()
-        }
-      }
-
-      images.forEach((image, index) => {
-        image.addEventListener("click", () => openImage(index))
-
-        const linkButton = document.createElement("button")
-        linkButton.textContent = "Link"
-
-        linkButton.addEventListener("click", (event) => {
-          event.stopPropagation()
-          const url = new URL(window.location.href)
-          url.searchParams.set("image", index)
-          prompt("Copy this link:", url.toString())
-        })
-
-        image.after(linkButton)
-      })
-
-      const closeButton = document.createElement("button")
-      closeButton.textContent = "Close"
-      closeButton.addEventListener("click", closeImage)
-      closeButton.style.position = "fixed"
-      closeButton.style.top = "10px"
-      closeButton.style.right = "10px"
-      closeButton.style.zIndex = "2"
-
-      function onImageClick(event) {
-        const image = event.target
-        image.classList.add("active")
-        image.after(closeButton)
-        window.addEventListener("click", onClickOutside)
-      }
-
-      function onClickOutside(event) {
-        const activeImage = gallery.querySelector(".active")
-        if (activeImage && !activeImage.contains(event.target)) {
-          activeImage.classList.remove("active")
-          closeButton.remove()
-          window.removeEventListener("click", onClickOutside)
-        }
-      }
-
-      images.forEach((image) => {
-        image.addEventListener("click", onImageClick)
-      })
-    </script>
+    <button id="link">Link to Image</button>
+    <button id="close">Close</button>
+    <span id="favorite"></span>
   </body>
+
+  <script>
+    const gallery = document.querySelector(".gallery")
+    const images = gallery?.querySelectorAll(
+      "img"
+    ) as NodeListOf<HTMLImageElement>
+    const params = new URLSearchParams(window.location.search)
+    const linkButton = document.getElementById("link") as HTMLButtonElement
+    const closeButton = document.getElementById("close") as HTMLButtonElement
+    const form = document.querySelector("form") as HTMLFormElement
+    const favorite = document.getElementById("favorite") as HTMLSpanElement
+
+    // @ts-ignore
+    let favoriteState =
+      navigation.currentEntry.getState()?.favorite || "all de cats"
+
+    if (favoriteState) {
+      favorite.textContent = `Your favorite kitty is ${favoriteState}`
+      if (favoriteState !== "all de cats") {
+        const favoriteInput = document.querySelector(
+          `input[value="${favoriteState}"]`
+        ) as HTMLInputElement
+        favoriteInput.checked = true
+      }
+    }
+
+    let imageIndex =
+      params.get("image") ||
+      // @ts-ignore
+      navigation.currentEntry.getState()?.imageIndex ||
+      null
+
+    closeButton.addEventListener("click", closeImage)
+
+    linkButton.addEventListener("click", linkImage)
+
+    form?.addEventListener("change", kittyUpdate)
+
+    document.addEventListener("click", onClickOutside)
+
+    if (imageIndex) {
+      openImage(imageIndex)
+    }
+
+    function openImage(index: string) {
+      images.forEach((image) => image.classList.remove("active"))
+      images[parseInt(index)].classList.add("active")
+      closeButton.style.display = "block"
+      linkButton.style.display = "block"
+    }
+
+    function closeImage() {
+      images.forEach((image) => image.classList.remove("active"))
+      closeButton.style.display = "none"
+      linkButton.style.display = "none"
+      // @ts-ignore
+      navigation.updateCurrentEntry({
+        // @ts-ignore
+        state: { ...navigation.currentEntry.getState(), imageIndex: null },
+      })
+    }
+
+    function linkImage() {
+      // @ts-ignore
+      imageIndex = navigation.currentEntry.getState().imageIndex
+      console.log(imageIndex, "imageIndex")
+      if (imageIndex === -1) return
+      const url = new URL(window.location.href)
+      url.searchParams.set("image", imageIndex || "0")
+      navigator.clipboard.writeText(url.toString())
+      alert("Link copied to clipboard!")
+    }
+
+    function onImageClick(event: MouseEvent) {
+      const image = event.currentTarget as HTMLImageElement
+      const index = Array.from(images).indexOf(image)
+      openImage(index.toString())
+
+      // @ts-ignore
+      navigation.navigate(window.location.pathname, {
+        // @ts-ignore
+        state: { ...navigation.currentEntry.getState(), imageIndex: index },
+      })
+    }
+
+    function onClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement
+      if (target.closest(".gallery")) return
+      closeImage()
+    }
+
+    function kittyUpdate(event: any) {
+      const target = event.target as HTMLInputElement
+      favorite.textContent = `Your favorite kitty is ${target.value}`
+      // @ts-ignore
+      navigation.updateCurrentEntry({
+        // @ts-ignore
+        state: {
+          ...navigation.currentEntry.getState(),
+          favorite: target.value,
+        },
+      })
+    }
+
+    images.forEach((image) => {
+      image.addEventListener("click", onImageClick)
+    })
+
+    // @ts-ignore
+    navigation.addEventListener("navigate", (event) => {
+      console.log(event, "event")
+
+      event.intercept({
+        handler() {
+          const state = event.currentTarget.currentEntry.getState()
+          if (state?.imageIndex) {
+            openImage(state.imageIndex.toString())
+          }
+          if (state?.favorite) {
+            favorite.textContent = `Your favorite kitty is ${state.favorite}`
+          }
+        },
+      })
+    })
+  </script>
 </html>

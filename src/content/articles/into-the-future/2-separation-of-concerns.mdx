@@ -7,7 +7,7 @@ import CodeBlock from "../../../components/CodeBlock.astro"
 
 ## Introduction
 
-So, we've got around 430 lines of code sitting in one HTML file. While it works perfectly fine, it's not very maintainable. We need to break this up into smaller, more manageable pieces. This has classically been referred to as "separation of concerns".
+So, we've got around 430 lines of code sitting in one HTML file. While it works perfectly fine, it's not very maintainable. We need to break this up into smaller, more manageable pieces. This has classically been called "separation of concerns".
 
 Broadly, this just means splitting our code into different files, each with a single responsibility. In the past, this could be as simple as splitting our code into three files: one for our HTML, one for our CSS, and one for our JavaScript. Let's start there.
 
@@ -23,7 +23,7 @@ const db = async () => {
   if (!response.ok) {
     alert("HTTP-Error: " + response.status)
     console.error(response)
-    return Nope("Servers", "Down")
+    return Nope("badFetch")
   }
 
   const data = await response.json()

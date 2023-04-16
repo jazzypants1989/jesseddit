@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.toast {
+  @apply fixed bottom-0 right-0 m-4 p-4 text-white bg-purple-800 rounded shadow-lg dark:bg-purple-300 dark:text-purple-800;
+}

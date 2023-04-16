@@ -1,0 +1,82 @@
+---
+title: "The View Transitions API"
+nextLink: "./6-typescript"
+githubLink: true
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+import Demo from "../../../components/Demo.astro"
+export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
+
+## Introduction
+
+Animations have been a part of the web experience for a long time. While we have come a long way from the days of the marquee tag and animated GIFs, the web is still a bit behind its native peers. While it is simple enough to move things around on a single web page with CSS, a transition between two pages has been almost impossible-- especially without lots of JavaScript. So, the Chrome team have developed a new web standard called the [View Transitions API](https://drafts.csswg.org/css-view-transitions-1/).
+
+## The Old Way
+
+Generally, if you want to transition between multiple views in a smooth way on the web, you need to use JavaScript. This, like so many other complexities of the web, goes back to the essential fact that the browser reads websites like a document-- from top to bottom. This is one of the many reasons why [Single Page Applications](/articles/client-side-routing/2-a-brief-history-of-client-side-routing) grew in prominence.
+
+Essentially, every time you navigate to a new page, the browser completely destroys the old one and creates a one from scratch with the new data unless you override the default behavior with client-side routing. In reality, it may hold [resources from the old page in memory for a short time](https://pressidium.com/blog/browser-cache-work/), but the important thing is that the browser assumes that nothing from the previous page is relevant to the new one.
+
+So, let's take a quick look at some demos of the old way of doing things. First, this just shows the basic idea of tying a dom element to a state (which as we've sees, that's basically what a route is). 
+
+<Demo id="demo-1" slug="VwEeqgg">
+<CodeBlock slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animating an Element</title>
+    <style>
+      .box {
+        position: absolute;
+        left: 0;
+        transition: left 2s ease-in-out, font-size 1s ease-in-out,
+          border-radius 2s ease-in-out, background-color 1s ease-in-out;
+        height: 200px;
+        width: fit-content;
+        font-size: 2em;
+        background-color: goldenrod;
+      }
+      .box.state-2 {
+        background-color: red;
+        left: calc(100% - 100px);
+        font-size: 3em;
+        border-radius: 3em;
+        transition: left 2s ease-in-out font-size 1s ease-in-out,
+          border-radius 2s ease-in-out, background-color 1s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="toggle-btn">Toggle State</button>
+    <div id="box" class="box">
+      <p id="text">State 1</p>
+    </div>
+    <script>
+      const button = document.getElementById("toggle-btn")
+
+      button.addEventListener("click", function () {
+        const box = document.getElementById("box")
+        const text = document.getElementById("text")
+        if (box.classList.contains("state-2")) {
+          box.classList.remove("state-2")
+          text.innerHTML = "State 1"
+        } else {
+          box.classList.add("state-2")
+          text.innerHTML = "WHO COULD HAVE EXPECTED ALL THIS TEXT, THIS WILL BE A PROBLEM"
+        }
+      })
+    </script>
+  </body>
+</html>
+```
+
+</CodeBlock>
+<IFrame src={demoURL + "1"} slot="demo" small />
+</Demo>
+
+One problem is that, unless you know ahead of time exactly how much space you need for the new page, getting the size and shape of the new element right can be a problem. Also, even though we put down multiple CSS classes to personalize the transition, things that we change programmatically (like the text) will not animate. There are a few ways to overcome this. Let's look at another example.

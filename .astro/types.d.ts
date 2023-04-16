@@ -219,6 +219,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"into-the-future/5-view-transitions-api.mdx": {
+  id: "into-the-future/5-view-transitions-api.mdx",
+  slug: "into-the-future/5-view-transitions-api",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "react/1-introduction.mdx": {
   id: "react/1-introduction.mdx",
   slug: "react/1-introduction",

@@ -19,21 +19,17 @@ Due to the issues with scoping in JavaScript, the eventual emergence of the [IIF
 
 <CodeBlock>
 ```js
-
 // Global scope
 var cheese = 'cheddar';
 
 (function() {
-// local scope
-
+    // local scope
     var cheese = 'gouda';
     console.log(cheese); // gouda
-
 })(); // note the extra parentheses
 
 console.log(cheese); // cheddar
-
-    ```
+```
 
 </CodeBlock>
 
@@ -51,16 +47,13 @@ So, let's take a look at how this works. First, we'll create a module that expor
 cheeseGrater.js
 ```js
 function cheeseGrater(cheese) {
-
     return cheese + ' is grated now';
-
 }
 module.exports = cheeseGrater;
-
 ````
 </CodeBlock>
 
-Notice how we can now import this module into another file and use it. But, we don't have to just export one thing from a module. We can export multiple things by adding them to the module.exports object.
+Now, we can import this module into another file and use it. But, we don't have to just export one thing from a module. We can export multiple things by adding them to the module.exports object.
 
 <CodeBlock>
 cheeseGraterCollection.js
@@ -68,15 +61,11 @@ cheeseGraterCollection.js
 var cheeseGrater = require('./cheeseGrater');
 
 function superCheeseGrater(cheese) {
-
     return cheeseGrater(cheese) + '... in a really impressive way!';
-
 }
 
 function tinyCheeseGrater(cheese) {
-
     return cheeseGrater(cheese) + '... in a really cute way!';
-
 }
 
 module.exports = {
@@ -94,14 +83,16 @@ index.js
 ```js
 var { superCheeseGrater, tinyCheeseGrater } = require('./cheeseGraterCollection');
 
-console.log(superCheeseGrater('cheddar')); // cheddar is grated now... in a really impressive way!
-console.log(tinyCheeseGrater('gouda')); // gouda is grated now... in a really cute way!
+console.log(superCheeseGrater('cheddar'));
+// cheddar is grated now... in a really impressive way!
+console.log(tinyCheeseGrater('gouda'));
+// gouda is grated now... in a really cute way!
 
 ````
 
 </CodeBlock>
 
-The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://developers.google.com/web/fundamentals/performance/rendering) and can even cause the browser to crash.
+The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
 
 AMD modules were designed to solve this problem by introducing an asynchronous loading mechanism that enables modules to be loaded in parallel without blocking the main thread. In AMD, modules are defined with an appropriately named define() function that takes both an array of dependencies and a factory function that defines the module's behavior. The dependencies are loaded asynchronously and passed to the factory function as parameters, which allows the module to start executing as soon as its dependencies are loaded.
 
@@ -110,19 +101,21 @@ AMD modules were designed to solve this problem by introducing an asynchronous l
 cheeseGrater.js
 
 define(function() {
-function cheeseGrater(cheese) {
-return cheese + ' is grated now';
-}
-return cheeseGrater;
+    function cheeseGrater(cheese) {
+        return cheese + ' is grated now';
+    }
+    
+    return cheeseGrater;
 });
 
 cheeseGraterCollection.js
 
 define(['./cheeseGrater'], function(cheeseGrater) {
-function superCheeseGrater(cheese) {
-return cheeseGrater(cheese) + '... in a really impressive way!';
-}
-return superCheeseGrater;
+    function superCheeseGrater(cheese) {
+        return cheeseGrater(cheese) + '... in a really impressive way!';
+    }
+
+    return superCheeseGrater;
 });
 ````
 
@@ -147,14 +140,14 @@ But, these two standards are not compatible with each other. This led to the eme
     // this will be the global object in the browser, 
     // or the exports object in Node.js
   function superCheeseGrater(cheese) {
-    return cheeseGrater(cheese) + '... in a really impressive way!';
+      return cheeseGrater(cheese) + '... in a really impressive way!';
   }
   return superCheeseGrater;
 }));
 ```
 </CodeBlock>
 
-Gross, right? While it is a clever use of an IIFE, it is not very readable. But, ESM are here to save the day!
+Oof. While it is a clever use of an IIFE, it is not very readable. But, ESM are here to save the day!
 
 ## ESM
 
@@ -173,7 +166,6 @@ export function improvedCheeseGrater(cheese) {
 
     That is a really impressive cheese grater!
     `
-
 }
 
 export function reallyTinyCheeseGrater(cheese) {
@@ -195,9 +187,9 @@ console.log(reallyTinyCheeseGrater('gouda'));
 ````
 </CodeBlock>
 
-In my opinion, this is much cleaner than the previous standards, and much more flexible. Notice how you can export multiple things from a module while still using a default export? [Although many consider default exports to be an anti-pattern](https://humanwhocodes.com/blog/2019/01/stop-using-default-exports-javascript-module/), they are still useful in some cases.
+In my opinion, this is much cleaner than the previous standards, and much more flexible. Notice how you can export multiple things from a module while still using a default export? [Although many consider default exports to be an anti-pattern](https://humanwhocodes.com/blog/2019/01/stop-using-default-exports-javascript-module/), they are still the preferred format for some.
 
-ESM are also asynchronous by default, and they can even be dynamically imported. This means that you can import modules on-demand which is especially useful for code-splitting. [Code-splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting) is exactly what it sounds like: splitting your code into multiple bundles depending on what is needed. While previously this could only be achieved with a bundler like the previously mentioned Browserify, [WebPack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/guide/en/), ESM allows us to do this natively in the browser.
+ESM are also asynchronous by default, and they can even be dynamically imported. This means that you can import modules on-demand which is especially useful for code-splitting. [Code-splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting) is exactly what it sounds like: splitting your code into multiple smaller chunks that can be loaded on-demand. This is useful for applications that have a lot of code, or for applications that have a lot of pages. While previously this could only be achieved with a bundler like the previously mentioned Browserify, [WebPack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/guide/en/), ESM allows us to do this natively in the browser.
 
 Unlike in the last chapter where everything was loaded onto the browser at once, modules will allow us to specify which files get loaded for each page. Speaking of our application, let's take a look at how we can use ESM to improve it.
 
@@ -239,18 +231,23 @@ searchListener()
 
 updateCart()
 
+// Don't worry, we clean this up even more 
+// in the next chapter...
+
 let urlParams = new URLSearchParams(location.search)
 if (urlParams.has("search")) {
-urlSearchHandler()
+  urlSearchHandler()
 } else {
-Router(location.pathname)
+  Router(location.pathname)
 }
 
 ````
 
 </CodeBlock>
 
-And, in the Routes.js file:
+It's important to note that these include the file extensions. Unless you are using a bundler or you create an import map, you will need to specify the file extension when using ESM in the browser. We'll be discussing both this and adjusting our server to use ESM in the aforementioned chapter 6.
+
+For now, the Routes.js file:
 
 <CodeBlock>
 components/Routes.js
@@ -277,7 +274,7 @@ This is where the magic happens. Notice how we can simply await the import of a 
 
 We also added a new page to the app: the checkout page! No e-commerce app would be complete without a checkout page, right? This page is pretty simple. It's just a form that collects the user's information and sends it with their cart to an imaginary server. We will be using the [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) API.
 
-Forms are an essential part of the web, and I wanted to include it in our demo app-- especially as we will be converting it to different frameworks in later articles. It's interesting to see how each framework handles forms-- the most primitive form of mutation on the web. I'm not going to include the code here as we will be covering forms in detail in another article. As always, the code is avaiable below.
+Forms are an essential part of the web, and I wanted to include it in our demo app-- especially as we will be converting it to different frameworks in later articles.It's interesting to see how each framework handles forms-- the most primitive form of mutation on the web. I'm not going to include the code here as we will be covering forms in detail in another article. As always, the code is avaiable below.
 
 ## Conclusion
 
