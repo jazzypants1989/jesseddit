@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation API demo 1</title>
+  </head>
+  <body>
+    <a id="top" href="#bottom">Bottom</a>
+    <button id="btn-1"> State 1, URL 1</button>
+    <button id="btn-3"> State 1, URL 2</button>
+    <button id="btn-2"> State 2, URL 1</button>
+    <button id="btn-4"> State 2, URL 2</button>
+    <pre
+      id="state">
+      With the state object, our app can store data that is not in the URL. 
+      This is useful for storing data that is not relevant to the current page, 
+      but is relevant to the user's experience. 
+      This can be anything from user preferences to the state of a form.
+    </pre>
+    <p id="url"></p>
+    <a id="bottom" href="#top">Top</a>
+    <button id="navigationMode"
+      >Toggle navigation API mode - Currently Off</button
+    >
+    <button id="markStateAsFavorite"> Mark current state as favorite</button>
+    <button id="goToFavoriteState">Go to favorite state</button>
+    <button id="back">Back</button>
+  </body>
+</html>
+
+<script>
+  const button1 = document.querySelector("#btn-1")
+  const button2 = document.querySelector("#btn-2")
+  const button3 = document.querySelector("#btn-3")
+  const button4 = document.querySelector("#btn-4")
+  const navigationModeButton = document.querySelector("#navigationMode")
+  const markFavoriteStateButton = document.querySelector("#markStateAsFavorite")
+  const goToFavoriteStateButton = document.querySelector("#goToFavoriteState")
+  const back = document.querySelector("#back")
+  const stateDisplay = document.querySelector("#state")
+  const urlDisplay = document.querySelector("#url")
+  const top = document.querySelector("#top")
+  const bottom = document.querySelector("#bottom")
+
+  const state1 = { name: "John", favColor: "blue", favNumber: 42 }
+  const state2 = { name: "Jane", favColor: "red", favNumber: 7 }
+
+  let navigationMode = "off"
+  let favoriteState = {
+    name: "Dick",
+    favColor: "green",
+    favNumber: 69,
+    key: 420,
+  }
+
+  urlDisplay!.textContent = "current URL: " + location.href
+
+  top?.addEventListener("click", () => {
+    setTimeout(() => {
+      updateUI()
+    }, 10)
+  })
+
+  bottom?.addEventListener("click", () => {
+    setTimeout(() => {
+      updateUI()
+    }, 10)
+  })
+
+  navigationModeButton?.addEventListener("click", () => {
+    if (navigationMode === "off") {
+      navigationMode = "on"
+      navigationModeButton!.textContent =
+        "Toggle navigation API mode - Currently On"
+      // @ts-ignore
+      navigation.addEventListener("navigate", navigationHandler)
+    } else {
+      navigationMode = "off"
+      navigationModeButton!.textContent =
+        "Toggle navigation API mode - Currently Off"
+      // @ts-ignore
+      navigation.removeEventListener("navigate", navigationHandler)
+    }
+  })
+
+  function navigationHandler(event: any) {
+    if (event.hashChange) {
+      return
+    }
+    event.intercept({
+      handler() {
+        updateUI()
+        console.log(event.navigationType)
+      },
+    })
+  }
+
+  button1?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/ONE", { state: state1 })
+    } else {
+      history.pushState(state1, "", "/ONE")
+      updateUI()
+    }
+  })
+
+  button2?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/ONE", { state: state2 })
+    } else {
+      history.pushState(state2, "", "/ONE")
+      updateUI()
+    }
+  })
+
+  button3?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/TWO", { state: state1 })
+    } else {
+      history.pushState(state1, "", "/TWO")
+      updateUI()
+    }
+  })
+
+  button4?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.navigate("/TWO", { state: state2 })
+    } else {
+      history.pushState(state2, "", "/TWO")
+      updateUI()
+    }
+  })
+
+  back?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      navigation.back()
+    } else {
+      history.back()
+      updateUI()
+    }
+  })
+
+  markFavoriteStateButton?.addEventListener("click", markStateAsFavorite)
+  goToFavoriteStateButton?.addEventListener("click", goToFavoriteState)
+
+  function updateStateDisplay() {
+    if (navigationMode === "on") {
+      stateDisplay!.textContent = JSON.stringify(
+        // @ts-ignore
+        navigation.currentEntry.getState(),
+        null,
+        2
+      )
+    } else {
+      stateDisplay!.textContent = JSON.stringify(history.state, null, 2)
+    }
+  }
+
+  function updateUI() {
+    urlDisplay!.textContent = "current URL: " + location.href
+    updateStateDisplay()
+  }
+
+  function markStateAsFavorite() {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      const key = navigation.currentEntry.key
+      favoriteState = {
+        // @ts-ignore
+        state: navigation.currentEntry.getState(),
+        key,
+      }
+    } else {
+      const key = history.state
+      favoriteState = key
+    }
+    console.log("marked", favoriteState)
+  }
+
+  async function goToFavoriteState() {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      const entries = navigation.entries()
+      const entry = entries.find(
+        (entry: any) => entry.key === favoriteState.key
+      )
+      if (!entry) {
+        stateDisplay!.textContent =
+          "You have to save a favorite in navigation mode first"
+        return
+      }
+      if (location.href === entry.url) {
+        console.log("replace state automatically triggered")
+        // @ts-ignore
+        navigation.updateCurrentEntry({ state: favoriteState.state })
+      }
+      // @ts-ignore
+      await navigation.traverseTo(entry.key)
+      // @ts-ignore
+      console.log(navigation.currentEntry)
+      updateUI()
+    } else {
+      history.replaceState(favoriteState, "", location.href)
+      updateUI()
+    }
+    console.log("updated", favoriteState)
+  }
+
+  window.addEventListener("popstate", () => {
+    updateUI()
+  })
+</script>
