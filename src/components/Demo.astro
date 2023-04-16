@@ -5,11 +5,11 @@ import SolidPicker from "./SolidPicker"
 const { id, slug } = Astro.props
 
 const code = await Astro.slots.render("code")
-console.log(code)
+console.log(code.slice(0, 50))
 const demo = await Astro.slots.render("demo")
-console.log(demo)
+console.log(demo.slice(0, 50))
 ---
 
-<SolidPicker code={code} demo={demo} id={id} client:load>
+<SolidPicker code={code} demo={demo} id={id} client:only>
   <CodePen slug={slug} />
 </SolidPicker>
