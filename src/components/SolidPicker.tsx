@@ -9,7 +9,12 @@ export default function SolidPicker(props: {
   id: string
   children: any
 }) {
-  const [active, setActive] = createSignal("demo")
+  const [active, setActive] = createSignal("code")
+
+  setTimeout(() => {
+    setActive("demo")
+  }, 1000)
+
   return (
     <div
       class="w-full flex flex-col items-center justify-center"
