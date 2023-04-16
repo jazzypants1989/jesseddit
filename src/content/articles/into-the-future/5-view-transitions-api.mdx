@@ -11,13 +11,13 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
 
 ## Introduction
 
-Animations have been a part of the web experience for a long time. While we have come a long way from the days of the marquee tag and animated GIFs, the web is still a bit behind its native peers. While it is simple enough to move things around on a single web page with CSS, a transition between two pages has been almost impossible-- especially without lots of JavaScript. So, the Chrome team have developed a new web standard called the [View Transitions API](https://drafts.csswg.org/css-view-transitions-1/).
+Animations have been a part of the web experience for a long time. While we have come a long way from the days of the marquee tag and animated GIFs, the web is still a bit behind its native peers. While it is simple enough to move things around on a single web page with CSS, a transition between two pages has been almost impossible-- especially without using JavaScript. So, the Chrome team have developed a new web standard called the [View Transitions API](https://drafts.csswg.org/css-view-transitions-1/).
 
 ## The Old Way
 
 Generally, if you want to transition between multiple views in a smooth way on the web, you need to use JavaScript. This, like so many other complexities of the web, goes back to the essential fact that the browser reads websites like a document-- from top to bottom. This is one of the many reasons why [Single Page Applications](/articles/client-side-routing/2-a-brief-history-of-client-side-routing) grew in prominence.
 
-Essentially, every time you navigate to a new page, the browser completely destroys the old one and creates a one from scratch with the new data unless you override the default behavior with client-side routing. In reality, it may hold [resources from the old page in memory for a short time](https://pressidium.com/blog/browser-cache-work/), but the important thing is that the browser assumes that nothing from the previous page is relevant to the new one.
+Essentially, every time you navigate to a new page, the browser completely destroys the old one and creates one from scratch with the new data unless you override the default behavior with client-side routing. In reality, it may hold [resources from the old page in memory for a short time](https://pressidium.com/blog/browser-cache-work/), but the important thing is that the browser assumes that nothing from the previous page is relevant to the new one.
 
 So, let's take a quick look at some demos of the old way of doing things. First, this just shows the basic idea of tying a dom element to a state (which as we've sees, that's basically what a route is). 
 
