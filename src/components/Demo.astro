@@ -8,6 +8,6 @@ const code = await Astro.slots.render("code")
 const demo = await Astro.slots.render("demo")
 ---
 
-<SolidPicker code={code} demo={demo} id={id} client:visible>
+<SolidPicker code={code} demo={demo} id={id} client:idle>
   <CodePen slug={slug} />
 </SolidPicker>
