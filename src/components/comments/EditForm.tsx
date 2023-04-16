@@ -2,7 +2,10 @@ import type { Comment } from "@prisma/client"
 import { Show, createEffect, createSignal } from "solid-js"
 import { updateComment } from "../../utils/client"
 
-export const [newMessage, setNewMessage] = createSignal("")
+export const [newMessage, setNewMessage] = createSignal({
+  body: "",
+  id: "0",
+})
 
 export default function EditForm(props: { comment: Comment }) {
   const [text, setText] = createSignal(props.comment.body)
@@ -12,7 +15,6 @@ export default function EditForm(props: { comment: Comment }) {
   createEffect(() => {
     if (text()) {
       setError("")
-      console.log(sleep())
     }
   })
 
@@ -32,7 +34,12 @@ export default function EditForm(props: { comment: Comment }) {
     try {
       const updatedComment = updateComment(props.comment, text())
 
-      setNewMessage(text())
+      setNewMessage({
+        body: text(),
+        id: props.comment.id,
+      })
+
+      console.log(newMessage())
 
       setSleep(true)
 

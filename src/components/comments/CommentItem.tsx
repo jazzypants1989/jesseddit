@@ -66,11 +66,13 @@ const CommentItem = (props: {
   })
 
   createEffect(() => {
-    if (newMessage() && commentHasBeenEdited(comment)) {
+    console.log(newMessage())
+    console.log(comment.id)
+    if (newMessage().id === comment.id) {
       setComment((comment: CommentItemProps) => {
         return {
           ...comment,
-          body: newMessage(),
+          body: newMessage().body,
         }
       })
       setShowEdit(false)
