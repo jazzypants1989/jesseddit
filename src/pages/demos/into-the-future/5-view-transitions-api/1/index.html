@@ -6,46 +6,46 @@
     <title>Animating an Element</title>
     <style>
       .box {
-        position: absolute;
-        left: 0;
         transition: left 2s ease-in-out, font-size 1s ease-in-out,
           border-radius 2s ease-in-out, background-color 1s ease-in-out;
+        position: relative;
+        left: 0;
+        width: 200px;
         height: 200px;
-        width: fit-content;
-        font-size: 2em;
-        background-color: goldenrod;
+        background-color: #f00;
+        border-radius: 0;
+        font-size: 1em;
+        text-align: center;
+        padding-top: 100px;
       }
       .box.state-2 {
-        background-color: red;
-        left: calc(100% - 100px);
-        font-size: 3em;
-        border-radius: 3em;
-        transition: left 2s ease-in-out font-size 1s ease-in-out,
-          border-radius 2s ease-in-out, background-color 1s ease-in-out;
+        left: 200px;
+        font-size: 2em;
+        border-radius: 50%;
+        background-color: #0f0;
       }
     </style>
   </head>
   <body>
-    <button id="toggle-btn">Toggle State</button>
+    <button id="toggle-btn">Want a change in scenery?</button>
     <div id="box" class="box">
-      <p id="text">State 1</p>
+      <p id="text">This is your home.</p>
     </div>
     <script>
       const button = document.getElementById("toggle-btn")
+      const box = document.getElementById("box")
+      const text = document.getElementById("text")
 
       button.addEventListener("click", function () {
-        const box = document.getElementById("box")
-        const text = document.getElementById("text")
-        document.startViewTransition(() => {
-          if (box.classList.contains("state-2")) {
-            box.classList.remove("state-2")
-            text.innerHTML = "State 1"
-          } else {
-            box.classList.add("state-2")
-            text.innerHTML = text.innerHTML =
-              "WHO COULD HAVE EXPECTED ALL THIS TEXT, THIS WILL BE A PROBLEM"
-          }
-        })
+        if (box.classList.contains("state-2")) {
+          box.classList.remove("state-2")
+          text.innerText = "This is your home."
+          button.innerText = "You're home! Wanna Leave?"
+        } else {
+          box.classList.add("state-2")
+          text.innerText = "This is somewhere else."
+          button.innerText = "Go back home!"
+        }
       })
     </script>
   </body>

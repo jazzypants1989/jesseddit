@@ -1,0 +1,70 @@
+import CodeBlock from "../../CodeBlock.astro"
+import IFrame from "../../IFrame.astro"
+import Demo from "../../Demo.astro"
+export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
+
+<Demo id="view-transition-one" slug="ZEqBqmL">
+<p slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+      .main-content {
+        view-transition-name: main-content;
+      }
+      
+
+      ::view-transition-new(main-content) {
+        animation-name: slide-content;
+      }
+
+      @keyframes slide-content {
+        from {
+          transform: translateY(100%);
+        }
+      }
+
+      /* html {
+  view-transition-name: none;
+      } */
+
+      /* footer {
+  view-transition-name: footer;
+      } */
+    </style>
+  </head>
+  <body>
+    <header>Header</header>
+    <button id="btn">Click me</button>
+    <main class="main-content">Main Content</main>
+    <footer>Footer</footer>
+    <script>
+      const button = document.querySelector("#btn")
+      const content = document.querySelector(".main-content")
+
+      const view1 = `
+      <div class="view1">
+      <h1>View 1</h1>
+      <p>This is some stuff.</p>
+      </div>
+    `
+      const view2 = `
+      <div class="view2">
+      <h1>View 2</h1>
+      <p>Totally different stuff.</p>
+      </div>
+    `
+
+      button.addEventListener("click", () => {
+        document.startViewTransition(() => {
+          content.innerHTML = content.innerHTML === view1 ? view2 : view1
+        })
+      })
+    </script>
+  </body>
+</html>
+```
+</p>
+<IFrame src={demoURL + "5"} slot="demo" />
+</Demo>

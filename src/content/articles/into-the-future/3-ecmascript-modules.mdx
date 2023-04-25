@@ -17,7 +17,7 @@ This is fine for simple pages, but as websites grew more dynamic and complex wit
 
 Due to the issues with scoping in JavaScript, the eventual emergence of the [IIFE](https://developer.mozilla.org/en-US/docs/Glossary/IIFE) (Immediately Invoked Function Expression) was inevitable. An **IIFE** is a function that is executed as soon as it is defined. This allows the developer to create a local scope for the variables and functions defined within it. This was even more crucial before [let](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) and [const](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const) were introduced in ES6 which allow for block scoping.
 
-<CodeBlock>
+<CodeBlock slot="code">
 ```js
 // Global scope
 var cheese = 'cheddar';
@@ -73,7 +73,6 @@ module.exports = {
     tinyCheeseGrater
 };
 ````
-
 </CodeBlock>
 
 Now, we can import both of these modules into another file and use them.
@@ -89,7 +88,6 @@ console.log(tinyCheeseGrater('gouda'));
 // gouda is grated now... in a really cute way!
 
 ````
-
 </CodeBlock>
 
 The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
@@ -118,7 +116,6 @@ define(['./cheeseGrater'], function(cheeseGrater) {
     return superCheeseGrater;
 });
 ````
-
 </CodeBlock>
 
 But, these two standards are not compatible with each other. This led to the emergence of UMD modules, which are a combination of the two. UMD modules are designed to be compatible with both AMD and CommonJS module loaders. This is done by checking for the presence of the define() function, which is used by AMD loaders, and the presence of the module object, which is used by CommonJS loaders. If neither of these is present, the module is loaded into the global scope.
@@ -212,7 +209,6 @@ index.html
   </head>
 <!-- The Rest of the Owl -->
 ````
-
 </CodeBlock>
 
 Yep, you saw that right. That's it. Just one script tag with the `type="module"` attribute. This tells the browser that this script is an ESM module. Now, let's take a look at our App.js file.
@@ -242,7 +238,6 @@ if (urlParams.has("search")) {
 }
 
 ````
-
 </CodeBlock>
 
 It's important to note that these include the file extensions. Unless you are using a bundler or you create an import map, you will need to specify the file extension when using ESM in the browser. We'll be discussing both this and adjusting our server to use ESM in the aforementioned chapter 6.
@@ -267,7 +262,6 @@ export async function Route(path) {
   return component.default()
 }
 ````
-
 </CodeBlock>
 
 This is where the magic happens. Notice how we can simply await the import of a module? While our current structure does not allow us to do much code-splitting, at least this allows us to only load the current view template for each page. This is a huge improvement over the previous version of our app, where we were loading everything at once.

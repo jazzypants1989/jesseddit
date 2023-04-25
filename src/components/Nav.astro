@@ -9,16 +9,36 @@ const cookie = Astro.cookies.get("user").value
 const user = cookie ? JSON.parse(cookie) : null
 ---
 
+<style>
+  @media (max-width: 768px) {
+    #blogLink {
+      display: none;
+    }
+
+    #blogNonLink {
+      display: block;
+    }
+  }
+</style>
+
 <ul class="text-3xl">
   {
     Astro.props.now === "Blog" ? (
-      <a href="/blog" class="Link">
-        <li class="px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600 duration-1000 hover:bg-purple-600 hover:text-white">
+      <>
+        <a id="blogLink" href="/blog" class="Link">
+          <li class="mb-4 rounded-full border-b-2 border-purple-600 px-4 text-center shadow-md duration-1000 hover:bg-purple-600 hover:text-white">
+            Blog
+          </li>
+        </a>
+        <li
+          id="blogNonLink"
+          class="mb-4 hidden rounded-full border-b-2 border-purple-600 px-4 text-center shadow-md duration-1000 hover:bg-purple-600 hover:text-white"
+        >
           Blog
         </li>
-      </a>
+      </>
     ) : (
-      <li class="pointer-events-none px-4 border-b-2 mb-4 shadow-md rounded-full text-center border-purple-600 duration-1000 hover:bg-purple-600 hover:text-white">
+      <li class="pointer-events-none mb-4 rounded-full border-b-2 border-purple-600 px-4 text-center shadow-md duration-1000 hover:bg-purple-600 hover:text-white">
         {Astro.props.now}
       </li>
     )
@@ -28,7 +48,7 @@ const user = cookie ? JSON.parse(cookie) : null
       if (item.toLowerCase().trim() == "home") {
         return (
           <a href="/" class="Link">
-            <li class="p-2 m-2 hover:shadow-md rounded-full text-center border-purple-600 hover:bg-purple-600 hover:text-white Link">
+            <li class="Link m-2 rounded-full border-purple-600 p-2 text-center hover:bg-purple-600 hover:text-white hover:shadow-md">
               {item}
             </li>
           </a>
@@ -36,7 +56,7 @@ const user = cookie ? JSON.parse(cookie) : null
       } else if (item.toLowerCase().trim() == "portfolio") {
         return (
           <a href="https://jazzypants.dev">
-            <li class="p-2 m-2 hover:shadow-md rounded-full text-center border-purple-600 hover:bg-purple-600 hover:text-white">
+            <li class="m-2 rounded-full border-purple-600 p-2 text-center hover:bg-purple-600 hover:text-white hover:shadow-md">
               {item}
             </li>
           </a>
@@ -44,7 +64,7 @@ const user = cookie ? JSON.parse(cookie) : null
       } else {
         return (
           <a href={`/${item.toLowerCase()}`}>
-            <li class="p-2 m-1 hover:shadow-md rounded-full text-center hover:bg-purple-600 hover:text-white">
+            <li class="m-1 rounded-full p-2 text-center hover:bg-purple-600 hover:text-white hover:shadow-md">
               {item}
             </li>
           </a>
@@ -55,13 +75,13 @@ const user = cookie ? JSON.parse(cookie) : null
   {
     user ? (
       <a href="/logout">
-        <li class="p-2 m-1 hover:shadow-md rounded-full text-center hover:bg-purple-600 hover:text-white">
+        <li class="m-1 rounded-full p-2 text-center hover:bg-purple-600 hover:text-white hover:shadow-md">
           Logout
         </li>
       </a>
     ) : (
       <a href="/login">
-        <li class="p-2 m-1 hover:shadow-md rounded-full text-center hover:bg-purple-600 hover:text-white">
+        <li class="m-1 rounded-full p-2 text-center hover:bg-purple-600 hover:text-white hover:shadow-md">
           Login
         </li>
       </a>

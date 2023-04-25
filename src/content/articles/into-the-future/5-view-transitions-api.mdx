@@ -6,77 +6,351 @@ githubLink: true
 
 import CodeBlock from "../../../components/CodeBlock.astro"
 import IFrame from "../../../components/IFrame.astro"
-import Demo from "../../../components/Demo.astro"
+import InfoBox from "../../../components/InfoBox.astro"
+import SimpleAnimation from "../../../components/demos/view-transitions/SimpleAnimation.mdx"
+import AnimationSandbox from "../../../components/demos/view-transitions/AnimationSandbox.mdx"
+import KittenGalleryOne from "../../../components/demos/view-transitions/KittenGalleryOne.mdx"
+import KittenGalleryTwo from "../../../components/demos/view-transitions/KittenGalleryTwo.mdx"
+import KittenGalleryThree from "../../../components/demos/view-transitions/KittenGalleryThree.mdx"
+import KittenGalleryFour from "../../../components/demos/view-transitions/KittenGalleryFour.mdx"
+import ViewTransitionOne from "../../../components/demos/view-transitions/ViewTransitionOne.mdx"
+import ViewTransitionTwo from "../../../components/demos/view-transitions/ViewTransitionTwo.mdx"
+import VanillaForm from "../../../components/demos/view-transitions/VanillaForm.mdx"
+import NewForm from "../../../components/demos/view-transitions/NewForm.mdx"
+import SimpleMPADemo from "../../../components/demos/view-transitions/SimpleMPADemo.mdx"
+import SurveyDemo from "../../../components/demos/view-transitions/SurveyDemo.mdx"
+
 export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
 
 ## Introduction
 
-Animations have been a part of the web experience for a long time. While we have come a long way from the days of the marquee tag and animated GIFs, the web is still a bit behind its native peers. While it is simple enough to move things around on a single web page with CSS, a transition between two pages has been almost impossible-- especially without using JavaScript. So, the Chrome team have developed a new web standard called the [View Transitions API](https://drafts.csswg.org/css-view-transitions-1/).
+Animations have been a part of the web experience for a long time. While we have come a long way from the days of the marquee tag and animated "under construction" GIFs, the web is still a bit behind its native peers. It is simple enough to move things around on a single web page with CSS, but transitions between pages have been particularly difficult-- especially without using JavaScript. So, the Chrome team have developed a new web standard called the [View Transitions API](https://drafts.csswg.org/css-view-transitions-1/).
 
-## The Old Way
+<InfoBox>
+I am not a designer. The examples in this article are not meant to be visually impressive. They are meant to be simple and easy to understand. I have links to more polished examples in the [footnotes](#footnotes).
+</InfoBox>
 
-Generally, if you want to transition between multiple views in a smooth way on the web, you need to use JavaScript. This, like so many other complexities of the web, goes back to the essential fact that the browser reads websites like a document-- from top to bottom. This is one of the many reasons why [Single Page Applications](/articles/client-side-routing/2-a-brief-history-of-client-side-routing) grew in prominence.
+## Animations and Transitions
 
-Essentially, every time you navigate to a new page, the browser completely destroys the old one and creates one from scratch with the new data unless you override the default behavior with client-side routing. In reality, it may hold [resources from the old page in memory for a short time](https://pressidium.com/blog/browser-cache-work/), but the important thing is that the browser assumes that nothing from the previous page is relevant to the new one.
+Generally, if you want to transition between multiple views in a smooth way on the web, you need to use JavaScript. For many, this means a framework like React. Like so many other complexities of the web, this goes back to the essential fact that the browser reads websites like a document-- from top to bottom. 
 
-So, let's take a quick look at some demos of the old way of doing things. First, this just shows the basic idea of tying a dom element to a state (which as we've sees, that's basically what a route is). 
+For each page, the browser parses an HTML document by analyzing its syntax. First, the head tags tell the browser how the document is formatted and what resources it needs to load. Then, the body tags tell the browser how to render the page. It constructs new [DOM](https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model) and [CSSOM](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model) trees to represent the document's structure, and then it renders the page by computing the layout, applying the styles, and finally painting the pixels on the screen. 
 
-<Demo id="demo-1" slug="VwEeqgg">
-<CodeBlock slot="code">
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Animating an Element</title>
-    <style>
-      .box {
-        position: absolute;
-        left: 0;
-        transition: left 2s ease-in-out, font-size 1s ease-in-out,
-          border-radius 2s ease-in-out, background-color 1s ease-in-out;
-        height: 200px;
-        width: fit-content;
-        font-size: 2em;
-        background-color: goldenrod;
-      }
-      .box.state-2 {
-        background-color: red;
-        left: calc(100% - 100px);
-        font-size: 3em;
-        border-radius: 3em;
-        transition: left 2s ease-in-out font-size 1s ease-in-out,
-          border-radius 2s ease-in-out, background-color 1s ease-in-out;
-      }
-    </style>
-  </head>
-  <body>
-    <button id="toggle-btn">Toggle State</button>
-    <div id="box" class="box">
-      <p id="text">State 1</p>
-    </div>
-    <script>
-      const button = document.getElementById("toggle-btn")
+Attempting to avoid this expensive process for each new page is one of the many reasons why [Single Page Applications](/articles/client-side-routing/2-a-brief-history-of-client-side-routing) grew in prominence. Essentially, every time you navigate to a new page, the browser completely destroys the old one and creates one from scratch with the new data. In reality, it may hold [resources from the old page in memory for a short time](https://pressidium.com/blog/browser-cache-work/). The important thing is that the browser assumes that nothing from the previous page is relevant to the new one unless you override that behavior with client-side routing or caching headers.
 
-      button.addEventListener("click", function () {
-        const box = document.getElementById("box")
-        const text = document.getElementById("text")
-        if (box.classList.contains("state-2")) {
-          box.classList.remove("state-2")
-          text.innerHTML = "State 1"
-        } else {
-          box.classList.add("state-2")
-          text.innerHTML = "WHO COULD HAVE EXPECTED ALL THIS TEXT, THIS WILL BE A PROBLEM"
+So, let's take a quick look at some demos of the traditional way of doing things. This first demo just shows the basic idea of tying a DOM element to a state. As we've seen, that's basically what a route is-- A collection of state tied to a URL. 
+
+<SimpleAnimation />
+
+This, like many of the other examples, takes advantage of [CSS Transitions](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Transitions/Using_CSS_transitions). Generally, they are an easy way of toggling your styles between various states smoothly. Usually, this will be between two, pre-defined states. However, you can also write dynamic transitions that will change based on the state of the element. 
+
+Our next demo is a bit of a playground. The button is a simple transition between three states, but the main animation is a bit more exciting. I used CSS variables to allow you to control a [CSS Animation](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Using_CSS_animations) that will play when the button is clicked. CSS Animations are a bit more complex than transitions, but they are also much more powerful and customizable.
+
+<AnimationSandbox />
+
+Hopefully, this helps you see how much more flexible CSS animations are than transitions. Rather than simply moving from one state to another, you can create complex animations that have multiple intermediate states or even repeat infinitely. I'm using CSS variables here which can even be shared between multiple elements to change several things at once. Once you realize how easy it is to change these values with JavaScript, the possibilities are endless.
+
+## The Kitten Gallery
+
+Now that we've covered the basics of CSS animations, let's put them to use in a somewhat real-world example. In this section, we'll build a simple image gallery where you can activate an image to fill the screen. Our main imaginary constraint is that we have no way of knowing how many images will be in the gallery or what size they will be. So, we can't control the layout or the animation with hard-coded CSS for each image.
+
+We'll be converting this to the new View Transitions API later. First, I want to show how things could be done without it. Be patient! Or, skip to the next section. If you're still with me, let's start with a simple transition. As we discussed, CSS transitions are great for situations when you are simply toggling between two states.
+
+<KittenGalleryOne />
+
+Just like the very first example, we don't have to code any specific animation code to make the transition work. The browser simply interpolates between the two states. But, with this simplicity comes a lot of limitations. 
+
+While it's nice that it automatically moves back to its original position, the initial transition is a bit jarring. Also, we are not displaying the image in the correct aspect-ratio because it fills the screen. But, if we try to fix that, the smooth transition breaks. I didn't try that hard, so it might be possible to get a perfect transition this way. But, let's see how this demo works with some custom animations instead.
+
+<KittenGalleryTwo />
+
+As you can see, CSS Animations give us a lot more control over the animation. Now, we are able to show the images in the correct aspect ratio. Unfortunately, we lose the automatic positioning and interpolation that we had with the transition. So, if we want to smoothly transition between the two states, we have to manually animate the positioning.
+
+This is a lot of work, and it's easy to make mistakes. If this was an MPA and the larger image had it's own URL, it would be almost impossible to make this seamless. But, not any more! Before we fully explore how the API can simplify the issues in this demo, let's take a look at some simple examples to get a better understanding of how it works.
+
+## How View Transitions Work
+
+<InfoBox>
+As of the time of writing this article (04/23), View Transitions are only supported in Google Chrome and Microsoft Edge browsers. You can see the current support status [here](https://caniuse.com/mdn-api_document_startviewtransition).
+</InfoBox>
+
+<ViewTransitionOne />
+
+When the button is clicked, we call the document.startViewTransition() method. The API starts by taking a screenshot of the current state of the page. Next, it invokes whatever callback function we give it. We're just completely blowing away the main content of the page here. After this functions runs and the DOM begins updating, the API captures the new state of the page as a live representation. Finally, the browser constructs a nested tree of pseudo-elements that covers the entire affected area of as we animate from the old state to the new state. 
+
+The most important of these pseudo-elements are `::view-transition-old` and `::view-transition-new` which represent the old and new page views respectively. These are held within a `::view-transition-image-pair` which is responsible for isolating these views from the rest of the page so that their images can correctly cross-fade. Zooming out even further, each of these "image pairs" is nested within a `::view-transition-group` that manages animating the size and position difference of the two states. I couldn't find much use for specifying things based on group or image pair, but [there are plans to enhance the nesting structure](https://github.com/WICG/view-transitions/blob/main/explainer.md#nested-transition-groups) in the future.
+
+The `view-transition-name` CSS property is used to specify which elements are used in each transition and how they are grouped. If you don't specify any view-transition-name properties, the entire page will be covered by the `::view-transition` parent pseudo-element which will contain a single `::view-transition-group(root)` pseudo-element. If you don't add CSS rules to any of these pseudo-elements, the default transition will be a simple opacity cross-fade between the old and new views over 250ms. 
+
+If you want to customize the transition, you can add CSS rules to one of the pseudo-elements-- usually `::view-transition-old` or `::view-transition-new`. If you know an element will persist between states, and you don't want it to fade in and out, you can give it a unique `view-transition-name`. This is enough for the API to automatically interpolate the position and size of the element between the old and new views. In the example above, you can uncomment the CSS rule for the footer element to watch it slide to make room for the new content on each transition.
+
+Alternatively, you can opt any element out of the transition entirely by giving it a `view-transition-name` property with a value of "none". This is the only name which can be shared. Generally, if you want to use the API for fine-grained updates, it seems like a good idea to put this on the root element. Otherwise, you may cover an unintended element with the transition. Notice how we can't click the button in the example above while the content is transitioning? That's because the button is covered by the parent `::view-transition` pseudo-element. Just uncomment the html selector in the CSS, and you'll be able to click the button again.
+
+However, we are barely scratching the surface of the API. And, like I said, it's only in Chrome right now. What about all of our Firefox and Safari users? The site just doesn't work for them! Or, worse yet, what if the user doesn't want to see any animations? We need to be able to gracefully degrade (my life motto in my twenties). Let's look at a more robust example.
+
+<ViewTransitionTwo />
+
+Here, we are using the transitionHelper function provided by [Jake Archibald in his fantastic introductory article](https://developer.chrome.com/docs/web-platform/view-transitions/). Basically, it just provides a fallback for browsers that don't support view transitions. It also takes in an array of classNames that can be added when the transition is ready and/or removed when the transition is finished. This is useful for specifying which elements should be animated with each transition.
+
+The viewTransition interface only has three properties and one method. Each of the properties is a promise. The first is `ready` which resolves when all the data is loaded and ready to go. The second is `updateCallbackDone` which resolves when whatever function we're using to update the DOM is done. The third is `finished` which resolves... well, when the transition is finished. The only method is `skipTransition()` which skips the animation, but still changes the DOM. Here, we're using it to check if our users have set a preference for reduced motion although [the docs recommend just setting a media query in the CSS for this](https://developer.chrome.com/docs/web-platform/view-transitions/#reacting-to-the-reduced-motion-preference).
+
+Additionally, I added some selectors here to the `::view-transition-group` and `::view-transition-image-pair` pseudo-elements, but I have rarely found use for them as I said previously. The `::view-transition-group` is best used for controlling the animation of persistent objects with specific `view-transition-name` properties, and the `::view-transition-image-pair` is useful if you have color blending issues. Note here that our keyframes only required a single `from` value. I have found that you often only need to define one half of the animation as the API automatically positions the element for us. 
+
+This is also our first and only use of the incredibly powerful [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API). It's fantastic. I just don't know how to use it very well, and my understanding is that pure CSS animations are both more performant and more reliable. Let's go back and apply some of our new-found skills to the Kitten Gallery from earlier.
+
+## The Kitten Gallery Revamped
+
+<KittenGalleryThree />
+
+Note that there is not a single line of traditional animation CSS that is active here-- even the transition property is commented out. Because we are giving each image a specific view-transition-name dynamically, the API automatically interpolates the position of the image for us. Unfortunately, the biggest rule of the View Transitions API is that no two items can have the same view-transition-name. So, we have to find a way to create a new one for each image, and then define the animations for them afterwrads.
+
+Remember, the idea is that we don't know how many images will be in our gallery ahead of time. Because of this, we cannot give each element a unique `view-transition-name` in the stylesheet. So, I'm looping through each image in the JavaScript, and I'm applying the CSS rules as I create each item.
+
+There is a big issue with this, however. Because the `::view-transition` animation properties are pseudo-elements, we cannot adjust them with JavaScript the way we did in the animation sandbox. Pseudo-elements are not a part of the DOM, so they are not accessible to JavaScript. Luckily, I found [this crazy IIFE on StackOverflow that allows you to append a new style tag to the head of the document](https://stackoverflow.com/questions/4481485/changing-css-pseudo-element-styles-via-javascript). With this, we can dynamically add the CSS rules we need to make the transition work.
+
+If you remove the addRule code above, you'll see why we are hiding the `::view-transition-old` animation. Because the standard transition takes this from opacity 1 to 0, we see a ghostly apparition of the old image fading out of view. But, we don't want to see it during the transition at all. So, as we loop through, we adjust each item's `::view-transition-old` opacity to 0.
+
+Unfortunately, we currently don't seem to be able to target the `::view-transition-group` in this way. Because of this, we are unable to control the timing of these dynamic transitions. I'm not sure if this is a bug or if it's just not implemented yet. If you uncomment the `::view-transition-group` rule in the CSS, you'll see that we can target them statically, but my dynamic function in the JS doesn't do anything. Overall, it seems pretty clear that this is _NOT_ how the API is intended to be used. 
+
+There aren't many occasions when you don't know *how many* items you will be transitioning ahead of time, but it still seems like it should be possible. Oh well, let's take a look at a slightly more idiomatic example of how this gallery could be achieved using some more complex animations.
+
+<KittenGalleryFour />
+
+There really is only one item that we need to animate separately from the rest of the page-- the active picture. So, instead of worrying about giving each image a unique transition name, we can just use the `root` transition group to target everything at once and an `active` transition group for the main image. It seems like tying animations to specific classes like this is the safest, easiest way to get smooth transitions with the API. Many of the resources that I will link in the footnotes use this approach.
+
+## Implementing the API in Our App
+
+Like the last chapter on the Navigation API, the View Transitions API is extremely easy to use. And, what's more-- they go hand in hand. Every SPA needs somes sort of navigation, and every navigation needs some sort of transition. So, we're already routing with the Navigation API. We're using the `render` function to completely blow out the innerHTML of the main area of our app. So, implementing the default transition is as easy as this.
+
+<CodeBlock noButtons>
+Router.js
+```js
+navigateEvent
+  ? navigateEvent.intercept({
+      async handler() {
+        navigateEvent.signal.onabort = () => {
+          console.log("aborted")
+          main.innerHTML = mainHTML
         }
-      })
-    </script>
-  </body>
-</html>
+
+        try {
+          document.startViewTransition(async () => {
+            await Route(path)
+          })
+        } catch (error) {
+          console.error("error", error)
+          main.innerHTML = Nope("error", error)
+        }
+      },
+    })
+  : document.startViewTransition(async () => Route(path))
 ```
-
 </CodeBlock>
-<IFrame src={demoURL + "1"} slot="demo" small />
-</Demo>
 
-One problem is that, unless you know ahead of time exactly how much space you need for the new page, getting the size and shape of the new element right can be a problem. Also, even though we put down multiple CSS classes to personalize the transition, things that we change programmatically (like the text) will not animate. There are a few ways to overcome this. Let's look at another example.
+If we were fine with the default transition, we could stop there. But, why do that when customizing the animations is this easy?You have to relish the simplicity of these new API's.
+
+<CodeBlock>
+```css
+nav {
+  top: 0;
+  view-transition-name: nav;
+}
+
+footer {
+  bottom: 0;
+  view-transition-name: footer;
+}
+
+h1 {
+  view-transition-name: h1;
+}
+
+::view-transition-group(h1) {
+  animation-duration: 0.5s;
+}
+
+::view-transition-group(activeImage) {
+  animation-duration: 0.5s;
+}
+
+::view-transition-old(root) {
+  animation: slide-left 0.75s ease-in-out;
+}
+
+::view-transition-new(root) {
+  animation: slide-right 0.75s ease-in-out;
+}
+
+@keyframes slide-left {
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slide-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+```
+</CodeBlock>
+
+With that, the vast majority of our work is complete. One note: The h1 `view-transition-name` only works because there should always be only one h1 on the screen at a time. However, we do need a way to tell our app when a user has clicked on a product so that we can get a cool animation there. We're going to have multiple images on the screen at a time, which means we're going to have to be a little creative with our implementation.
+
+[Jake Archibald did a fantastic demo of how to do image continuity.](https://glitch.com/edit/#!/simple-set-demos?path=6-expanding-image%2Fscript.js%3A15%3A17)-- I swear I made my cat gallery before I saw this. We're going to be doing something similar, but a little less gracefully. Also, we're going to bring back the transitionHelper function because our simple implementation didn't account for users with JavaScript disabled or that use incompatible browsers.
+
+<CodeBlock>
+```js
+  // ...
+  // Route
+  navigateEvent
+    ? navigateEvent.intercept({
+        async handler() {
+          navigateEvent.signal.onabort = () => {
+            console.log("aborted")
+            main.innerHTML = mainHTML
+          }
+
+          try {
+            addOldActiveClass()
+            transitionHelper({
+              updateDOM: async () => {
+                await Route(path)
+                addNewActiveClass()
+              },
+            })
+          } catch (error) {
+            console.error("error", error)
+            main.innerHTML = Nope("error", error)
+          }
+        },
+      })
+    : transitionHelper({
+        updateDOM: async () => {
+          await Route(path)
+        },
+      })
+}
+
+// ...
+
+let clickedImage = false
+let oldImage = null
+
+document.addEventListener("click", (e) => {
+  if (e.target.tagName === "IMG" || e.target.parentNode.tagName === "A") {
+    clickedImage = true
+    if (e.target.tagName === "IMG") {
+      oldImage = e.target
+    } else {
+      oldImage = e.target.parentNode.querySelector("img")
+    }
+  } else {
+    clickedImage = false
+  }
+})
+
+function addOldActiveClass() {
+  if (!clickedImage) return
+  oldImage.style.viewTransitionName = "activeImage"
+}
+
+function addNewActiveClass() {
+  if (!clickedImage) return
+  const newImage = document.querySelector("img")
+  newImage.style.viewTransitionName = "activeImage"
+}
+```
+</CodeBlock>
+
+We check on every single click if the user is clicking on an image or a product title (which are the only h2's in our app). If that is the case, we set a flag, store the image that was clicked, and then add a `view-transition-name` to the image. Next, as we update the DOM, we apply the same view-transition-name to the first image we find. This whole process only works if you are sure that the first image on the next page is the same image that was clicked on the previous page, but it's fine for our simple app. Now, let's liven up our checkout form a bit.
+
+## The Form Example
+
+Something like a multi-step form seems ripe for this API. Often, you will see the steps of a form get split up to keep the user from being overwhelmed and to allow things like validation to occur at a more granular level. To me, this seems like a perfect use case for view transitions. First, let's see how we could implement this with some simple vanilla CSS.
+
+<VanillaForm />
+
+Not bad. We display and hide steps as the user progresses through the form. We vary the animation based on the direction of the transition. Nothing too fancy, but it gets the job done. Let's see how we can implement this with the View Transitions API.
+
+<NewForm />
+
+So, we added error handling and a progress bar. We change the background color based on whether the user makes an error, goes backward or forward, or reaches the end of the form. We also added not one but two progress indicators: a progress bar and a number which automatically animate as the user progresses through the form. Almost everything has a `view-transition-name`, so all of the elements adapt in terms of their position and size as the user goes through the form.
+
+Overall, this is probably over-extending the View Transitions API. Should we be using it for all of this? Probably not. But it's a fun example of what you can do with it. And, the most exciting part is coming up next!
+
+## MPA View Transitions
+
+<InfoBox warning>
+You must have chrome://flags/#view-transition-on-navigation enabled to see these transitions! This is very experimental stuff. 
+</InfoBox>
+
+Finally, the holy grail! As I said in the introduction, animating the transition between pages has traditionally been incredibly difficult. And, doing this without JavaScript has been impossible. The most common trick was to simply intercept each link click. Then, you could begin your animations as you load the page in the background. Even if you didn't do client-side routing, you could still start and end each page with an animation. Here's a simple example.
+
+<CodeBlock>
+```
+// taken from:
+// https://stackoverflow.com/questions/47391462/how-to-do-transition-effects-between-two-html-pages
+
+window.transitionToPage = function (href) {
+  event.preventDefault()
+  document.querySelector("body").style.opacity = 0
+  setTimeout(function () {
+    window.location.href = href
+  }, 1000)
+}
+
+document.addEventListener("DOMContentLoaded", function (event) {
+  setTimeout(function () {
+    document.querySelector("body").style.opacity = 1
+  })
+})
+```
+</CodeBlock>
+<IFrame src={demoURL + "11/"} />
+
+But, the View Transitions API aims to make this much easier. It all comes down to the use of one special meta tag in the head of your HTML document.
+
+<CodeBlock noButtons>
+```
+<meta name="view-transition" content="same-origin" />
+```
+</CodeBlock>
+
+This meta tag tells the browser that you want to use View Transitions for this page. Now, all the same rules that we have been applying in our other examples apply when we navigate to other pages that have this meta tag on the same origin (whatever.com). So, let's take a look at how that previous example would work if we add that meta tag and a few `view-transition-name`s to each page.
+
+[Unfortunately, this feature doesn't work in iFrames yet, so you'll have to open this in a new tab.](/demos/into-the-future/5-view-transitions-api/12/)
+
+<SimpleMPADemo />
+
+50 lines of code for each page, with only three of them being animation-specific, and we have a fully animated multi-page application. It doesn't look great, but this is just intended to show how easy this can be. And, we're not restricted to simple animations. We can do some pretty complex stuff with it. Rich Harris, the creator of [Svelte](https://svelte.dev/), recently gave a fantastic talk where he mentioned the View Transitions API. As an example of something that was impossible even with this new API, [he described a survey in an MPA with a progress number tweening between pages](https://www.youtube.com/watch?v=uXCipjbcQfM).
+
+Within two days, [Jake Archibald had built a beautiful SPA demo](https://twitter.com/jaffathecake/status/1649005875124633601). [He started on an MPA version](https://glitch.com/edit/#!/simple-set-demos?path=mpa-survey-progress%2Fscript.js%3A1%3A0) which doesn't have any JS at all! It's great, but it doesn't have number tweening. 
+
+[Here's my attempt at an MPA version](/demos/into-the-future/5-view-transitions-api/13/). The number tweening isn't perfect, but it's definitely there. And, this is all still rough and unpolished. As the API progresses, I'm sure that better designers than me will find ways to make this look even better. But, I think it's a great example of the exciting things that are becoming possible with this API.
+
+<SurveyDemo />
+
+## Conclusion
+
+While it is still restricted to Google Chrome and Microsoft Edge browsers, the View Transitions API seems like a huge boon for the web as a whole. Animations are no longer a second-class citizen on the web, and we can finally build complex page transitions without having to rely on JavaScript. I think that we are finally starting to see the web catch up to native apps. Between this and the Navigation API, building applications that flow naturally has never been easier. If Firefox and Safari implement these APIs, putting them together in your app could be as simple as this.
+
+<CodeBlock noButtons>
+```js
+export default function Router(navigateEvent) {
+  const pathname = new URL(navigateEvent.destination.url).pathname
+  navigateEvent.intercept({
+    async handler() {
+      document.startViewTransition(async () => {
+        await Route(pathname)
+      })
+    },
+  })
+}
+```
+</CodeBlock>
+
+Obviously, this code still wouldn't be optimal as it isn't checking for hash changes or anything like that. But, I just wanted to show how easy things could be. Who needs a framework when web standards are this powerful?
+
+While I don't think this marks the end for frameworks like React and Vue, it will be easier than ever to build complex animations without them. And, I think that this is a great thing. Animations can be a powerful tool for communicating with users, and they can make the web feel more alive. This article has already gotten long enough, so I'll end here. I'm excited to see where this goes in the future, and I hope that you are too!

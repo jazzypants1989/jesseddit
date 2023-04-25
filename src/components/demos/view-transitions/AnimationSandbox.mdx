@@ -1,0 +1,284 @@
+import CodeBlock from "../../CodeBlock.astro"
+import IFrame from "../../IFrame.astro"
+import Demo from "../../Demo.astro"
+export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
+
+<Demo id="animation-sandbox" slug="RweaKYL">
+<p slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animating an Element</title>
+    <style>
+      :root {
+        --animation-duration: 2s;
+        --animation-direction: alternate;
+        --animation-fill-mode: none;
+        --iteration-count: infinite;
+        --timing-function: ease-in-out;
+        --left: 200px;
+        --width: 200px;
+        --height: 200px;
+        --background-color: #f00;
+        --border-radius: 0;
+      }
+
+      .box {
+        animation-name: box;
+        animation-duration: var(--animation-duration);
+        animation-direction: var(--animation-direction);
+        animation-fill-mode: var(--animation-fill-mode);
+        animation-iteration-count: var(--iteration-count);
+        animation-timing-function: var(--timing-function);
+        position: relative;
+        width: var(--width);
+        height: var(--height);
+        background-color: var(--background-color);
+        border-radius: var(--border-radius);
+        font-size: 1em;
+        text-align: center;
+        padding-top: 100px;
+      }
+
+      @keyframes box {
+        0% {
+          left: 0;
+        }
+        100% {
+          left: var(--left);
+        }
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        justify-content: start;
+        align-items: flex-start;
+      }
+
+      label {
+        font-weight: bold;
+      }
+
+      button {
+        transition: all 0.5s ease;
+        background-color: blue;
+        color: #fff;
+        border: none;
+        padding: 1em;
+        border-radius: 5px;
+      }
+
+      button:hover {
+        background-color: green;
+        transform: scale(1.1);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      button:active {
+        background-color: red;
+        transform: scale(0.9);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="controls">
+        <button id="toggle-btn">Trigger Animation</button>
+        <h3>Animation Properties</h3>
+        <label for="animation-duration">Animation Duration</label>
+        <input
+          id="animation-duration"
+          type="range"
+          min="0"
+          max="10"
+          step="0.1"
+          value="2"
+        />
+        <span id="duration-value">2s</span>
+        <label for="iteration-count">Animation Iteration Count</label>
+        <input
+          id="iteration-count"
+          type="range"
+          min="0"
+          max="10"
+          step="1"
+          value="1"
+          disabled
+        />
+        <label for="infinity">Infinity?</label>
+        <input checked id="infinity" type="checkbox" />
+        <span id="iteration-value">Current: Infinite</span>
+        <label for="animation-direction">Animation Direction</label>
+        <select id="animation-direction">
+          <option value="alternate">Alternate</option>
+          <option value="normal">Normal</option>
+          <option value="reverse">Reverse</option>
+          <option value="alternate-reverse">Alternate Reverse</option>
+        </select>
+        <label for="animation-fill-mode">Animation Fill Mode</label>
+        <select id="animation-fill-mode">
+          <option value="none">None</option>
+          <option value="forwards">Forwards</option>
+          <option value="backwards">Backwards</option>
+          <option value="both">Both</option>
+        </select>
+        <label for="timing-function">Timing Function</label>
+        <select id="timing-function">
+          <option value="ease-in-out">Ease In Out</option>
+          <option value="linear">Linear</option>
+          <option value="ease">Ease</option>
+          <option value="ease-in">Ease In</option>
+          <option value="ease-out">Ease Out</option>
+          <option value="cubic-bezier(0.1, 0.7, 1.0, 0.1)">
+            Weird Cubic Bezier
+          </option>
+        </select>
+        <label for="left">Pixels to Move from Left</label>
+        <input id="left" type="range" min="0" max="1000" step="1" value="200" />
+        <h3>Element Properties</h3>
+        <label for="width">Width</label>
+        <input
+          id="width"
+          type="range"
+          min="0"
+          max="1000"
+          step="1"
+          value="200"
+        />
+        <label for="height">Height</label>
+        <input
+          id="height"
+          type="range"
+          min="0"
+          max="1000"
+          step="1"
+          value="200"
+        />
+        <label for="background-color">Background Color</label>
+        <input id="background-color" type="color" value="#ff0000" />
+        <label for="border-radius">Border Radius</label>
+        <input
+          id="border-radius"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          value="0"
+        />
+      </div>
+      <div id="box" class="box">
+        <p id="text">Mold me to your will</p>
+      </div>
+    </main>
+    <script>
+      const button = document.getElementById("toggle-btn")
+      const box = document.getElementById("box")
+      const text = document.getElementById("text")
+      const animationDuration = document.getElementById("animation-duration")
+      const animationDirection = document.getElementById("animation-direction")
+      const animationFillMode = document.getElementById("animation-fill-mode")
+      const iterationCount = document.getElementById("iteration-count")
+      const infinity = document.getElementById("infinity")
+      const timingFunction = document.getElementById("timing-function")
+      const durationValue = document.getElementById("duration-value")
+      const iterationValue = document.getElementById("iteration-value")
+      const width = document.getElementById("width")
+      const height = document.getElementById("height")
+      const backgroundColor = document.getElementById("background-color")
+      const borderRadius = document.getElementById("border-radius")
+      const left = document.getElementById("left")
+      const root = document.documentElement
+
+      animationDuration.addEventListener("input", function () {
+        root.style.setProperty(
+          "--animation-duration",
+          animationDuration.value + "s"
+        )
+        durationValue.innerHTML = animationDuration.value + "s"
+      })
+
+      animationDirection.addEventListener("input", function () {
+        root.style.setProperty(
+          "--animation-direction",
+          animationDirection.value
+        )
+      })
+
+      animationFillMode.addEventListener("input", function () {
+        root.style.setProperty("--animation-fill-mode", animationFillMode.value)
+      })
+
+      iterationCount.addEventListener("input", function () {
+        if (infinity.checked) {
+          root.style.setProperty("--iteration-count", "infinite")
+          iterationValue.innerHTML = "To Infinity-- and Beyond!"
+        } else {
+          root.style.setProperty("--iteration-count", iterationCount.value)
+          iterationValue.innerHTML = `Current: ${iterationCount.value}`
+        }
+      })
+
+      infinity.addEventListener("input", function () {
+        if (infinity.checked) {
+          root.style.setProperty("--iteration-count", "infinite")
+          iterationValue.innerHTML = "To Infinity-- and Beyond!"
+          iterationCount.disabled = true
+        } else {
+          root.style.setProperty("--iteration-count", iterationCount.value)
+          iterationValue.innerHTML = `Current: ${iterationCount.value}`
+          iterationCount.disabled = false
+        }
+      })
+
+      timingFunction.addEventListener("input", function () {
+        root.style.setProperty("--timing-function", timingFunction.value)
+      })
+
+      left.addEventListener("input", function () {
+        root.style.setProperty("--left", left.value + "px")
+      })
+
+      width.addEventListener("input", function () {
+        root.style.setProperty("--width", width.value + "px")
+      })
+
+      height.addEventListener("input", function () {
+        root.style.setProperty("--height", height.value + "px")
+      })
+
+      backgroundColor.addEventListener("input", function () {
+        root.style.setProperty("--background-color", backgroundColor.value)
+      })
+
+      borderRadius.addEventListener("input", function () {
+        root.style.setProperty("--border-radius", borderRadius.value + "%")
+      })
+
+      button.addEventListener("click", function () {
+        // first, we remove the animation from the element
+        box.style.animation = "none"
+
+        // then we force the browser to reflow the element
+        setTimeout(function () {
+          // by simply changing the animation name to an empty string
+          box.style.animation = ""
+          // it doesn't find anything in the JS code, so it falls back to the CSS
+        })
+      })
+    </script>
+  </body>
+</html>
+```
+</p>
+<IFrame src={demoURL + "2"} slot="demo" />
+</Demo>

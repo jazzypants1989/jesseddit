@@ -1,4 +1,11 @@
 ---
+// const { url } = Astro.props
+
+// const baseURL = Astro.url.origin
+// const codeURL = new URL(url, baseURL).href
+
+// const code = await fetch(codeURL).then((res) => res.text())
+
 import CodePen from "./CodePen.astro"
 import SolidPicker from "./SolidPicker"
 
@@ -8,6 +15,10 @@ const code = await Astro.slots.render("code")
 const demo = await Astro.slots.render("demo")
 ---
 
-<SolidPicker code={code} demo={demo} id={id} client:idle>
+<h6 class="indent-0">
+  {id}
+</h6>
+
+<SolidPicker code={code} demo={demo} id={id} client:load>
   <CodePen slug={slug} />
 </SolidPicker>

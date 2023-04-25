@@ -1,0 +1,174 @@
+---
+const title = Astro.props.title as string
+const filenames = Astro.props.filenames as {
+  default: string
+  one: string
+  two: string
+  three: string
+  four: string
+  five: string
+  six: string
+  seven: string
+  eight: string
+  nine: string
+  ten: string
+  eleven: string
+}
+
+const titlesFromValues = Object.values(filenames).filter(
+  (value) => value !== filenames.default
+)
+---
+
+<style>
+  button {
+    background: #c084fc;
+    border: 1px solid #c084fc;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.5s ease;
+    width: fit-content;
+  }
+
+  button:hover {
+    background: #a855f7;
+    border-color: #a855f7;
+    border-radius: 10px;
+  }
+</style>
+
+<mpa-demo
+  class="m-auto flex w-full max-w-3xl flex-col items-center justify-center p-4"
+  id={title}
+>
+  <h3 class="indent-0">{title}</h3>
+  <div class="flex w-full flex-wrap items-center justify-center gap-2">
+    {
+      titlesFromValues.map((title, index) => {
+        return (
+          <button class="px-2 py-1" id={`btn-${index + 1}`}>
+            {title}
+          </button>
+        )
+      })
+    }
+  </div>
+
+  <slot name="one" />
+  {Astro.slots.two && <slot name="two" />}
+  {Astro.slots.three && <slot name="three" />}
+  {Astro.slots.four && <slot name="four" />}
+  {Astro.slots.five && <slot name="five" />}
+  {Astro.slots.six && <slot name="six" />}
+  {Astro.slots.seven && <slot name="seven" />}
+  {Astro.slots.eight && <slot name="eight" />}
+  {Astro.slots.nine && <slot name="nine" />}
+  {Astro.slots.ten && <slot name="ten" />}
+  {Astro.slots.eleven && <slot name="eleven" />}
+</mpa-demo>
+
+<script>
+  class mpaDemo extends HTMLElement {
+    constructor() {
+      super()
+
+      const btn1 = this.querySelector("#btn-1") as HTMLButtonElement
+      const btn2 = this.querySelector("#btn-2") as HTMLButtonElement
+      const btn3 = this.querySelector("#btn-3") as HTMLButtonElement
+      const btn4 = this.querySelector("#btn-4") as HTMLButtonElement
+      const btn5 = this.querySelector("#btn-5") as HTMLButtonElement
+      const btn6 = this.querySelector("#btn-6") as HTMLButtonElement
+      const btn7 = this.querySelector("#btn-7") as HTMLButtonElement
+      const btn8 = this.querySelector("#btn-8") as HTMLButtonElement
+      const btn9 = this.querySelector("#btn-9") as HTMLButtonElement
+      const btn10 = this.querySelector("#btn-10") as HTMLButtonElement
+      const btn11 = this.querySelector("#btn-11") as HTMLButtonElement
+
+      const one = this.querySelector("#one") as HTMLElement
+      const two = this.querySelector("#two") as HTMLElement
+      const three = this.querySelector("#three") as HTMLElement
+      const four = this.querySelector("#four") as HTMLElement
+      const five = this.querySelector("#five") as HTMLElement
+      const six = this.querySelector("#six") as HTMLElement
+      const seven = this.querySelector("#seven") as HTMLElement
+      const eight = this.querySelector("#eight") as HTMLElement
+      const nine = this.querySelector("#nine") as HTMLElement
+      const ten = this.querySelector("#ten") as HTMLElement
+      const eleven = this.querySelector("#eleven") as HTMLElement
+
+      const btns = [
+        btn1,
+        btn2,
+        btn3,
+        btn4,
+        btn5,
+        btn6,
+        btn7,
+        btn8,
+        btn9,
+        btn10,
+        btn11,
+      ]
+
+      const btnsThatExist = btns.filter((btn) => btn !== null)
+
+      const slots = [
+        one,
+        two,
+        three,
+        four,
+        five,
+        six,
+        seven,
+        eight,
+        nine,
+        ten,
+        eleven,
+      ]
+
+      const slotsThatExist = slots.filter((slot) => slot !== null)
+
+      hideAllSlots(one)
+      showSlot(one)
+
+      function hideAllSlots(activeSlot?: HTMLElement) {
+        slotsThatExist.forEach((slot: HTMLElement) => {
+          if (slot === activeSlot) return
+          const btn = findButtonBySlot(slot)
+          if (!slot || !btn) return
+          slot.style.display = "none"
+          btn.style.border = "1px solid #c084fc"
+          btn.style.background = "#c084fc"
+        })
+      }
+
+      function showSlot(slot: HTMLElement) {
+        const btn = findButtonBySlot(slot)
+        if (!slot || !btn) return
+        slot.style.display = "block"
+        btn.style.border = "2px dashed #c084fc"
+        btn.style.background = "#a855f7"
+      }
+
+      function findButtonBySlot(slot: HTMLElement) {
+        const index = slotsThatExist.indexOf(slot)
+        return btnsThatExist[index]
+      }
+
+      btnsThatExist.forEach((btn, index) => {
+        if (!btn) return
+        btn.addEventListener("click", () => {
+          hideAllSlots(slotsThatExist[index])
+          showSlot(slotsThatExist[index])
+        })
+      })
+    }
+  }
+
+  customElements.define("mpa-demo", mpaDemo)
+</script>

@@ -1,0 +1,187 @@
+import CodeBlock from "../../CodeBlock.astro"
+import IFrame from "../../IFrame.astro"
+import Demo from "../../Demo.astro"
+export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
+
+<Demo id="view-transition-two" slug="WNaoaLv">
+<p slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html {
+        view-transition-name: none;
+      }
+
+      .main-content {
+        height: 200px;
+        margin: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #eee;
+      }
+      .button {
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .content {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #333;
+        border-radius: 5px;
+        background-color: #fff;
+        view-transition-name: scoot;
+      }
+
+      ::view-transition-old(scoot),
+      ::view-transition-new(scoot) {
+        mix-blend-mode: normal;
+        overflow: clip;
+      }
+
+      ::view-transition-group(scoot) {
+        background-color: #333;
+      }
+
+      ::view-transition-image-pair(scoot) {
+        border: 5px solid #1af;
+      }
+
+      ::view-transition-old(scoot) {
+        animation: scoot ease-out 1s reverse;
+      }
+      ::view-transition-new(scoot) {
+        animation: scoot ease-in 1s forwards;
+      }
+
+      @keyframes scoot {
+        from {
+          transform: translateX(100%);
+        }
+      }
+
+      .scabbadoobie {
+        animation: scabbadoobie 1s ease-in-out infinite;
+      }
+
+      @keyframes scabbadoobie {
+        0% {
+          background-color: #333;
+        }
+        33% {
+          background-color: #1af;
+        }
+        66% {
+          background-color: #f1a;
+        }
+        100% {
+          background-color: #333;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-content">
+      <button class="button" id="button">Click me</button>
+      <main class="content"></main>
+    </div>
+    <script>
+      const button = document.querySelector(".button")
+      const content = document.querySelector(".content")
+
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
+      const skipTransition = mediaQuery.matches
+
+      const view1 = `
+      <div class="view1">
+      <h1>View 1</h1>
+      <p>This is some stuff.</p>
+      </div>
+      `
+      const view2 = `
+      <div class="view2">
+      <h1>View 2</h1>
+      <p>Totally different stuff.</p>
+      </div>
+      `
+
+      button.addEventListener("click", () => {
+        const transition = transitionHelper({
+          classNames: ["scabbadoobie"],
+          updateDOM: () => {
+            content.innerHTML = content.innerHTML === view1 ? view2 : view1
+          },
+          skipTransition,
+        })
+
+        handleAnimation(transition, button)
+      })
+
+      function transitionHelper({
+        skipTransition = false,
+        classNames = [],
+        updateDOM,
+      }) {
+        if (skipTransition || !document.startViewTransition) {
+          const updateCallbackDone = Promise.resolve(updateDOM())
+
+          return {
+            ready: Promise.reject(Error("View transitions unsupported")),
+            updateCallbackDone,
+            finished: updateCallbackDone,
+          }
+        }
+        const transition = document.startViewTransition(updateDOM)
+
+        transition.ready.finally(() => {
+          document.documentElement.classList.add(...classNames)
+          console.log(
+            "You can do things as soon as the transition is ready (all the data is loaded and ready to go)"
+          )
+        })
+
+        transition.finished.finally(() => {
+          document.documentElement.classList.remove(...classNames)
+          console.log("And clean-up after the transition is finished")
+        })
+
+        return transition
+      }
+
+      function handleAnimation(transition, element) {
+        if (skipTransition) {
+          element.style.backgroundColor = "green"
+          return
+        }
+        transition.ready.finally(() => {
+          element.animate(
+            [
+              { backgroundColor: "red", transform: "scale(1)" },
+              { backgroundColor: "green", transform: "scale(1.5)" },
+              { backgroundColor: "blue", transform: "scale(0.5)" },
+              { backgroundColor: "green", transform: "scale(1)" },
+            ],
+            { duration: 1000 }
+          )
+        })
+
+        transition.finished.finally(() => {
+          element.style.backgroundColor = "green"
+        })
+      }
+    </script>
+  </body>
+</html>
+```
+</p>
+<IFrame src={demoURL + "6"} slot="demo" />
+</Demo>

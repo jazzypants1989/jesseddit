@@ -1,0 +1,398 @@
+import CodeBlock from "../../CodeBlock.astro"
+import IFrame from "../../IFrame.astro"
+import Demo from "../../Demo.astro"
+export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
+
+<Demo id="new-form" slug="poxNxMN">
+<p slot="code">
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Form with View Transitions API</title>
+    <style>
+      :root {
+        transition: background-color 0.3s;
+        --progress-left: 0;
+      }
+
+      .form-container {
+        width: 400px;
+        z-index: -1;
+        background: #fff;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      }
+
+      input {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+      }
+
+      input.error {
+        border-color: red;
+      }
+
+      .error-message {
+        display: none;
+        background: red;
+        color: #fff;
+        margin-bottom: 10px;
+        view-transition-name: error-message;
+      }
+
+      .error-message.active {
+        display: block;
+        position: relative;
+        scale: 1;
+        transition: all 0.6s ease-in-out;
+      }
+
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background: #333;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #444;
+      }
+
+      .form-step {
+        display: none;
+        view-transition-name: slide-left;
+      }
+
+      .form-step.active {
+        display: block;
+      }
+
+      #next {
+        view-transition-name: next;
+        transition: opacity 0.2s;
+      }
+
+      #prev {
+        display: none;
+        view-transition-name: prev;
+        transition: opacity 0.2s;
+      }
+
+      #submit {
+        display: none;
+        view-transition-name: submit;
+        transition: opacity 0.2s;
+      }
+
+      .progress-bar {
+        height: 10px;
+        background-color: #333;
+        border-radius: 5px;
+        width: 0;
+        view-transition-name: progress-bar;
+      }
+
+      .progress-number {
+        left: calc(var(--progress-left) - 20px);
+        border-radius: 50%;
+        background-color: #333;
+        width: fit-content;
+        view-transition-name: progress-number;
+        position: relative;
+        top: -20px;
+        padding: 5px;
+        color: #fff;
+        font-size: 1.5rem;
+      }
+
+      .error-transition {
+        background-color: red;
+      }
+
+      .success-transition {
+        background-color: green;
+      }
+
+      .back-transition {
+        background-color: #333;
+      }
+
+      ::view-transition-old(progress-bar),
+      ::view-transition-new(progress-bar) {
+        animation-name: progress-bar-transition;
+        mix-blend-mode: normal;
+        height: 100%;
+      }
+
+      ::view-transition-old(progress-number) {
+        opacity: 0;
+      }
+
+      ::view-transition-new(progress-number) {
+        animation-name: progress-number-transition;
+        height: 100%;
+        mix-blend-mode: normal;
+      }
+
+      ::view-transition-old(slide-left) {
+        animation-name: slide-left;
+        border: 5px solid green;
+      }
+
+      ::view-transition-old(slide-right) {
+        animation-name: slide-right;
+        border: 5px solid #333;
+      }
+
+      ::view-transition-new(error-message) {
+        animation-name: error-transition;
+        background-color: red;
+      }
+
+      ::view-transition-group(error-message) {
+        animation-duration: 1s;
+      }
+
+      ::view-transition-group(root) {
+        animation-duration: 0.5s;
+      }
+
+      ::view-transition-group(prev),
+      ::view-transition-group(next),
+      ::view-transition-group(submit) {
+        opacity: 50%;
+      }
+
+      @keyframes progress-bar-transition {
+        from {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slide-left {
+        to {
+          opacity: 0;
+          transform: translateX(-100px);
+        }
+      }
+
+      @keyframes slide-right {
+        to {
+          opacity: 0;
+          transform: translateX(100px);
+        }
+      }
+
+      @keyframes error-transition {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <span class="progress-number">0%</span>
+      <div class="progress-bar" id="progress-bar"></div>
+      <div id="step1" class="form-step active">
+        <input type="text" id="name" placeholder="Name" />
+        <input type="email" id="email" placeholder="Email" />
+      </div>
+
+      <div id="step2" class="form-step">
+        <input type="text" id="address" placeholder="Address" />
+        <input type="text" id="city" placeholder="City" />
+      </div>
+
+      <div id="step3" class="form-step">
+        <input type="text" id="credit-card" placeholder="Credit Card Number" />
+        <input type="text" id="cvv" placeholder="CVV" />
+      </div>
+
+      <div id="step4" class="form-step">
+        <h2>Success!</h2>
+      </div>
+
+      <p class="error-message" id="error-message"></p>
+
+      <div id="buttons">
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+        <button id="submit">Submit</button>
+      </div>
+    </div>
+
+    <script>
+      const steps = document.querySelectorAll(".form-step")
+      const prevButton = document.getElementById("prev")
+      const nextButton = document.getElementById("next")
+      const submitButton = document.getElementById("submit")
+      const progressBar = document.getElementById("progress-bar")
+      const progressNumber = document.querySelector(".progress-number")
+      const errorMessage = document.getElementById("error-message")
+
+      let currentStep = 0
+
+      prevButton.addEventListener("click", prevHandler)
+      nextButton.addEventListener("click", nextHandler)
+      submitButton.addEventListener("click", submitHandler)
+
+      function prevHandler() {
+        steps.forEach((step) => {
+          step.style.setProperty("view-transition-name", "slide-right")
+        })
+        if (currentStep === steps.length - 1) {
+          alert("DON'T YOU DARE GO BACK!")
+          return
+        }
+        const transition = transitionHelper({
+          classNames: ["back-transition"],
+          updateDOM: () => updateDOM(currentStep - 1),
+        })
+      }
+
+      function nextHandler() {
+        steps.forEach((step) => {
+          step.style.setProperty("view-transition-name", "slide-left")
+        })
+        if (validateStep(currentStep)) {
+          const transition = transitionHelper({
+            classNames: ["success-transition"],
+            updateDOM: () => updateDOM(currentStep + 1),
+          })
+        } else {
+          showError("Please fill out all fields")
+        }
+      }
+
+      function submitHandler() {
+        alert("Form submitted!")
+        document.documentElement.style.backgroundColor = "blue"
+      }
+
+      function animateNumber(start, end, duration, callback) {
+        const range = end - start
+        let current = start
+        const increment = end > start ? 1 : -1
+        const stepTime = Math.abs(Math.floor(duration / range))
+        const timer = setInterval(() => {
+          current += increment
+          callback(current)
+          if (current === end) {
+            clearInterval(timer)
+          }
+        }, stepTime)
+      }
+
+      function showError(message) {
+        const transition = transitionHelper({
+          classNames: ["error-transition"],
+
+          updateDOM: () => {
+            errorMessage.textContent = message
+            errorMessage.classList.add("active")
+          },
+        })
+
+        transition.ready.finally(() => {
+          errorMessage.style.scale = 1
+        })
+
+        transition.finished.finally(() => {
+          setTimeout(() => {
+            errorMessage.style.scale = 0
+          }, 2400)
+          setTimeout(() => {
+            errorMessage.classList.remove("active")
+          }, 3000)
+        })
+      }
+
+      function validateStep(step) {
+        let isValid = true
+        const inputs = steps[step].querySelectorAll("input")
+        inputs.forEach((input) => {
+          if (!input.value) {
+            input.classList.add("error")
+            isValid = false
+          } else {
+            input.classList.remove("error")
+          }
+        })
+        return isValid
+      }
+
+      function transitionHelper({
+        skipTransition = false,
+        classNames = [],
+        updateDOM,
+      }) {
+        if (skipTransition || !document.startViewTransition) {
+          const updateCallbackDone = Promise.resolve(updateDOM()).then(() => {})
+
+          return {
+            ready: Promise.reject(Error("View transitions unsupported")),
+            updateCallbackDone,
+            finished: updateCallbackDone,
+            skipTransition: () => {},
+          }
+        }
+
+        document.documentElement.classList.add(...classNames)
+
+        const transition = document.startViewTransition(updateDOM)
+
+        transition.finished.finally(() =>
+          document.documentElement.classList.remove(...classNames)
+        )
+
+        return transition
+      }
+
+      function updateDOM(newStep) {
+        if (newStep < 0 || newStep >= steps.length) return
+        steps[currentStep].classList.remove("active")
+        steps[newStep].classList.add("active")
+        currentStep = newStep
+
+        prevButton.style.display = currentStep === 0 ? "none" : "inline-block"
+
+        nextButton.style.display =
+          currentStep === steps.length - 1 ? "none" : "inline-block"
+
+        submitButton.style.display =
+          currentStep === steps.length - 1 ? "inline-block" : "none"
+
+        progressBar.style.width = `${(currentStep / (steps.length - 1)) * 100}%`
+        progressBar.style.backgroundColor =
+          currentStep === steps.length - 1 ? "green" : "#333"
+
+        animateNumber(
+          parseInt(progressNumber.textContent), // start
+          Math.floor((currentStep / (steps.length - 1)) * 100), // end
+          700, // duration
+          (value) => {
+            progressNumber.textContent = `${value}%`
+            progressNumber.style.setProperty("--progress-left", `${value}%`)
+          } // callback
+        )
+      }
+    </script>
+  </body>
+</html>
+```
+</p>
+<IFrame src={demoURL + "10"} slot="demo" />
+</Demo>

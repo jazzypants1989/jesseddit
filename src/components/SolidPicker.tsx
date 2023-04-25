@@ -9,7 +9,7 @@ export default function SolidPicker(props: {
   id: string
   children: any
 }) {
-  const [active, setActive] = createSignal("code")
+  const [active, setActive] = createSignal("demo")
 
   return (
     <div

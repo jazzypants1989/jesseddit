@@ -1,102 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <title>Animated Image Gallery</title>
     <style>
-      body {
-        margin: 0;
+      /* html {
+        view-transition-name: none;
+      } */
+
+      .main-content {
+        view-transition-name: main-content;
       }
 
-      #gallery {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background: #000;
+      /* footer {
+        view-transition-name: footer;
+      } */
+
+      ::view-transition-new(main-content) {
+        animation-name: slide-content;
+        animation-duration: 1s;
       }
 
-      .gallery-item {
-        width: 200px;
-        height: 200px;
-        cursor: pointer;
-        transition: all 1s ease-in-out;
-        z-index: 0;
-        overflow: hidden;
-        object-fit: cover;
-      }
-
-      .gallery-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 0;
-      }
-
-      .gallery-item.active {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
+      @keyframes slide-content {
+        from {
+          transform: translateY(100%);
+        }
       }
     </style>
   </head>
   <body>
-    <div id="gallery"></div>
+    <header>Header</header>
+    <button id="btn">Click me</button>
+    <main class="main-content">Main Content</main>
+    <footer>Footer</footer>
     <script>
-      const images = [
-        "https://placekitten.com/200/200",
-        "https://placekitten.com/300/300",
-        "https://placekitten.com/400/400",
-        "https://placekitten.com/500/500",
-        "https://placekitten.com/600/600",
-        "https://placekitten.com/700/700",
-        "https://placekitten.com/800/800",
-        "https://placekitten.com/900/900",
-      ]
+      const button = document.querySelector("#btn")
+      const content = document.querySelector(".main-content")
 
-      const gallery = document.querySelector("#gallery")
+      const view1 = `
+      <div class="view1">
+      <h1>View 1</h1>
+      <p>This is some stuff.</p>
+      </div>
+    `
+      const view2 = `
+      <div class="view2">
+      <h1>View 2</h1>
+      <p>Totally different stuff.</p>
+      </div>
+    `
 
-      images.forEach((src) => {
-        const item = document.createElement("div")
-        item.classList.add("gallery-item")
-        const img = document.createElement("img")
-        img.src = src
-        img.alt = "cute kitten"
-        item.appendChild(img)
-        gallery.appendChild(item)
-      })
-
-      document.querySelectorAll(".gallery-item").forEach((item, index) => {
-        item.addEventListener("click", () => {
-          if (!item.classList.contains("active")) {
-            item.classList.add("active")
-          } else {
-            item.classList.remove("active")
-          }
+      button.addEventListener("click", () => {
+        document.startViewTransition(() => {
+          content.innerHTML = content.innerHTML === view1 ? view2 : view1
         })
       })
-
-      // const items = document.querySelectorAll(".gallery-item")
-      // items.forEach((item) => {
-      //   item.addEventListener("click", () => {
-      //     if (!item.classList.contains("active")) {
-      //       console.log("active")
-      //       item.classList.add("active")
-      //       document
-      //         .querySelectorAll(".gallery-item:not(.active)")
-      //         .forEach((item) => {
-      //           item.style.display = "none"
-      //         })
-      //     } else {
-      //       console.log("not active")
-      //       item.classList.remove("active")
-      //       document.querySelectorAll(".gallery-item").forEach((item) => {
-      //         item.style.display = "block"
-      //       })
-      //     }
-      //   })
-      // })
     </script>
   </body>
 </html>

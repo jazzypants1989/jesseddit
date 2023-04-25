@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-step Form with Animations</title>
+    <style>
+      .form-container {
+        width: 400px;
+        margin: 50px auto;
+        background: #fff;
+        padding: 30px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-step {
+        transition: all 0.3s ease-in-out;
+      }
+
+      .form-step.hidden {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+
+      .form-step.slide-left {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+
+      .form-step.slide-right {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+
+      input {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background: #333;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #444;
+      }
+
+      #submit {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <div id="step1" class="form-step">
+        <input type="text" placeholder="Name" />
+        <input type="email" placeholder="Email" />
+      </div>
+      
+      <div id="step2" class="form-step hidden">
+        <input type="text" placeholder="Address" />
+        <input type="text" placeholder="City" />
+      </div>
+      
+      <div id="step3" class="form-step hidden">
+        <input type="text" placeholder="Credit Card Number" />
+        <input type="text" placeholder="CVV" />
+      </div>
+
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+        <button id="submit">Submit</button>
+      </div>
+    </div>
+
+    <script>
+      const steps = document.querySelectorAll('.form-step');
+      const prevBtn = document.querySelector('#prev');
+      const nextBtn = document.querySelector('#next');
+      const submitBtn = document.querySelector('#submit');
+      let currentStep = 0;
+
+      function showStep(n) {
+        steps.forEach((step, i) => {
+          if (i === n) {
+            step.classList.remove('hidden');
+            step.classList.remove('slide-left');
+            step.classList.remove('slide-right');
+          } else if (i < n) {
+            step.classList.add('slide-left');
+            step.classList.add('hidden');
+          } else {
+            step.classList.add('slide-right');
+            step.classList.add('hidden');
+          }
+        });
+      }
+
+      function updateButtons(n) {
+        if (n === 0) {
+          prevBtn.disabled = true;
+        } else if (n === steps.length - 1) {
+          nextBtn.disabled = true;
+          nextBtn.style.display = 'none';
+          submitBtn.disabled = false;
+          submitBtn.style.display = 'inline-block';
+        } else {
+          prevBtn.disabled = false;
+          nextBtn.disabled = false;
+          submitBtn.disabled = true;
+          nextBtn.style.display = 'inline-block';
+          submitBtn.style.display = 'none';
+        }
+      }
+
+      showStep(currentStep);
+      updateButtons(currentStep);
+
+      prevBtn.addEventListener('click', () => {
+        if (currentStep === 0) return;
+        currentStep--;
+        showStep(currentStep);
+        updateButtons(currentStep);
+      });
+
+      nextBtn.addEventListener('click', () => {
+        currentStep++;
+        showStep(currentStep);
+        updateButtons(currentStep);
+      });
+
+      submitBtn.addEventListener('click', () => {
+        alert('Form Submitted!');
+      });
+    </script>
+  </body>
+</html>

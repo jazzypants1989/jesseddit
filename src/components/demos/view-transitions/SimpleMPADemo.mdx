@@ -1,0 +1,105 @@
+import CodeBlock from "../../CodeBlock.astro"
+import MPADemo from "../../MPADemo.astro"
+
+export const filenames = {
+  one: "index.html",
+  two: "other.html",
+}
+
+<MPADemo title="Simple MPA Transition" filenames={filenames}>
+<CodeBlock slot="one" id="one">
+index.html
+```
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="view-transition" content="same-origin" />
+    <style>
+      body {
+        margin: 0;
+      }
+      main {
+        display: flex;
+        background: #990033;
+        height: 100vh;
+      }
+      main a {
+        color: #fff;
+        background: #339909;
+        height: fit-content;
+        padding: 1em;
+        margin: 1em;
+        border-radius: 2em;
+        view-transition-name: button;
+      }
+      main span {
+        align-self: end;
+        color: #fff;
+        background: #330099;
+        height: fit-content;
+        border-radius: 4em;
+        view-transition-name: other;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="./other">Other</a>
+      <span>HI</span>
+    </main>
+  </body>
+</html>
+```
+</CodeBlock>
+
+<CodeBlock slot="two" id="two">
+other.html
+```
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="view-transition" content="same-origin" />
+    <style>
+      body {
+        margin: 0;
+      }
+      main {
+        display: flex;
+        justify-content: flex-end;
+        align-items: end;
+        background: #339909;
+        height: 100vh;
+      }
+      main a {
+        color: #00f;
+        background: #990033;
+        height: fit-content;
+        padding: 1em;
+        margin: 1em;
+        font-size: 2em;
+        border-radius: 0.5em;
+        view-transition-name: button;
+      }
+      main span {
+        color: #fff;
+        align-self: start;
+        background: #f0f;
+        height: fit-content;
+        padding: 2em;
+        margin: 2em;
+        font-size: 3em;
+        border-radius: 2em;
+        view-transition-name: other;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="./">Home</a>
+      <span>BYE!</span>
+    </main>
+  </body>
+</html>
+```
+</CodeBlock>
+</MPADemo>

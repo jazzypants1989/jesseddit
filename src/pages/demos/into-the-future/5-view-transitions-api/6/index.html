@@ -1,143 +1,175 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <title>Animated Image Gallery</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      body {
-        margin: 0;
+      html {
+        view-transition-name: none;
       }
 
-      #gallery {
+      .main-content {
+        height: 200px;
+        margin: 20px;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 100vh;
-        background: #000;
+        background-color: #eee;
       }
-
-      .gallery-item {
-        width: 200px;
-        height: 200px;
+      .button {
+        background-color: #333;
+        color: #fff;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
         cursor: pointer;
-        overflow: hidden;
-        object-fit: cover;
+      }
+      .content {
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px solid #333;
+        border-radius: 5px;
+        background-color: #fff;
+        view-transition-name: scoot;
       }
 
-      .gallery-item img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+      ::view-transition-group(scoot) {
+        background-color: #333;
+      }
+
+      ::view-transition-image-pair(scoot) {
+        border: 5px solid #1af;
+      }
+
+      ::view-transition-old(scoot),
+      ::view-transition-new(scoot) {
         mix-blend-mode: normal;
-        contain: paint;
+        overflow: clip;
       }
 
-      .gallery-item.active {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
+      ::view-transition-old(scoot) {
+        animation: scoot ease-out 1s reverse;
+      }
+      ::view-transition-new(scoot) {
+        animation: scoot ease-in 1s forwards;
       }
 
-      @keyframes grow-x {
+      @keyframes scoot {
         from {
-          transform: scaleX(0);
-        }
-        to {
-          transform: scaleX(1);
+          transform: translateX(100%);
         }
       }
 
-      @keyframes shrink-x {
-        from {
-          transform: scaleX(1);
+      .scabbadoobie {
+        animation: scabbadoobie 1s ease-in-out infinite;
+      }
+
+      @keyframes scabbadoobie {
+        0% {
+          background-color: #333;
         }
-        to {
-          transform: scaleX(0);
+        33% {
+          background-color: #1af;
         }
-      }
-
-      ::view-transition-old(figure-caption),
-      ::view-transition-new(figure-caption) {
-        height: auto;
-        right: 0;
-        left: auto;
-        transform-origin: right center;
-      }
-
-      ::view-transition-old(figure-caption) {
-        animation: 0.25s linear both shrink-x;
-      }
-
-      ::view-transition-new(figure-caption) {
-        animation: 0.25s 0.25s linear both grow-x;
+        66% {
+          background-color: #f1a;
+        }
+        100% {
+          background-color: #333;
+        }
       }
     </style>
   </head>
   <body>
-    <div id="gallery"></div>
+    <div class="main-content">
+      <button class="button" id="button">Click me</button>
+      <main class="content"></main>
+    </div>
     <script>
-      const gallery = document.querySelector("#gallery")
+      const button = document.querySelector(".button")
+      const content = document.querySelector(".content")
 
-      const images = [
-        "https://placekitten.com/200/200",
-        "https://placekitten.com/300/300",
-        "https://placekitten.com/400/400",
-        "https://placekitten.com/500/500",
-        "https://placekitten.com/600/600",
-        "https://placekitten.com/700/700",
-        "https://placekitten.com/800/800",
-        "https://placekitten.com/900/900",
-      ]
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
+      const skipTransition = mediaQuery.matches
 
-      images.forEach((src) => {
-        const item = document.createElement("div")
-        item.classList.add("gallery-item")
-        const img = document.createElement("img")
-        img.src = src
-        img.alt = "cute kitten"
-        item.appendChild(img)
-        gallery.appendChild(item)
-      })
+      const view1 = `
+      <div class="view1">
+      <h1>View 1</h1>
+      <p>This is some stuff.</p>
+      </div>
+      `
+      const view2 = `
+      <div class="view2">
+      <h1>View 2</h1>
+      <p>Totally different stuff.</p>
+      </div>
+      `
 
-      const items = document.querySelectorAll(".gallery-item")
-
-      items.forEach((item, index) => {
-        // item.style.setProperty(
-        //   "view-transition-name",
-        //   `gallery-item-transition-${index}`
-        // )
-
-        item.addEventListener("click", () => {
-          const transition = document.startViewTransition(() => {
-            if (!item.classList.contains("active")) {
-              item.classList.add("active")
-              document
-                .querySelectorAll(".gallery-item:not(.active)")
-                .forEach((item) => {
-                  item.style.display = "none"
-                })
-            } else {
-              item.classList.remove("active")
-              document.querySelectorAll(".gallery-item").forEach((item) => {
-                item.style.display = "block"
-              })
-            }
-          })
-
-          transition.ready.then(() => {
-            document.querySelectorAll(".active").forEach((item) => {
-              item.style.setProperty("view-transition-name", "active")
-            })
-
-            transition.finished.then(() => {
-              document.querySelectorAll(".active").forEach((item) => {
-                item.style.removeProperty("view-transition-name")
-              })
-            })
-          })
+      button.addEventListener("click", () => {
+        const transition = transitionHelper({
+          classNames: ["scabbadoobie"],
+          updateDOM: () => {
+            content.innerHTML = content.innerHTML === view1 ? view2 : view1
+          },
+          skipTransition,
         })
+
+        handleAnimation(transition, button)
       })
+
+      function transitionHelper({
+        skipTransition = false,
+        classNames = [],
+        updateDOM,
+      }) {
+        if (skipTransition || !document.startViewTransition) {
+          const updateCallbackDone = Promise.resolve(updateDOM())
+
+          return {
+            ready: Promise.reject(Error("View transitions unsupported")),
+            updateCallbackDone,
+            finished: updateCallbackDone,
+          }
+        }
+        const transition = document.startViewTransition(updateDOM)
+
+        transition.ready.finally(() => {
+          document.documentElement.classList.add(...classNames)
+          console.log(
+            "You can do things as soon as the transition is ready (all the data is loaded and ready to go)"
+          )
+        })
+
+        transition.finished.finally(() => {
+          document.documentElement.classList.remove(...classNames)
+          console.log("And clean-up after the transition is finished")
+        })
+
+        return transition
+      }
+
+      function handleAnimation(transition, element) {
+        if (skipTransition) {
+          element.style.backgroundColor = "green"
+          return
+        }
+        transition.ready.finally(() => {
+          element.animate(
+            [
+              { backgroundColor: "red", transform: "scale(1)" },
+              { backgroundColor: "green", transform: "scale(1.5)" },
+              { backgroundColor: "blue", transform: "scale(0.5)" },
+              { backgroundColor: "green", transform: "scale(1)" },
+            ],
+            { duration: 1000 }
+          )
+        })
+
+        transition.finished.finally(() => {
+          element.style.backgroundColor = "green"
+        })
+      }
     </script>
   </body>
 </html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="view-transition" content="same-origin" />
+    <style>
+      body {
+        margin: 0;
+      }
+      main {
+        display: flex;
+        background: #990033;
+        height: 100vh;
+      }
+      main a {
+        color: #fff;
+        background: #339909;
+        height: fit-content;
+        padding: 1em;
+        margin: 1em;
+        border-radius: 2em;
+        view-transition-name: button;
+      }
+      main span {
+        align-self: end;
+        color: #fff;
+        background: #330099;
+        height: fit-content;
+        border-radius: 4em;
+        view-transition-name: other;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="./other">Other</a>
+      <span>HI</span>
+    </main>
+  </body>
+</html>

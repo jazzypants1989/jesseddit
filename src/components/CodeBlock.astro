@@ -1,5 +1,97 @@
-<div
-  class="overflow-hidden p-0 my-1 rounded-2xl border-2 border-purple-400 shadow-lg shadow-primary-DARK md:text-xl max-w-full indent-0"
+---
+const { id, noButtons } = Astro.props as { id: string; noButtons: boolean }
+
+const hidden = noButtons ? "hidden" : ""
+---
+
+<code-block
+  class="m-2 max-w-full overflow-hidden rounded-2xl border-2 border-purple-400 px-2 indent-0 shadow-lg shadow-purple-400 md:text-xl"
+  id={id}
 >
+  <button
+    class={`show m-2 px-2 py-1 text-sm font-semibold shadow-inner shadow-purple-400 bg-purple-400 text-white rounded-lg hover:bg-purple-500 hover:shadow-purple-500 ${hidden}`}
+  >
+    Show less
+  </button>
+  <button
+    class={`copy m-2 px-2 py-1 text-sm font-semibold shadow-inner shadow-purple-400 bg-purple-400 text-white rounded-lg hover:bg-purple-500 hover:shadow-purple-500 ${hidden}`}
+  >
+    Copy to clipboard
+  </button>
   <slot />
-</div>
+  <div class="flex items-center justify-end">
+    <button
+      class={`copy px-2 py-1 text-sm font-semibold shadow-inner shadow-purple-400 bg-purple-400 text-white rounded-t-2xl hover:bg-purple-500 hover:shadow-purple-500 ${hidden}`}
+    >
+      Copy to clipboard
+      <button
+        class={`show px-2 py-1 text-sm font-semibold shadow-inner shadow-purple-400 bg-purple-400 text-white rounded-t-2xl hover:bg-purple-500 hover:shadow-purple-500 ${hidden}`}
+      >
+        Show less
+      </button>
+    </button>
+  </div>
+
+  <script>
+    class codeBlock extends HTMLElement {
+      constructor() {
+        super()
+
+        const showButtons = this.querySelectorAll(".show")
+        const copyButtons = this.querySelectorAll(".copy")
+
+        if (!showButtons) return
+
+        showButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            this.classList.toggle("h-28")
+            showButtons.forEach((button) => {
+              button.textContent = this.classList.contains("h-28")
+                ? "Show more"
+                : "Show less"
+            })
+            this.scrollIntoView({ behavior: "smooth" })
+          })
+        })
+
+        copyButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const code = this.querySelector("code")
+            console.log(this)
+            if (!code) return console.error("THIS SUCKS!!")
+            copyToast()
+            navigator.clipboard.writeText(code.textContent || "")
+          })
+        })
+
+        const id = this.querySelector("p")?.textContent || "this code block"
+
+        function copyToast() {
+          const toast = document.createElement("div")
+          toast.classList.add("toast")
+          toast.innerHTML = `Copied the code for ${id} to your clipboard. Go experiment and have fun!`
+          const body = document.querySelector("body")
+          body?.appendChild(toast)
+          animateIn(toast)
+        }
+
+        function animateIn(element: HTMLElement) {
+          element.classList.add("animate-fade-in-up")
+          setTimeout(() => {
+            animateOut(element)
+          }, 3000)
+        }
+
+        function animateOut(element: HTMLElement) {
+          element.classList.remove("animate-fade-in-up")
+          element.classList.add("animate-fade-out-down")
+          setTimeout(() => {
+            element.remove()
+          }, 1000)
+        }
+      }
+    }
+
+    customElements.define("code-block", codeBlock)
+  </script>
+</code-block>

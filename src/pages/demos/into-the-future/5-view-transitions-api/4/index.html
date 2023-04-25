@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Animated Image Gallery</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #gallery {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #000;
+      }
+
+      .gallery-item {
+        width: 200px;
+        height: 200px;
+        cursor: pointer;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .gallery-item.active {
+        position: absolute;
+        width: fit-content;
+        height: fit-content;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+      }
+
+      @keyframes moveRight {
+        to {
+          transform: translateX(100%);
+        }
+      }
+
+      @keyframes fadeIn {
+        0% {
+          clip-path: polygon(0 0, 0 0, 0 0, 0 100%);
+        }
+        25% {
+          filter: blur(0);
+        }
+        50% {
+          transform: scale(0.5);
+          clip-path: polygon(0 0, 100% 0, 0 100%, 0 100%);
+          filter: blur(20px);
+        }
+        75% {
+          filter: blur(0);
+        }
+        100% {
+          clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        }
+      }
+      @keyframes fadeOut {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gallery"></div>
+    <script>
+      const images = [
+        "https://placekitten.com/200/200",
+        "https://placekitten.com/300/300",
+        "https://placekitten.com/400/400",
+        "https://placekitten.com/500/500",
+        "https://placekitten.com/600/600",
+        "https://placekitten.com/700/700",
+        "https://placekitten.com/800/800",
+        "https://placekitten.com/900/900",
+      ]
+
+      const gallery = document.querySelector("#gallery")
+
+      images.forEach((src) => {
+        const item = document.createElement("div")
+        item.classList.add("gallery-item")
+        const img = document.createElement("img")
+        img.src = src
+        img.alt = "cute kitten"
+        item.appendChild(img)
+        gallery.appendChild(item)
+      })
+
+      const galleryItems = document.querySelectorAll(".gallery-item")
+
+      galleryItems.forEach((item) => {
+        item.addEventListener("click", (e) => {
+          if (item.classList.contains("active")) {
+            item.style.animation = "fadeOut 1s ease-in-out forwards"
+            setTimeout(() => {
+              item.classList.remove("active")
+              item.style.animation = "none"
+            }, 1100)
+          } else {
+            item.classList.add("active")
+            item.style.animation = "fadeIn 2s ease-in-out forwards"
+          }
+        })
+      })
+    </script>
+  </body>
+</html>

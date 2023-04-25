@@ -1,0 +1,165 @@
+import CodeBlock from "../../CodeBlock.astro"
+import IFrame from "../../IFrame.astro"
+import Demo from "../../Demo.astro"
+export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
+
+<Demo id="kitten-gallery-four" slug="QWZGZoj">
+<p slot="code">
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Animated Image Gallery</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+      }
+
+      #gallery {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #000;
+      }
+
+      .gallery-item {
+        width: 200px;
+        height: 200px;
+        cursor: pointer;
+        overflow: hidden;
+      }
+
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .gallery-item.active {
+        width: fit-content;
+        height: fit-content;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+        view-transition-name: active;
+      }
+
+      ::view-transition-old(root) {
+        animation: moveRight 0.75s ease-in-out;
+      }
+
+      ::view-transition-new(root) {
+        animation: fadeIn 0.75s ease-in-out;
+      }
+
+      ::view-transition-old(active) {
+        animation: moveRight 0.75s ease-in-out;
+      }
+
+      ::view-transition-new(active) {
+        animation: activate 0.75s ease-in-out;
+      }
+
+      @keyframes activate {
+        0% {
+          transform: scale(0.5);
+          filter: blur(10px);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+          filter: blur(0);
+        }
+      }
+
+      @keyframes moveRight {
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="gallery"></div>
+    <script>
+      const gallery = document.querySelector("#gallery")
+
+      const images = [
+        "https://placekitten.com/200/200",
+        "https://placekitten.com/300/300",
+        "https://placekitten.com/400/400",
+        "https://placekitten.com/500/500",
+        "https://placekitten.com/600/600",
+        "https://placekitten.com/700/700",
+        "https://placekitten.com/800/800",
+        "https://placekitten.com/900/900",
+      ]
+
+      images.forEach((src) => {
+        const item = document.createElement("div")
+        item.classList.add("gallery-item")
+        const img = document.createElement("img")
+        img.src = src
+        img.alt = "cute kitten"
+        item.appendChild(img)
+        gallery.appendChild(item)
+      })
+
+      const galleryItems = document.querySelectorAll(".gallery-item")
+
+      galleryItems.forEach((item, index) => {
+        item.addEventListener("click", () => {
+          transitionHelper({
+            updateDOM: () => {
+              if (!item.classList.contains("active")) {
+                item.classList.add("active")
+                document
+                  .querySelectorAll(".gallery-item:not(.active)")
+                  .forEach((item) => {
+                    item.style.display = "none"
+                  })
+              } else {
+                item.classList.remove("active")
+                galleryItems.forEach((item) => {
+                  item.style.display = "block"
+                })
+              }
+            },
+          })
+        })
+      })
+
+      function transitionHelper({ updateDOM }) {
+        if (!document.startViewTransition) {
+          const updateCallbackDone = Promise.resolve(updateDOM())
+
+          return {
+            ready: Promise.reject(Error("View transitions unsupported")),
+            updateCallbackDone,
+            finished: updateCallbackDone,
+          }
+        }
+
+        const transition = document.startViewTransition(updateDOM)
+
+        return transition
+      }
+    </script>
+  </body>
+</html>
+```
+</p>
+<IFrame src={demoURL + "8"} slot="demo" />
+</Demo>
