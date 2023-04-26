@@ -1,10 +1,11 @@
 import CodeBlock from "../../CodeBlock.astro"
 import IFrame from "../../IFrame.astro"
 import Demo from "../../Demo.astro"
+import CodePen from "../../CodePen.astro"
 export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
 
-<Demo id="kitten-gallery-one" slug="GRYjmgw">
-<p slot="code">
+<Demo id="kitten-gallery-one">
+<CodeBlock>
 ```html
 <!DOCTYPE html>
 <html>
@@ -89,6 +90,7 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
   </body>
 </html>
 ```
-</p>
+</CodeBlock>
 <IFrame src={demoURL + "3"} slot="demo" />
+<CodePen slug="GRYjmgw" slot="codePen" />
 </Demo>

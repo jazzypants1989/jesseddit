@@ -1,24 +1,96 @@
 ---
-// const { url } = Astro.props
-
-// const baseURL = Astro.url.origin
-// const codeURL = new URL(url, baseURL).href
-
-// const code = await fetch(codeURL).then((res) => res.text())
-
-import CodePen from "./CodePen.astro"
-import SolidPicker from "./SolidPicker"
-
-const { id, slug } = Astro.props
-
-const code = await Astro.slots.render("code")
-const demo = await Astro.slots.render("demo")
+const { id } = Astro.props
 ---
 
 <h6 class="indent-0">
   {id}
 </h6>
 
-<SolidPicker code={code} demo={demo} id={id} client:load>
-  <CodePen slug={slug} />
-</SolidPicker>
+<spa-demo class="w-full flex flex-col items-center justify-center">
+  <div class="w-full flex items-center justify-center">
+    <button
+      class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-l-2xl hover:-translate-x-1 transform transition duration-500 ease-in-out"
+      data-button="codeButton"
+    >
+      Code
+    </button>
+    <button
+      class={`bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 transform transition duration-500 ease-in-out`}
+      data-button="demoButton"
+    >
+      Demo
+    </button>
+    <button
+      class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-r-2xl hover:translate-x-1 transform transition duration-500 ease-in-out"
+      data-button="playButton"
+    >
+      Play
+    </button>
+  </div>
+  <slot />
+  <slot name="demo" />
+  <slot name="codePen" />
+</spa-demo>
+<script>
+  class spaDemo extends HTMLElement {
+    constructor() {
+      super()
+
+      const codeButton = this.querySelector(
+        "[data-button=codeButton]"
+      ) as HTMLButtonElement
+      const demoButton = this.querySelector(
+        "[data-button=demoButton]"
+      ) as HTMLButtonElement
+      const playButton = this.querySelector(
+        "[data-button=playButton]"
+      ) as HTMLButtonElement
+      const codeSlot = this.querySelector("code-block") as HTMLPreElement
+      const demoSlot = this.querySelector(
+        "[data-slot=demo]"
+      ) as HTMLIFrameElement
+      let codePen = this.querySelector(
+        "[data-slot=codePen]"
+      ) as HTMLIFrameElement
+
+      const buttons = [codeButton, demoButton, playButton]
+      const slots = [codeSlot, demoSlot, codePen]
+      let activeButton = demoButton
+      let activeSlot = demoSlot
+      const activeClasses = [
+        "bg-purple-700",
+        "-translate-y-1",
+        "hover:translate-y-0",
+      ]
+
+      const setActive = (button: HTMLButtonElement, slot: any) => {
+        activeButton.classList.remove(...activeClasses)
+        activeSlot.classList.add("hidden")
+        activeButton = button
+        activeSlot = slot
+        activeButton.classList.add(...activeClasses)
+        activeSlot.classList.remove("hidden")
+      }
+
+      buttons.forEach((button, i) => {
+        button.addEventListener("click", () => {
+          setActive(button, slots[i])
+        })
+      })
+
+      slots.forEach((slot) => {
+        slot.classList.add("hidden")
+      })
+
+      setTimeout(() => {
+        codePen = this.querySelector(".cp_embed_wrapper") as HTMLIFrameElement
+        slots[2] = codePen
+        codePen.classList.add("hidden")
+        codePen.style.width = "100%"
+      }, 100)
+
+      setActive(demoButton, demoSlot)
+    }
+  }
+  customElements.define("spa-demo", spaDemo)
+</script>

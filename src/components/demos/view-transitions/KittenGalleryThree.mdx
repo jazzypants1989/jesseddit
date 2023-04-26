@@ -1,10 +1,11 @@
 import CodeBlock from "../../CodeBlock.astro"
 import IFrame from "../../IFrame.astro"
 import Demo from "../../Demo.astro"
+import CodePen from "../../CodePen.astro"
 export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
 
-<Demo id="kitten-gallery-three" slug="YzJpJBJ">
-<p slot="code">
+<Demo id="kitten-gallery-three">
+<CodeBlock>
 ```html
 <!DOCTYPE html>
 <html>
@@ -29,7 +30,6 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
         height: 200px;
         cursor: pointer;
         overflow: hidden;
-        /* transition: all 1s ease-in-out; */
       }
 
       .gallery-item img {
@@ -40,8 +40,6 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
 
       .gallery-item.active {
         position: absolute;
-        /* width: 100%;
-        height: 100%; */
         width: fit-content;
         height: fit-content;
         max-width: 100%;
@@ -161,6 +159,7 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
   </body>
 </html>
 ```
-</p>
+</CodeBlock>
 <IFrame src={demoURL + "7"} slot="demo" />
+<CodePen slug="YzJpJBJ" slot="codePen" />
 </Demo>

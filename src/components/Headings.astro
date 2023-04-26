@@ -19,101 +19,31 @@
     animation: slide-left 0.5s ease-in-out forwards;
   }
 
+  button {
+    --translateX: 33vw;
+  }
+
   @keyframes slide-right {
     0% {
       transform: translateX(0);
     }
     100% {
-      transform: translateX(444%);
+      transform: translateX(var(--translateX));
     }
   }
 
   @keyframes slide-left {
     0% {
-      transform: translateX(444%);
+      transform: translateX(var(--translateX));
     }
     100% {
       transform: translateX(0);
     }
   }
 
-  @media only screen and (max-width: 400px) {
-    @keyframes slide-right {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(125%);
-      }
-    }
-
-    @keyframes slide-left {
-      0% {
-        transform: translateX(125%);
-      }
-      100% {
-        transform: translateX(0);
-      }
-    }
-  }
-
-  @media only screen and (min-width: 401px) and (max-width: 724px) {
-    @keyframes slide-right {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(150%);
-      }
-    }
-
-    @keyframes slide-left {
-      0% {
-        transform: translateX(150%);
-      }
-      100% {
-        transform: translateX(0);
-      }
-    }
-  }
-
-  @media only screen and (min-width: 725px) and (max-width: 1024px) {
-    @keyframes slide-right {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(300%);
-      }
-    }
-
-    @keyframes slide-left {
-      0% {
-        transform: translateX(300%);
-      }
-      100% {
-        transform: translateX(0);
-      }
-    }
-  }
-
-  @media only screen and (min-width: 1025px) and (max-width: 1280px) {
-    @keyframes slide-right {
-      0% {
-        transform: translateX(0);
-      }
-      100% {
-        transform: translateX(333%);
-      }
-    }
-
-    @keyframes slide-left {
-      0% {
-        transform: translateX(333%);
-      }
-      100% {
-        transform: translateX(0);
-      }
+  @media (min-width: 768px) {
+    button {
+      --translateX: 42vw;
     }
   }
 </style>

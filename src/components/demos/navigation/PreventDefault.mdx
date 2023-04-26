@@ -1,10 +1,11 @@
 import CodeBlock from "../../CodeBlock.astro"
 import IFrame from "../../IFrame.astro"
 import Demo from "../../Demo.astro"
+import CodePen from "../../CodePen.astro"
 export const demoURL = "/demos/into-the-future/4-navigation-api/"
 
-<Demo id="preventDefault" slug="oNajZwQ">
-<p slot="code">
+<Demo id="preventDefault">
+<CodeBlock>
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -138,6 +139,7 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
   </body>
 </html>
 ```
-</p>
+</CodeBlock>
 <IFrame src={demoURL + "2"} slot="demo" small />
+<CodePen slug="oNajZwQ" slot="codePen" />
 </Demo>

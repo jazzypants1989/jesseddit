@@ -15,16 +15,19 @@ let randomID = Math.random().toString(36).substring(2, 15)
 id = id || randomID
 ---
 
-<iframe
-  style={`aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
-  src={src}
-  id={id}
->
-</iframe>
-{
-  !src?.startsWith("https://www.youtube.com") && (
-    <a class="text-sm" href={src} target="_blank" rel="noopener noreferrer">
-      Click here to open in a new tab
-    </a>
-  )
-}
+<div data-slot="demo" class="w-full flex flex-col items-center justify-center">
+  <iframe
+    style={`aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
+    src={src}
+    id={id}
+    loading="lazy"
+  >
+  </iframe>
+  {
+    !src?.startsWith("https://www.youtube.com") && (
+      <a class="text-sm" href={src} target="_blank" rel="noopener noreferrer">
+        Click here to open in a new tab
+      </a>
+    )
+  }
+</div>

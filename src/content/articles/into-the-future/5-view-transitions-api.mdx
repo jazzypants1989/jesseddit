@@ -102,15 +102,15 @@ This is also our first and only use of the incredibly powerful [Web Animations A
 
 <KittenGalleryThree />
 
-Note that there is not a single line of traditional animation CSS that is active here-- even the transition property is commented out. Because we are giving each image a specific view-transition-name dynamically, the API automatically interpolates the position of the image for us. Unfortunately, the biggest rule of the View Transitions API is that no two items can have the same view-transition-name. So, we have to find a way to create a new one for each image, and then define the animations for them afterwrads.
+There is not a single line of traditional animation CSS that here! Because we are giving each image a specific view-transition-name dynamically, the API automatically interpolates the position of the image for us. Unfortunately, the biggest rule of the View Transitions API is that no two items can have the same view-transition-name. So, we have to find a way to create a new one for each image, and then define the animations for them afterwrads.
 
 Remember, the idea is that we don't know how many images will be in our gallery ahead of time. Because of this, we cannot give each element a unique `view-transition-name` in the stylesheet. So, I'm looping through each image in the JavaScript, and I'm applying the CSS rules as I create each item.
 
 There is a big issue with this, however. Because the `::view-transition` animation properties are pseudo-elements, we cannot adjust them with JavaScript the way we did in the animation sandbox. Pseudo-elements are not a part of the DOM, so they are not accessible to JavaScript. Luckily, I found [this crazy IIFE on StackOverflow that allows you to append a new style tag to the head of the document](https://stackoverflow.com/questions/4481485/changing-css-pseudo-element-styles-via-javascript). With this, we can dynamically add the CSS rules we need to make the transition work.
 
-If you remove the addRule code above, you'll see why we are hiding the `::view-transition-old` animation. Because the standard transition takes this from opacity 1 to 0, we see a ghostly apparition of the old image fading out of view. But, we don't want to see it during the transition at all. So, as we loop through, we adjust each item's `::view-transition-old` opacity to 0.
+If you remove the first addRule code above, you'll see why we are hiding the `::view-transition-old` animation. Because the standard transition takes this from opacity 1 to 0, we see a ghostly apparition of the old image fading out of view. But, we don't want to see it during the transition at all. So, as we loop through, we adjust each item's `::view-transition-old` opacity to 0.
 
-Unfortunately, we currently don't seem to be able to target the `::view-transition-group` in this way. Because of this, we are unable to control the timing of these dynamic transitions. I'm not sure if this is a bug or if it's just not implemented yet. If you uncomment the `::view-transition-group` rule in the CSS, you'll see that we can target them statically, but my dynamic function in the JS doesn't do anything. Overall, it seems pretty clear that this is _NOT_ how the API is intended to be used. 
+Unfortunately, we currently don't seem to be able to target the `::view-transition-group` in this way. Because of this, we are unable to control the timing of these dynamic transitions. I'm not sure if this is a bug or if it's just not implemented yet. We can target them statically, however. You uncomment the `::view-transition-group` rule in the CSS and you'll see that is true. But, my dynamic function in the JS doesn't do anything. Overall, it seems pretty clear that this is _NOT_ how the API is intended to be used. 
 
 There aren't many occasions when you don't know *how many* items you will be transitioning ahead of time, but it still seems like it should be possible. Oh well, let's take a look at a slightly more idiomatic example of how this gallery could be achieved using some more complex animations.
 
@@ -120,7 +120,7 @@ There really is only one item that we need to animate separately from the rest o
 
 ## Implementing the API in Our App
 
-Like the last chapter on the Navigation API, the View Transitions API is extremely easy to use. And, what's more-- they go hand in hand. Every SPA needs somes sort of navigation, and every navigation needs some sort of transition. So, we're already routing with the Navigation API. We're using the `render` function to completely blow out the innerHTML of the main area of our app. So, implementing the default transition is as easy as this.
+Like the last chapter on the Navigation API, the View Transitions API is extremely easy to use. And, what's more-- they go hand in hand. Changing out the DOM on the client-side can be jarring without some sort of transition. Since we're already routing with the Navigation API, implementing the default transition is as easy as this.
 
 <CodeBlock noButtons>
 Router.js
@@ -264,7 +264,9 @@ function addNewActiveClass() {
 ```
 </CodeBlock>
 
-We check on every single click if the user is clicking on an image or a product title (which are the only h2's in our app). If that is the case, we set a flag, store the image that was clicked, and then add a `view-transition-name` to the image. Next, as we update the DOM, we apply the same view-transition-name to the first image we find. This whole process only works if you are sure that the first image on the next page is the same image that was clicked on the previous page, but it's fine for our simple app. Now, let's liven up our checkout form a bit.
+We check on every single click if the user is clicking on an image or a product title (which are the only h2's in our app). If that is the case, we set a flag, store the image that was clicked, and then add a `view-transition-name` to the image. Next, as we update the DOM, we apply the same view-transition-name to the first image we find. 
+
+This whole process only works if you are sure that the first image on the next page is the same image that was clicked on the previous page. This is rarely the case on most webpages, but it's fine for our simple app. If we wanted, we could add an activeID to the product page as we render it and then use that to find the correct image. Instead, let's liven up our checkout form a bit.
 
 ## The Form Example
 
@@ -272,11 +274,11 @@ Something like a multi-step form seems ripe for this API. Often, you will see th
 
 <VanillaForm />
 
-Not bad. We display and hide steps as the user progresses through the form. We vary the animation based on the direction of the transition. Nothing too fancy, but it gets the job done. Let's see how we can implement this with the View Transitions API.
+Not bad. We display and hide steps as the user progresses through the form. We vary the animation based on the direction of the transition. Nothing too fancy, but it gets the job done. Let's see how we can implement this with the View Transitions API while adding a few more bells and whistles.
 
 <NewForm />
 
-So, we added error handling and a progress bar. We change the background color based on whether the user makes an error, goes backward or forward, or reaches the end of the form. We also added not one but two progress indicators: a progress bar and a number which automatically animate as the user progresses through the form. Almost everything has a `view-transition-name`, so all of the elements adapt in terms of their position and size as the user goes through the form.
+So, we added error handling and a progress bar. We change the background color based on whether the user makes an error, goes backward or forward, or reaches the end of the form. We also added not one but two progress indicators: a progress bar and a number which automatically animates as the user progresses through the form. Almost everything has a `view-transition-name`, so all of the elements adapt in terms of their position and size as the user goes through the form.
 
 Overall, this is probably over-extending the View Transitions API. Should we be using it for all of this? Probably not. But it's a fun example of what you can do with it. And, the most exciting part is coming up next!
 
