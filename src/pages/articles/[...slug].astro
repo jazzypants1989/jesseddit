@@ -35,7 +35,7 @@ let others = ["Home", "About", "Contact", "Portfolio"]
     class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-blue-200 rounded-lg shadow-2xl dark:bg-gray-800"
   >
     <a
-      class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1 my-2"
+      class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-400 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1 my-2"
       href={`/blog/${blog}`}
     >
       Back to Table of Contents
@@ -62,7 +62,7 @@ let others = ["Home", "About", "Contact", "Portfolio"]
     </article>
     <div class="flex items-center justify-between w-full h-24 mt-4 text-center">
       <a
-        class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-2"
+        class="cursor-pointer bold text-blue-600 dark:text-blue-500 hover:text-purple-700 dark:hover:text-blue-400 bg-blue-200 dark:bg-gray-700 rounded-2xl text-sm md:text-base shadow-purple-400 drop-shadow shadow-2xl px-2 py-1 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
         href={`/blog/${blog}`}
       >
         Back to Table of Contents (with comments)
@@ -70,7 +70,7 @@ let others = ["Home", "About", "Contact", "Portfolio"]
       {
         githubLink && (
           <a
-            class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-purple-500 dark:hover:text-blue-600 bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl px-2 py-1"
+            class="cursor-pointer bold text-green-700 dark:text-green-400 dark:hover:text-green-300 bg-blue-200 dark:bg-gray-700 rounded-2xl text-sm md:text-base shadow-green-400 drop-shadow shadow-2xl px-2 py-1 hover:shadow-lg hover:shadow-green-700 transition-all duration-700 ease-in-out"
             href={githubURL}
             id="github-link"
           >
@@ -82,13 +82,13 @@ let others = ["Home", "About", "Contact", "Portfolio"]
         nextLink === "/blog" ? (
           <a
             href="/blog"
-            class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 text-3xl bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-2"
+            class="cursor-pointer text-blue-500 hover:text-purple-700 bold text-xl md:text-3xl bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl shadow-purple-400 p-2 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
           >
             Other Articles!
           </a>
         ) : (
           <a
-            class="cursor-pointer bold text-blue-600 hover:text-purple-700 dark:text-green-500 dark:hover:text-blue-600 text-3xl bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl p-2"
+            class="cursor-pointer bold text-blue-600 dark:text-blue-500 hover:text-purple-700 dark:hover:text-blue-400 text-xl md:text-3xl bg-blue-200 dark:bg-gray-700 rounded-2xl shadow-2xl shadow-purple-400 p-2 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
             href={nextLink}
           >
             Next Page!

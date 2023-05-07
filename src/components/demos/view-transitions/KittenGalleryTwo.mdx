@@ -15,11 +15,12 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
     <style>
       body {
         margin: 0;
+        overflow: hidden;
       }
 
       #gallery {
         display: flex;
-        justify-content: center;
+        justify-items: center;
         align-items: center;
         height: 100vh;
         background: #000;
@@ -31,22 +32,49 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
         cursor: pointer;
       }
 
+      .gallery-item.active {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        height: max-content;
+        width: max-content;
+      }
+
       .gallery-item img {
         width: 100%;
         height: 100%;
         object-fit: contain;
       }
 
-      .gallery-item.active {
-        position: absolute;
-        width: 100%;
-        height: 97%;
+      .gallery-item.active img {
+        width: auto;
+        height: auto;
         object-fit: cover;
+        max-width: 100%;
+        max-height: 100%;
       }
 
-      @keyframes moveRight {
+      .slideOut {
+        animation: slide 1s ease-in-out forwards;
+      }
+
+      .slideIn {
+        animation: slide 1s ease-in-out forwards reverse;
+      }
+
+      .fadeIn {
+        animation: fadeIn 1s ease-in-out forwards;
+      }
+
+      .fadeOut {
+        animation: fadeOut 1s ease-in-out forwards;
+      }
+
+      @keyframes slide {
         to {
           transform: translateX(100%);
+          opacity: 0;
         }
       }
 
@@ -58,7 +86,7 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
           filter: blur(0);
         }
         50% {
-          transform: scale(0.5);
+          transform: scale(0.5) translate(-50%, -50%);
           clip-path: polygon(0 0, 100% 0, 0 100%, 0 100%);
           filter: blur(20px);
         }
@@ -67,6 +95,7 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
         }
         100% {
           clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+          transform: scale(1) translate(-50%, -50%);
         }
       }
       @keyframes fadeOut {
@@ -74,15 +103,20 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
           opacity: 1;
           transform: scale(1);
         }
-        100% {
+        70% {
+          transform: scale(0.2);
           opacity: 0;
-          transform: scale(0.5);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
         }
       }
     </style>
   </head>
   <body>
     <div id="gallery"></div>
+    <div id="overlay"></div>
     <script>
       const images = [
         "https://placekitten.com/200/200",
@@ -107,25 +141,44 @@ export const demoURL = "/demos/into-the-future/5-view-transitions-api/"
         gallery.appendChild(item)
       })
 
+      function animateGalleryItem(item, animation) {
+        item.classList.add(animation)
+        item.addEventListener("animationend", () => {
+          item.classList.remove(animation)
+        })
+      }
+
       const galleryItems = document.querySelectorAll(".gallery-item")
+      let hiddenItems = []
+      let activeItem = null
 
       galleryItems.forEach((item) => {
-        item.addEventListener("click", (e) => {
-          if (item.classList.contains("active")) {
-            item.style.animation = "fadeOut 1s ease-in-out forwards"
-            setTimeout(() => {
-              item.classList.remove("active")
-              item.style.animation = "none"
-            }, 1100)
+        item.addEventListener("click", () => {
+          if (activeItem) {
+            activeItem.classList.remove("active")
+            animateGalleryItem(activeItem, "fadeOut")
+            hiddenItems = [...galleryItems].filter(
+              (i) => i !== activeItem && i !== item
+            )
+            hiddenItems.forEach((i) => (i.style.display = "block"))
+            hiddenItems.forEach((i) => animateGalleryItem(i, "slideIn"))
+            activeItem = null
           } else {
-            item.classList.add("active")
-            item.style.animation = "fadeIn 2s ease-in-out forwards"
+            activeItem = item
+            activeItem.classList.add("active")
+            animateGalleryItem(activeItem, "fadeIn")
+            hiddenItems = [...galleryItems].filter((i) => i !== item)
+            hiddenItems.forEach((i) => animateGalleryItem(i, "slideOut"))
+            setTimeout(() => {
+              hiddenItems.forEach((i) => (i.style.display = "none"))
+            }, 1000)
           }
         })
       })
     </script>
   </body>
 </html>
+
 ```
 </CodeBlock>
 <IFrame src={demoURL + "4"} slot="demo" />

@@ -1,0 +1,325 @@
+---
+title: "TypeScript"
+nextLink: "./7-bundling"
+githubLink: true
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+
+## Introduction
+
+Since we're talking about the future of JavaScript, this series of articles wouldn't be complete if I didn't talk about TypeScript. Created by Microsoft in 2012, [TypeScript is a superset of JavaScript](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html) that adds static typing to the language. JavaScript doesn't have the best reputation when it comes to types. In fact, it's often cited as one of the worst parts of the language. This is because it is a dynamically typed language.
+
+## Dynamic Typing
+
+> That's a big regret because that breaks an important mathematical property-- the equivalence relation property. It was not totally unknown. Other languages had similar warts.
+
+-- [Brendan Eich on Dynamic Typing](https://www.infoworld.com/article/3294999/interview-brendan-eich-on-javascripts-blessing-and-curse.html)
+
+I have heard it said before that JavaScript does not have types. [This is not true](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures). The problem is that JavaScript is a dynamic, weakly typed language. This means that the type of a variable is not known until it is actually executed, and it can be changed at any time. This is in contrast to most statically typed languages where the type of each variable is defined as soon as the code is compiled and cannot be changed. This can lead to some unexpected behavior.
+
+<CodeBlock noButtons>
+```js
+let x = 1; // x is a number
+x = "hello" // x is now a string.
+// This is perfectly valid JavaScript.
+```
+</CodeBlock>
+
+Some consider this [a feature and not a bug](https://www.infoq.com/presentations/dynamic-static-typing/). It allows for a lot of flexibility in the language. However, many developers prefer the guard rails that static typing provides. It allows for better tooling, and it helps catch bugs before they happen. So, people have been trying to add static typing to JavaScript for a long time.
+
+## Static Typing
+
+Static typing allows the developer to define the data structure of each variable in the code so that it can be interpreted by [a compiler](https://en.wikipedia.org/wiki/Compiler). This is done by adding a type annotation to the variable with a special syntax that tells the compiler what type of data it is. The compiler then checks to make sure that the variable is only used in ways that are consistent with that type, and it will throw an error if it is not.
+
+JavaScript is not usually compiled, so any errors that are caused by using a variable incorrectly will not be caught until runtime. This means that the error will not be thrown until the code is ran-- possibly by the end user. Rather than waiting for users to have bad experiences, static typing allows the compiler to catch errors before the code is executed. Here's an example of how this works in TypeScript.
+
+<CodeBlock noButtons>
+```ts
+let x: number = 1; // x is a number
+x.toUpperCase(); // This will cause a compilation error.
+// Normally, this could cause issues for our users at runtime.
+```
+</CodeBlock>
+
+A simple example, but it shows how static typing can help catch bugs before they happen. It also allows for better tooling. For example, if you are using an IDE that supports TypeScript, it will be able to provide you with better auto-complete suggestions because it knows the type of each variable. Or, if it's a function, it will be able to tell you what type of data it expects as an argument and what type of data it will return.
+
+## JSDoc
+
+Before TypeScript was created, there were a few different ways to add static typing to JavaScript. While it wasn't explicitly created for this purpose, one of the most popular methods is using [JSDoc](https://jsdoc.app/). JSDoc is a documentation generator for JavaScript. Inspired by [JavaDoc](https://en.wikipedia.org/wiki/Javadoc), it uses a special comment syntax to add formatted annotations to JavaScript code. 
+
+It is not a compiler, but it can be used by other tools to provide static typing. For example, [Google Closure Compiler](https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler) uses JSDoc, and you can [turn on a setting in IDE's like VSCode](https://code.visualstudio.com/docs/languages/javascript#_type-checking) to check your code for errors using JSDoc. Here's an example of how you can use it to add static typing to a function.
+
+<CodeBlock noButtons>
+```js
+/**
+ * Adds two numbers together. I bet you need an example.
+ * @param {number} x - The first number.
+ * @param {number} y - The second number.
+ * @return {number}
+ * @example
+ * add(1, 2) // 3
+ */
+function add(x, y) {
+  return x + y;
+}
+```
+</CodeBlock>
+
+It's a bit bulky and hard to read, but it also does a few things that TypeScript can't. I really enjoy the ability to add descriptions to each parameter and return value. Now, if you put this code in an IDE that supports it, you can hover over the function and see the description of each parameter and return value. I even included an example of how to use the function. This is a great way to document your code.
+
+## TypeScript
+
+So, like I said, TypeScript is a superset of JavaScript. This just means that it adds some extra features to JavaScript to help make it more like a statically typed language. If you use `.ts` or `tsx` files and a special syntax, you can use the TypeScript compiler to check the code for errors outside of the context of an IDE. Browsers can't interpret this syntax though, so the compiler will convert it to regular JavaScript. Here's another example.
+
+<CodeBlock noButtons>
+```ts
+function add(x: number, y: number): number {
+  return x + y;
+}
+```
+</CodeBlock>
+
+Because JSDoc is just a documentation generator, it can't actually check the code for errors by itself. So, while you can add it to your [CI/CD pipeline](https://about.gitlab.com/topics/ci-cd/), it won't break the build if there are errors. But, you can still use it in conjunction with TypeScript to annotate your code. TypeScript doesn't have a good way to add descriptions for your functions and variables. Here's one way to get the best of both worlds.
+
+<CodeBlock noButtons>
+```ts
+/**
+ * Adds two numbers together. I bet you need an example.
+ * @param x The first number
+ * @param y The second number
+ * @returns The sum of the two numbers
+ * @example
+ * add(1, 2) // 3
+ */
+ function add(x: number, y: number): number {
+  return x + y;
+}
+```
+</CodeBlock>
+
+Alternatively, one can also use the TypeScript compiler to [check your JSDoc annotated code for errors without using TypeScript syntax at all](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html). This has been recently championed by such tech luminaries as [Rich Harris](https://twitter.com/Rich_Harris/status/1350436286948122625) who has gone so far as to convert the entire [Svelte code base to JSDoc TypeScript](https://t.co/TVfGzuVtw2). The basic idea is that you get most of the benefits of TypeScript without having to go through the hassle of a compilation step. Microsoft has [added support for this method to VSCode](https://code.visualstudio.com/docs/languages/jsconfig#_jsdoc-support), and they maintain [TSDOC](https://tsdoc.org/) as well which is focused strictly on documenting TypeScript code.
+
+## Adding Types to our App
+
+Now that we have a basic understanding of TypeScript, let's add it to our app. We will start by installing the TypeScript compiler. Twenty or so chapters later, and we're finally adding a second dependency to our app. Don't worry, it's not that bad. We just need to install it as a dev dependency.
+
+<CodeBlock noButtons>
+```bash
+npm install --save-dev typescript
+```
+</CodeBlock>
+
+From this point on, this series of articles will branch into two paths. On the first path, we will fully embrace the build step and use .ts files that will be compiled to .js files. In the next chapter, this version of the app will be bundled and minified for production. On the second path, we will use JSDoc annotations, and explore how far we can go without compilation. Either way, we'll need to configure TypeScript to work with our app.
+
+## The tsconfig.json File
+
+So, we'll start with the compilation path. First, we need to create a `tsconfig.json` file. This tells the compiler exactly how to compile our code. There are a surprising amount of options, but we'll just use a few important ones for now.
+
+<CodeBlock noButtons>
+tsconfig.json
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext", /* How the code is compiled. We're using the latest version of ECMAScript. */
+    "lib": ["ESNext", "DOM", "DOM.Iterable"], /* The libraries that are available to the compiler. */ 
+    "module": "ESNext", /* Tells the compiler to use ECMAScript modules if possible. */
+    "moduleResolution": "NodeNext" /* How the compiler "resolves" (finds) modules. */,
+    "outDir": "./public" /* Where JavaScript files are placed after compilation. */,
+    "noEmitOnError": true /* Disable emitting files if any type checking errors are reported. */,
+    "forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+    "strict": true /* Enable all strict type-checking options. Why not? We're using TypeScript. */,
+  },
+  "include": ["src"] /* Specify files to include here. */,
+  "exclude": ["node_modules", "public"] /* Specify files to exclude here. */
+}
+```
+</CodeBlock>
+
+Other than that, it's just a matter of a tightening up the code base to make the compiler happy. Much of the work can be accomplished by simply defining the types of all of our variables and functions. Rather than repeating these definitions, it can be helpful to create a central type definition file for any of our custom types that we want to use throughout the app. We'll call it `index.d.ts`. This lets us define our types once and use them anywhere in our app.
+
+<CodeBlock>
+index.d.ts
+```ts
+interface FancyButton extends HTMLButtonElement {
+  alreadyAdded: boolean
+  id: string
+}
+
+interface Product {
+  id: number
+  title: string
+  description: string
+  price: number
+  discountPercentage: number
+  rating: number
+  stock: number
+  brand: string
+  category: string
+  thumbnail: string
+  images: string[]
+}
+
+interface CartItem {
+  quantity: number
+  product: Product
+}
+
+interface Cart {
+  [key: number]: CartItem
+}
+
+interface CSSStyleDeclaration {
+  viewTransitionName: string
+} 
+// now included in @definitelytyped/dom-view-transitions package
+```
+</CodeBlock>
+
+Now, we can use these types throughout our app. For example, the `buttonFinderAdd` function can be a little tricky to type if you don't know what you're doing. But, since we extended the `HTMLButtonElement` interface, we can use the `FancyButton` type without any trouble. Here's what my final version of the function looks like. 
+
+<CodeBlock>
+render.ts
+```ts
+export async function buttonFinderAdd() {
+  const products = await getProducts()
+
+  const buttons: FancyButton[] = Array.from(
+    document.querySelectorAll(".add-to-cart")
+  )
+  buttons.forEach((button) => {
+    if (button.alreadyAdded) return
+    button.alreadyAdded = true
+    button.addEventListener("click", (event) => {
+      const target = event.target as FancyButton
+      const id = target.id
+      const product = products.find(
+        (product: Product) => product.id === Number(id)
+      )
+      if (!product) {
+        Nope("badID", id)
+        return
+      }
+      addToCart(product)
+    })
+  })
+}
+```
+</CodeBlock>
+
+I would like to draw your attention to the `event.target as FancyButton` part. This is called a type assertion. It's a way of telling the compiler that you know more about the type of a variable than it does. In this case, we know that the `event.target`(the thing the user clicked) is a button with the extra property `alreadyAdded`, but the compiler doesn't. The compiler can't know everything, and sometimes you have to help it out a bit. If we tried to use `event.target.alreadyAdded` without the type assertion, the compiler would throw an error. 
+
+Generally, [you want to keep assertions to a minimum](https://medium.com/swlh/why-you-should-avoid-type-assertions-in-typescript-5494e3d04dd). While they are necessary in situations where the compiler returns any or unknown, their use equates to a loss of actual type checking. This can lead to bugs. Another way of doing this without an assertion is by using the `in` operator. This is a way of checking if a property exists on an object. It's safer because the `in` operator actually exists in JavaScript, and it does a runtime check on the object. Here's what that would look like.
+
+<CodeBlock noButtons>
+```ts
+function isFancyButton(button: HTMLButtonElement): button is FancyButton {
+  return "alreadyAdded" in button
+}
+
+// ... later
+
+button.addEventListener('click', (e) => {
+  const target = e.target;
+  if (!target || !isFancyButton(target)) return;
+  // TypeScript now knows that target is a FancyButton
+  // and we can use target.alreadyAdded without an assertion.
+})
+```
+
+If you want to see more of the conversion process, you can watch the video above. Otherwise, let's move on to JSDoc.
+
+## JSDoc TypeScript
+
+The JSDoc path is a bit more complicated, but it's also more interesting. We still install TypeScript as a dev dependency, but our `tsconfig.json` is going to be a little different this time.
+
+<CodeBlock noButtons>
+tsconfig.json
+```json
+{
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"], /* The libraries that are available to the compiler. */
+    "moduleResolution": "nodenext", /* How the compiler "resolves" (finds) modules. */,
+    "module": "esnext", /* Tells the compiler to use ECMAScript modules if possible. */
+    "allowJs": true, /* Allow JavaScript files to be compiled. */
+    "checkJs": true, /* Enable error reporting in JavaScript files. */
+    "noEmit": true, /* Disable emitting files. We're not compiling, so we don't need this. */
+    "strict": true /* Enable all strict type-checking options. May as well if we're using TypeScript. */,
+  },
+  "include": ["public/**/*.js", "public/**/*.d.ts"],
+  "exclude": ["node_modules"]
+}
+```
+</CodeBlock>
+
+With these settings, we're not really compiling anything anymore. We're just using TypeScript to check our JavaScript files for errors. But, since we aren't compiling our code with TypeScript, we can no longer use its special type syntax because it is not understood by browsers.
+
+We can still define all of our types centrally though. Most of the articles that I read about this recommended creating a central `.js` file with which we will import and export our types. This is fine, but I don't like how it requires us to import the types into every single file.
+
+Personally, the method that I like the best is still using a central `.d.ts` "barrel file" to define all of our types. I see people saying that you will need to add `/// <reference path="index.d.ts" />` to each .js file, but everything just works for me without it in VSCode. I'm not sure if this is a new feature or what, but I'm not complaining. The StackBlitz demos that I've created for this series don't seem to work this way though, so you're not going to get this convenience in every environment. Both the types.js and index.d.ts files are in the repo if you want to try it out for yourself.
+
+So, we can still use all of the same types that we defined in `index.d.ts`, but we'll need to use JSDoc annotations to tell the compiler what types we're using. Here's what our `buttonFinderAdd` function looks like with JSDoc annotations. I will show a variety of ways to apply our custom `FancyButton` type.
+
+<CodeBlock>
+render.ts
+```ts
+import * as Types from "../types.js"
+
+// ... other code
+
+/**
+ * Finds all the add-to-cart buttons and adds an event listener to them.
+ * @returns {Promise<void>} - A promise that resolves when the buttons have each been given an event listener.
+ * @async
+ */
+export async function buttonFinderAdd() {
+  const products = await getProducts()
+  // import * as Types from "../types.js"
+  // this brings in all the types so we can do this:
+  // /** @type {NodeListOf<Types.FancyButton>} */
+  // Or, we can import one type at a time inlined with the JSDoc annotation.
+  // /** @type {import("../types").FancyButton}*/
+  // Or, we can add the property on the fly.
+  // /** @type {NodeListOf<HTMLButtonElement & { alreadyAdded: boolean }>} */
+  // I like writing custom interfaces in the index.d.ts file.
+  /** @type {NodeListOf<FancyButton>} */
+  const buttons = document.querySelectorAll(".add-to-cart")
+  // In VSCode, it works without importing anything. It's awesome.
+
+  buttons.forEach((button) => {
+    if (button.alreadyAdded) return
+    button.alreadyAdded = true
+    button.addEventListener("click", (e) => {
+      const target = /** @type {FancyButton} */ (e.target)
+      const id = target.id
+      const product = products.find((product) => product.id === Number(id))
+      if (!product) throw new Error("No product found.")
+      addToCart(product)
+    })
+  })
+}
+```
+</CodeBlock>
+
+The worst part for me is the ugly `/** @type {FancyButton} */` syntax, but it's not too bad of a price to pay for static typing in JavaScript without a build step. Again, if you would like to see more of the type conversion process, you can watch the video above.
+
+## Types in JavaScript
+
+So, all of these methods require additional steps to achieve static typing in JavaScript. While JSDoc does not require a build step, you still must use an editor that knows how to read the annotations. Wouldn't it be great if static typing was just a part of JavaScript?
+
+Recently, Gil Tayar, Daniel Rosenwasser and a few others introduced [a TC39 proposal to add a type syntax to the language](https://devblogs.microsoft.com/typescript/a-proposal-for-type-syntax-in-javascript/). While this would not extend to runtime validation, it would at least standardize the syntax for type annotations. It's not the first attempt at this (maybe not the last), but I'm hopeful that it will be accepted.
+
+The general concept is that you would be able to use much of the TypeScript syntax that we know and love in JavaScript without worrying about removing it with compilation. While browsers still would not be able to parse the type annotations, they would simply ignore them rather than throwing an error. This would allow IDE's and build tools to take advantage of these types without requiring a build step or JSDoc's busy syntax. I think this is probably the right move. [Other languages like Python](https://www.python.org/dev/peps/pep-0484/) and [Ruby](https://www.ruby-lang.org/en/news/2020/12/25/ruby-3-0-0-released/) have done similar things, and it seems to work well for them.
+
+## Conclusion
+
+So, now we have two versions of our app. One that requires a build step, and one that doesn't. We're going to maintain this split because I think JavaScript is at a bit of a crossroads. 
+
+On the one hand, [many developers feel overwhelmed](https://www.reddit.com/r/webdev/comments/vsomxr/web_dev_has_gotten_notoriously_complex_and_i_dont/) [with the complexity of modern JavaScript](https://news.ycombinator.com/item?id=20762475). [Some have even begun to question the need for a build step](https://deno.com/blog/you-dont-need-a-build-step). But, modern frameworks have become so complex that it's hard to imagine building a large application without one.
+
+Some frameworks like [Svelte](https://svelte.dev/blog/frameworks-without-the-framework) have fully leaned into the extra benefits that a build step can provide. While others like [Solid.js and React](https://www.youtube.com/watch?v=gOBztmbmXPY) separate their compilation from their runtime. [Both approaches have their merits](https://ryansolid.medium.com/javascript-ui-compilers-comparing-svelte-and-solid-cbcba2120cea). React's optional compile step has traditionally been a simple JSX transform, but they have [recently been experimenting with a more advanced compiler](https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023).
+
+I plan on further exploring both approaches in this series. I think it's important to understand the tradeoffs involved in each direction. One aspect that I haven't touched on is the performance implications of a build step. [Static analysis](https://en.wikipedia.org/wiki/Static_program_analysis) of pre-compiled code can allow for better [tree-shaking](https://en.wikipedia.org/wiki/Tree_shaking),[dead code elimination](https://en.wikipedia.org/wiki/Dead_code_elimination), and [minification](https://en.wikipedia.org/wiki/Minification_(programming)). And, it also allows for niceties like [import aliases](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping).
+
+So, in our final chapter of this series, we will explore the world of bundling. We will look at the different types of bundlers, and we will see how they can help us optimize our code. At the same time, we'll try to see how we can get some of the same benefits without a build step.

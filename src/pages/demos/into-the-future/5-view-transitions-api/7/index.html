@@ -6,6 +6,8 @@
     <style>
       body {
         margin: 0;
+        overflow: hidden;
+        background: #000;
       }
 
       #gallery {
@@ -13,14 +15,12 @@
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background: #000;
       }
 
       .gallery-item {
         width: 200px;
         height: 200px;
         cursor: pointer;
-        overflow: hidden;
       }
 
       .gallery-item img {
@@ -31,15 +31,31 @@
 
       .gallery-item.active {
         position: absolute;
-        width: fit-content;
-        height: fit-content;
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: cover;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        height: max-content;
+        width: max-content;
       }
 
-      /* ::view-transition-group(gallery-item-transition-0) {
-        animation-duration: 2s;
+      .gallery-item.active img {
+        width: auto;
+        height: auto;
+        object-fit: cover;
+        max-width: 100%;
+        max-height: 100%;
+      }
+      /* ::view-transition-group(active) {
+        animation-duration: 0.75s;
+      }
+
+      ::view-transition-old(active),
+      ::view-transition-new(active) {
+        animation: none;
+      }
+
+      ::view-transition-old(active) {
+        opacity: 0;
       } */
     </style>
   </head>
@@ -48,29 +64,6 @@
     <script>
       const gallery = document.querySelector("#gallery")
       const root = document.documentElement
-
-      // Adapted from https://stackoverflow.com/questions/4481485/changing-css-pseudo-element-styles-via-javascript
-      // This IIFE adds a rule to the document's stylesheet
-      // We're using it because we can't adjust the pseudo-elements directly with JS
-      const addRule = ((style) => {
-        const sheet = document.head.appendChild(style).sheet
-        return (selector, css) => {
-          const propText =
-            typeof css === "string"
-              ? css
-              : Object.keys(css)
-                  .map(function (p) {
-                    return (
-                      p + ":" + (p === "content" ? "'" + css[p] + "'" : css[p])
-                    )
-                  })
-                  .join(";")
-          return sheet.insertRule(
-            selector + "{" + propText + "}",
-            sheet.cssRules.length
-          )
-        }
-      })(document.createElement("style"))
 
       const images = [
         "https://placekitten.com/200/200",
@@ -93,41 +86,32 @@
         gallery.appendChild(item)
       })
 
-      const galleryItems = document.querySelectorAll(".gallery-item")
-
-      galleryItems.forEach((item, index) => {
-        item.style.setProperty(
-          "view-transition-name",
-          `gallery-item-transition-${index}`
-        )
-
-        addRule(`::view-transition-old(gallery-item-transition-${index})`, {
-          opacity: 0,
-        })
-
-        // This does nothing, LOL. Maybe soon?
-        addRule(`::view-transition-group(gallery-item-transition-${index})`, {
-          animationDuration: "10s",
-        })
-
+      document.querySelectorAll(".gallery-item").forEach((item) => {
         item.addEventListener("click", () => {
-          transitionHelper({
-            updateDOM: () => {
-              if (!item.classList.contains("active")) {
+          item.style.viewTransitionName = "active"
+          if (!item.classList.contains("active")) {
+            transitionHelper({
+              updateDOM: () => {
                 item.classList.add("active")
                 document
                   .querySelectorAll(".gallery-item:not(.active)")
                   .forEach((item) => {
                     item.style.display = "none"
                   })
-              } else {
+              },
+            })
+          } else {
+            transitionHelper({
+              updateDOM: () => {
                 item.classList.remove("active")
-                galleryItems.forEach((item) => {
-                  item.style.display = "block"
-                })
-              }
-            },
-          })
+                document
+                  .querySelectorAll(".gallery-item:not(.active)")
+                  .forEach((item) => {
+                    item.style.display = "block"
+                  })
+              },
+            })
+          }
         })
       })
 
@@ -143,6 +127,12 @@
         }
 
         const transition = document.startViewTransition(updateDOM)
+
+        transition.finished.finally(() => {
+          document.querySelectorAll(".gallery-item").forEach((item) => {
+            item.style.viewTransitionName = "none"
+          })
+        })
 
         return transition
       }

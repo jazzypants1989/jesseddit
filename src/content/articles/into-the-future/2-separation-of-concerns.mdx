@@ -13,7 +13,7 @@ Broadly, this just means splitting our code into different files, each with a si
 
 Since the majority of the code will be the same here, There won't be many snippets. Instead, I'll just show you the file structure. But, we will be changing one function. To simplify our file structure, I will be using an external API to get our data. This also shows that these concepts work outside of our current project.
 
-<CodeBlock>
+<CodeBlock noButtons>
 new db function
 
 ```js
@@ -36,7 +36,7 @@ const db = async () => {
 
 So, here's our new file structure:
 
-<CodeBlock>
+<CodeBlock noButtons>
 
 ```bash
 ├── index.html
@@ -49,11 +49,11 @@ So, here's our new file structure:
 
 Now, we can link our CSS and JavaScript files in our HTML file.
 
-<CodeBlock>
+<CodeBlock noButtons>
 ```html
 <!DOCTYPE html>
 <link rel="stylesheet" href="style.css" />
-<script src="App.js"></script>
+<script src="App.js" defer></script>
 ```
 </CodeBlock>
 
@@ -61,7 +61,7 @@ So, instead of over 400 lines of code in one file, we have around 50 lines of HT
 
 ## Our New Architecture
 
-There are a million different ways to do this, and I'm not going to pretend that mine is the best. But, I will try to explain some of my decisions. I plan on splitting my files up into three folders: components, features, and pages. I'll explain what each of these folders are for, but first let's see what the file structure looks like:
+There are a million different ways to do this, and I'm not going to pretend that mine is the best. But, I will try to explain some of my decisions. I plan on splitting my files up into three folders: components, features, and pages. I will explain the purpose of each of these folders soon, but first let's see what the file structure looks like:
 
 <CodeBlock>
 
@@ -96,7 +96,7 @@ Hopefully, my comments and naming conventions make it clear what each folder is 
 
 ## Components, Features, and Pages
 
-**Components** are the essential building blocks of our app. Generally, these are reusable visual elements, but I am also including anything that is necessary for our app to function. I want this folder structure to remain throughout every future iteration of this project, and I hope this will make more sense as we go along.
+**Components** are the core pieces of our app. Generally, these refer to reusable visual elements, but I am also including anything that is necessary for our app to function. I want this folder structure to remain throughout every future iteration of this project, and I hope this will make more sense as we go along.
 
 **Features** in our application are anything extra that we want to add. While our app wouldn't be much without these features, they aren't essential to the functionality of our app. We don't need different themes or a search bar, but they are nice to have. So, anything like that will go in this folder.
 
@@ -106,7 +106,7 @@ Hopefully, my comments and naming conventions make it clear what each folder is 
 
 So, now our App.js is pretty barebones. It just needs to bootstrap our app, load up any additional features, and then pass control over to our router.
 
-<CodeBlock>
+<CodeBlock noButtons>
 App.js
 ```js
 themeListener()
@@ -128,7 +128,7 @@ Router(location.pathname)
 
 But, where are those functions coming from... Oh, no...
 
-<CodeBlock>
+<CodeBlock noButtons>
 index.html
 ```html
 <!DOCTYPE html>
@@ -157,8 +157,7 @@ index.html
     <script src="/App.js" defer></script>
   </head>
 </html>
-````
-
+```
 </CodeBlock>
 
 Play close attention to the order of these scripts. Hopefully, our folder structure makes a bit more sense now. The view templates are mostly just strings of HTML and some event listeners. They don't rely on much, but they are relied on by a lot of other files. So, they have to come first.

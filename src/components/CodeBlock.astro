@@ -21,7 +21,7 @@ const hidden = noButtons ? "hidden" : ""
   <slot />
   <div class="flex items-center justify-end">
     <button
-      class={`copy px-2 py-1 text-sm font-semibold shadow-inner shadow-purple-400 bg-purple-400 text-white rounded-t-2xl hover:bg-purple-500 hover:shadow-purple-500 ${hidden}`}
+      class={`copy px-2 py-1 animate- text-sm font-semibold shadow-inner shadow-purple-400 bg-purple-400 text-white rounded-t-2xl hover:bg-purple-500 hover:shadow-purple-500 ${hidden}`}
     >
       Copy to clipboard
       <button
@@ -45,6 +45,7 @@ const hidden = noButtons ? "hidden" : ""
         showButtons.forEach((button) => {
           button.addEventListener("click", () => {
             this.classList.toggle("h-28")
+            this.classList.toggle("animate-nudge-y")
             showButtons.forEach((button) => {
               button.textContent = this.classList.contains("h-28")
                 ? "Show more"

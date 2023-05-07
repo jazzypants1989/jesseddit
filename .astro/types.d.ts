@@ -252,9 +252,16 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"into-the-future/6-demo.mdx": {
-  id: "into-the-future/6-demo.mdx",
-  slug: "into-the-future/6-demo",
+"into-the-future/6-typescript.mdx": {
+  id: "into-the-future/6-typescript.mdx",
+  slug: "into-the-future/6-typescript",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"into-the-future/7-bundling-and-import-maps.mdx": {
+  id: "into-the-future/7-bundling-and-import-maps.mdx",
+  slug: "into-the-future/7-bundling-and-import-maps",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">

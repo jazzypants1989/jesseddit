@@ -6,7 +6,9 @@
     <style>
       body {
         margin: 0;
+        overflow: hidden;
         background: #000;
+        view-transition-name: none;
       }
 
       #gallery {
@@ -14,14 +16,13 @@
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background: #000;
+        view-transition-name: gallery;
       }
 
       .gallery-item {
         width: 200px;
         height: 200px;
         cursor: pointer;
-        overflow: hidden;
       }
 
       .gallery-item img {
@@ -31,19 +32,28 @@
       }
 
       .gallery-item.active {
-        width: fit-content;
-        height: fit-content;
-        max-width: 100%;
-        max-height: 100%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        height: max-content;
+        width: max-content;
+      }
+
+      .gallery-item.active img {
+        width: auto;
+        height: auto;
         object-fit: cover;
+        max-width: 100%;
+        max-height: 96%;
         view-transition-name: active;
       }
 
-      ::view-transition-old(root) {
+      ::view-transition-old(gallery) {
         animation: moveRight 0.75s ease-in-out;
       }
 
-      ::view-transition-new(root) {
+      ::view-transition-new(gallery) {
         animation: fadeIn 0.75s ease-in-out;
       }
 
@@ -117,11 +127,11 @@
             updateDOM: () => {
               if (!item.classList.contains("active")) {
                 item.classList.add("active")
-                document
-                  .querySelectorAll(".gallery-item:not(.active)")
-                  .forEach((item) => {
+                galleryItems.forEach((item) => {
+                  if (!item.classList.contains("active")) {
                     item.style.display = "none"
-                  })
+                  }
+                })
               } else {
                 item.classList.remove("active")
                 galleryItems.forEach((item) => {

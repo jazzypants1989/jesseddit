@@ -228,6 +228,7 @@ module.exports = {
             },
             h2: {
               color: theme("colors.purple.600"),
+              indent: "0",
             },
             h3: {
               color: theme("colors.purple.600"),
@@ -245,7 +246,19 @@ module.exports = {
               color: theme("colors.purple.600"),
             },
             code: {
-              color: theme("colors.purple.600"),
+              color: theme("colors.purple.200"),
+              backgroundColor: theme("colors.purple.900"),
+              "&:before": {
+                content: "none !important",
+              },
+              "&:after": {
+                content: "none !important",
+              },
+              fontWeight: "400",
+              fontSize: "0.875rem",
+              lineHeight: "1.375rem",
+              padding: "0.125rem 0.25rem",
+              borderRadius: "0.25rem",
             },
             figcaption: {
               color: theme("colors.purple.500"),
@@ -295,6 +308,7 @@ module.exports = {
             },
             h2: {
               color: theme("colors.purple.400"),
+              indent: "0",
             },
             h3: {
               color: theme("colors.purple.400"),
@@ -310,10 +324,6 @@ module.exports = {
             },
             strong: {
               color: theme("colors.purple.400"),
-            },
-            code: {
-              color: theme("colors.purple.400"),
-              font: "Menlo, monospace",
             },
             figcaption: {
               color: theme("colors.purple.500"),
