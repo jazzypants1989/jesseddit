@@ -1,0 +1,275 @@
+---
+title: "Deno and Astro"
+nextLink: "./9-conclusion-and-other-features"
+githubLink: true
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import ServerDemo from "../../../components/demos/deno-astro/ServerDemo.mdx"
+
+## Introduction
+
+In our last chapter, we started using external libraries in our web app which now has two main versions. In one, we are writing it in TypeScript and bundling it using tools like Vite and Parcel. In the other, we are using JSDoc annotations and import maps to get much of the same functionality. For now, let's focus on the version that we can run directly in the browser.
+
+Our uncompiled app has one main problem. Because we are not actually downloading the dependencies, TypeScript can't supply us with the types for those dependencies. (At least, I don't know how to do it. Let me know [in the comments](/blog/into-the-future#comments) if there's a good way to do this.) This means that we are losing out on a lot of the benefits of TypeScript. In this chapter, we will look at how we can use Deno to solve this problem.
+
+We'll also be switching out our server to use Deno as well. I plan on covering the balance between server and client in greater detail in future articles, but I will give a brief overview of my thoughts on the subject in this chapter. 
+
+Finally, we will look at how we can use Astro to create a Multi-Page Application (a fancy word for a normal website) with the same basic codebase as our compiled Single Page Application. I'll use this to examine the benefits and drawbacks of full client-side routing. In the last chapter on bundling, we tried to limit the amount of JavaScript that we send to the client. There's no better way to do that than to not send any at all. 
+
+We'll also use Astro to see how modern tooling can allow us to maximize the benefits of a build step. Because it uses Vite underneath the hood, Astro cordons the complexities of compilation away from the developer. But first, let's talk about Deno.
+
+## Deno
+
+> Using Node is kind of like nails on chalkboard to me at times. Just because I see the bugs that I introduced that aren't really bugs at this point. They're just how it works. But, they are bugs. And, they were design mistakes [I] made that just cannot be corrected now because there is so much software that uses it. And, I don't know... It offends my sensibilities. It could have been so much nicer.
+
+-- Ryan Dahl, [10 Things I Regret About Node.js](https://www.youtube.com/watch?v=M3BM9TB-8yA)
+
+Created by Ryan Dahl in 2018, [Deno is a secure runtime for JavaScript and TypeScript](https://deno.land/). A runtime is a program that executes code written in a particular language. The browser is the most common runtime for JavaScript. Since [the moment we started building](/articles/client-side-routing/3-getting-started-setting-up-a-server), we have been using Node.js as our runtime which was also created by Ryan Dahl. Deno is similar to Node.js in many ways, but with a few key differences.
+
+One nice thing about it is that it runs TypeScript natively. You don't need to compile it to JavaScript first. While each of our TypeScript versions have had a `.ts` server to leverage static types, we have needed to compile it to JavaScript before running it. This is because Node.js doesn't understand TypeScript. With Deno, we can run it directly.
+
+## Security by Default
+> I've always regretted what happened with Node-- not really using the JavaScript sandbox as it was as a security mechanism. And, you've seen all these exploits that are happening with leftpad and various other NPM modules-- basically supply chain attacks-- because Node has no security guarantees.
+-- Ryan Dahl on [Syntax](https://syntax.fm/show/538/supper-club-ryan-dahl-and-deno)
+
+Deno is also designed to be more secure than Node.js. Unlike Node, you can't access things like the file system or network by default. You have to explicitly grant access to these resources. This is a great idea for security, but it can be a bit of a pain to work with. I find myself copying and pasting the same permissions into my terminal over and over again. I'm sure there's a better way, but I haven't found it yet.
+
+Like Node, Deno is a command line tool that you can install on your computer. You can find instructions for installing it on [the Deno website](https://deno.com/manual/getting_started/installation). Once you have it installed, we can run a TypeScript version of our server like this:
+
+<CodeBlock>
+```bash
+deno run --allow-read --allow-net --alow-env server.ts
+```
+</CodeBlock>
+
+I basically have that command memorized at this point. The flags grants access to the file system, the network, and environment variables respectively. As you can imagine, a bad actor could do a lot of damage if they had access to these things. 
+
+Generally, you would only want to allow these kinds of permissions to code that trust. Or, even better, code that you have written yourself. You can find a full list of permissions [in the Deno manual](https://deno.com/manual/getting_started/permissions). Let's take a look at what our server looks like when we modify it to run in Deno.
+
+## Request and Response
+
+> The axiom in my mind is that JavaScript is future-proof, and that the world is going to continue to build on JavaScript. What we try to do is stick as close to the browser standards as we can and try to be in the flow of where JavaScript is going and avoid building infrastructure and stuff that is going to ultimately get supplanted by something in the browser or, say, invent syntax that is going to ultimately not future-proof for where browser JavaScript is going.
+-- Ryan Dahl on [PodRocket](https://podrocket.logrocket.com/deno)
+
+[Web standards](https://en.wikipedia.org/wiki/Web_standards) has become a bit of a nebulous term, but essentially it refers to adherence to established rules and best practices on the web for the sake of compatibility. Deno is designed to follow these standards as closely as possible. For instance, unlike Node, it uses the [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request) and [Response](https://developer.mozilla.org/en-US/docs/Web/API/Response) interfaces-- the same ones made available by the Fetch API we used in our app. Additionally, it uses [EcmaScript Modules](../3-ecmascript-modules) by default.
+
+This makes our code much more reusable and ["isomorphic"](https://en.wikipedia.org/wiki/Isomorphic_JavaScript), but it requires us to change things up a bit. Let's take a look at the most recent version of our Node server and compare it to a server built with Deno that does the same things.
+
+<ServerDemo />
+
+It's around the same amount of code-- but we're not even using a framework like Express in the Deno version. [Building a server like this with just Node is a bit more involved](https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction). Because Deno leverages powerful tools built into modern JavaScript like async iterators and promises, you can build a capable server in Deno with no outside scripts whatsoever. This allows for things like the Response we built for the "POST" method to look like a normal `fetch` call. We'll get back to [the Stripe integration later](./conclusion-and-other-features), but first let's focus on package management.
+
+## package.json and deno.json
+>But what happens if the content in the remote url is changed? This could lead to your production module running with different dependency code than your local module. Deno's solution to avoid this is to use integrity checking and lock files.
+-- [Deno Manual](https://deno.com/manual/getting_started/package_manager#integrity-checking)
+
+You may have noticed that these are all first party scripts, but the imports in the deno version look a little messier. Instead of using NPM to gather disparate packages, the Deno version pulls in official packages from their CDN. While they have [recently expanded their support for NPM packages](https://deno.com/manual@v1.33.2/node), Deno encourages [importing from URLs](https://deno.com/manual@v1.33.2/basics/modules#remote-import). 
+
+While this is reminiscent of the wild west of script tags, Deno has [multiple methods](https://deno.com/manual@v1.33.2/basics/modules/integrity_checking) for making this a much better experience. While you can [now simply bring in a package.json](https://deno.com/manual@v1.33.2/node/package_json), the preferred method for a better package experience is building a `deno.json` file. Because Deno is also taking care of our TypeScript for us, this will be where we define our configuration for that as well.
+
+<CodeBlock>
+deno.json
+```json
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"],
+    "checkJs": true,
+    "types": ["./public/types.js", "./public/index.d.ts"]
+  },
+  "imports": {
+    "stripe-js": "https://esm.sh/@stripe/stripe-js@1.52.1",
+    "date-fns": "https://unpkg.com/date-fns@2.27.0/esm/index.js",
+    "@fullcalendar/core": "https://cdn.skypack.dev/@fullcalendar/core@6.1.6",
+    "@fullcalendar/daygrid": "https://cdn.skypack.dev/@fullcalendar/daygrid@6.1.6",
+    "Product": "./public/components/Product.js",
+    "render": "./public/components/render.js",
+    "Router": "./public/components/Router.js",
+    "Routes": "./public/components/Routes.js",
+    "store": "./public/components/store.js",
+    "cart": "./public/features/cart.js",
+    "search": "./public/features/search.js",
+    "hamburger": "./public/features/hamburger.js",
+    "theme": "./public/features/theme.js",
+    "calendar": "./public/features/calendar.js",
+    "toast": "./public/features/toast.js",
+    "About": "./public/pages/About.js",
+    "Cart": "./public/pages/Cart.js",
+    "Checkout": "./public/pages/Checkout.js",
+    "Success": "./public/pages/Success.js",
+    "Home": "./public/pages/Home.js",
+    "Events": "./public/pages/Events.js",
+    "Nope": "./public/pages/Nope.js",
+    "ProductPage": "./public/pages/ProductPage.js",
+    "Products": "./public/pages/Products.js",
+    "Types": "./public/types.js"
+  }
+}
+```
+</CodeBlock>
+
+So, this takes the place of both our `tsconfig.json` and our `package.json` while still being smaller than either of them! Now, Deno will cache and hash all of our resources to allow us to verify our dependencies at runtime. And, I hope that the `imports` area looked familiar. That's right-- it's an [import map](./7-bundling-and-import-maps)! Deno's adherence to web standards runs through every aspect of their API's.
+
+Unfortunately, this `json` file cannot be used in the browser as we discussed in the last chapter. So, we still have to maintain two separate sources of truth for our app. But, at least we can copy and paste this into the script tag we use for the browser-- unlike the array that `tsconfig.json` uses for paths. 
+
+So, now we get the convenience of being able to import and export by [bare module specifiers](https://dev.to/thepassle/the-javascript-ecosystem-for-the-dazed-and-confused-36il#bare-module-specifiers) just like using a bundler. We already got this just by using import maps, but now we have TypeScript definitions for all of our external packages through Deno! 
+
+I think this is about as good as it gets for developing a single page application with vanilla JavaScript in 2023. And still-- no build step! We get full type safety, bare import aliases that are locally cached, and full code splitting. My question to you as a reader is this: What are we missing that a build tool could provide? The code isn't properly minified, but the difference in code sent to the client is kind of negligible. [Let me know in the comments](/blog/into-the-future#comments) what you think.
+
+## Server and Client
+
+> There is an active debate happening in front-end circles about the right way to build websites. Like most front-end debates, boths sides are really attacking a caricature of the other. On the one hand, we have advocates for what is often referred to as "Modern Web Development". On the other hand, we have people who look at the state of modern web development and argue that it's time for a bit of a "Come to Jesus" moment about the path that we're on.
+-- Rich Harris, [Have Single-Page Apps Ruined the Web?](https://www.youtube.com/watch?v=860d8usGC0o)
+
+So, we have reached the limit of my goals for the uncompiled SPA version of our app. While this is key to understanding the last ten years of JavaScript, it seems clear that JavaScript is moving towards a more server-centric approach that takes full advantage of the benefits of compilation. This can be seen with the introduction of [React Server Components](https://legacy.reactjs.org/blog/2020/12/21/data-fetching-with-react-server-components.html), the new [Next.JS app router](https://nextjs.org/docs/app), and emerging meta-frameworks like Qwik. Rich Harris coined the term "Transitional Apps" and [Kent C. Dodds likes to talk about "Full Stack Components"](https://www.epicweb.dev/full-stack-components), and they both partially describe aspects of this new paradigm.
+
+To fully understand the trade-offs with this approach, we need to look at the benefits and drawbacks of both server and client-side rendering. I plan on exploring this more in future articles, but I think that it would be helpful to see what our current app would look like with a modern compiled approach that fully leverages the interplay between server and client. While I could demonstrate this with the Deno or Express servers that we have been using so far, it makes sense to use a meta-framework like Astro so we can simply focus on the benefits of this approach. I will explore both custom server-side rendering and [Fresh](https://fresh.deno.dev/) in their own articles.
+
+## Astro
+>Because we're so server-first in our thinking, Astro is just a templating language for the server. There's no reactivity to worry about, there's no hooks. Everything's going to run once and render, and that gives us essentially something that's just HTML. We call it like HTML with some nice-to-have features, like a JSX expression if you want to do some sort of templating. You can use components in it. So it feels a lot like a Svelte or a React, but we've stripped away all the bits that aren't really relevant on the server. 
+-- Fred K. Schott, [Changelog: JSParty](https://changelog.com/jsparty/238)
+
+I will try to temper my enthusiasm for [Astro](https://astro.build), but I genuinely think that it is the pinnacle of modern web development. As I have previously stated, this very site is built with it. Like most meta-frameworks these days, Astro is built on top of Vite. It is co-created by [Fred K. Schott](http://fredkschott.com) and [Nate Moore](https://twitter.com/n_moore) who are both very active in the open source community.
+
+Astro is a component-based meta-framework that takes a slightly different approach than most. Instead of being built on top of a single UI library like Next.JS or SvelteKit, it is built on top of the web platform itself. You can bring in [components from a framework like React if you want](https://docs.astro.build/en/core-concepts/framework-components/), but it is not required. Often, Astro's built-in components are all you need.
+
+## .astro Files
+>We also wanted to make sure that Astro had a great built-in component language as well. To do that, we created our own .astro UI language. It's heavily influenced by HTML: any valid snippet of HTML is already a valid Astro component! But it also combines some of our favorite features borrowed from other component languages like JSX expressions (React) and CSS scoping by default (Svelte and Vue).
+-- [Astro Docs](https://docs.astro.build/en/concepts/why-astro/)
+
+Because Astro is built on top of Vite, they have decided to introduce a proprietary single file component that allows you to give instructions to both the server and the client for each component--the `.astro` file. This allows you to use a component-based approach to build a MPA without the overhead of a SPA framework. While it allows you to use a form of JSX for templating, Astro components are HTML-first by default.
+
+Because everything will be compiled to HTML later, Astro has decided to treat TypeScript as a first-class citizen. This means that you can use TypeScript in your `.astro` files without any extra configuration, and you don't have to worry about the browser not understanding it. If we're going to be implementing a build step anyways, why not use it to its full potential?
+
+Each component has a `frontmatter` portion where you can define the server's responsibilities for each component. This can be anything from fetching data to defining dynamic variables to use in the template. To limit the amount of JavaScript we send to the client, we can take advantage of the Astro server and compose our reactivity with POST requests. Also, we'll use cookies for our cart just to see how Astro makes that easy.
+
+## Server-Side Rendering in Astro
+> The way that every web framework, like modern web framework, of the last decade has treated [hydration] is "let's ship the whole page as JavaScript and the whole page will hydrate." And then, your whole page is a JavaScript application. Everything's interactive. And Astro's take is instead-- the whole thing is static HTML and just the bits that need to be interactive are interactive.
+-- Fred K. Schott, [React Round Up](https://topenddevs.com/podcasts/react-round-up/episodes/all-astro-with-fred-schott-rru-198)
+
+I think the best way to explain how this works in practice is to show you some code. Let's take a look at our `/products.astro` page-- the route that displays all of our products.
+
+<CodeBlock>
+products.astro
+```jsx
+---
+import Layout from "../components/Layout.astro"
+import ProductComponent from "../components/Product.astro"
+import Nope from "../components/Nope.astro"
+import { getProducts } from "../utils/store"
+import type { Product } from "../types"
+
+const products = await getProducts()
+const cartCookie = Astro.cookies.get("cart").value
+const cart = cartCookie ? JSON.parse(cartCookie) : []
+
+if (Astro.request.method === "POST") {
+  let product: Product | undefined
+  const form = await Astro.request.formData()
+  const body = Object.fromEntries(form.entries())
+  if (body.id && typeof body.id === "string") {
+    product = addToCart(body.id)
+  }
+  const param = `?toast=${product?.title}&type=success`
+  return Astro.redirect(`/products${param}`)
+}
+
+function addToCart(id: string) {
+  const product = products.find((product) => product.id === Number(id))
+  if (!product) return
+  if (cart) {
+    const cartItem = cart.find((item: Product) => item.id === product.id)
+    if (cartItem) {
+      cartItem.quantity++
+    } else {
+      cart.push({ ...product, quantity: 1 })
+    }
+    Astro.cookies.set("cart", JSON.stringify(cart), { path: "/" })
+  } else {
+    Astro.cookies.set("cart", JSON.stringify([{ ...product, quantity: 1 }]), {
+      path: "/",
+    })
+  }
+  return product
+}
+---
+
+{products.length === 0 && <Nope id="badFetch" />}
+{
+  products.length > 0 && (
+    <Layout title="Products" description="This is the products page">
+      <h1>Products</h1>
+      <div class="products">
+        {products.map((product) => (
+          <ProductComponent product={product} />
+        ))}
+      </div>
+    </Layout>
+  )
+}
+
+<script>
+  import { addToast } from "../utils/toast.js"
+
+  const params = new URLSearchParams(window.location.search)
+  const toast = params.get("toast")
+  const type = params.get("type")
+
+  if (toast) {
+    if (type === "success") {
+      addToast(`Added ${toast} to cart!`, { type: "success" })
+    } else {
+      addToast(`Hmmm... something went wrong.`, { type: "error" })
+    }
+  }
+</script>
+```
+</CodeBlock>
+
+So, everything in between the two `---` blocks is the `frontmatter` for this component. As you can see, we pre-populate the products on the server instead of waiting to fetch them on the client. This prevents what is known as a [client-server waterfall](https://www.dotcom-monitor.com/blog/optimizing-web-performance-understanding-waterfall-charts/) where the client must first wait for the Javascript to load before it can fetch the data it needs to render the page. Instead, the page is pre-rendered on the server and sent to the client as actual HTML.
+
+You can see Astro's JSX-like templating system beneath the frontmatter. While we can simply write HTML here, we can also use JSX expressions to make our templates more dynamic. For instance, we are no longer imperatively joining together template strings for our product components like we have been. 
+
+Astro allows us to declaratively render our components as if they were normal HTML elements while still using plain JavaScript array methods to map over the products. I think we can agree that this is much more readable than my custom `render` function. Despite my best efforts, you just can't do this kind of thing in vanilla JavaScript without a transpiler or a build step.
+
+## Islands of Interactivity
+> The general idea of an “Islands” architecture is deceptively simple: render HTML pages on the server, and inject placeholders or slots around highly dynamic regions. These placeholders/slots contain the server-rendered HTML output from their corresponding widget. They denote regions that can then be "hydrated" on the client into small self-contained widgets, reusing their server-rendered initial HTML.
+-- Jason Miller - [Islands Architecture](https://jasonformat.com/islands-architecture/)
+
+Finally, we have the `addToCart` function which is called when the user clicks the "Add to Cart" button. This function only runs on the server, but we can call it from the client by sending a POST request with the form. When we return from the POST request, a search parameter is added to the URL to trigger a toast notification. 
+
+Everything in between the `<script>` tags is handled with client-side JavaScript. So, instead of sending the entire app as JavaScript and then rendering it on the client, we send just enough to give the user a good experience. This adheres to a concept called "Islands of Interactivity"-- coined by Jason Miller, the creator of Preact.
+
+While we are simply using vanilla JavaScript, this idea is even more powerful when used with a framework like React. React applications can quickly get out of hand when you bring in a few dependencies. Astro allows you to render your React components on the server and then only hydrate the parts that need to be interactive. Ultimately, there is not much of a difference between this and React Server Components-- except [RSC's can refetch the server content on the client](https://twitter.com/dan_abramov/status/1631642742395658243). But, we'll get to that in a future article.
+
+## Conclusion
+> I think what's been happening recently is we've actually felt like the whole field got reenergized again. And you see, there are new players, so there are new libraries, there are new frameworks… And I think what we're seeing - one thing we're seeing a lot is a lot more emphasis on the server, particularly being able to not just run your existing client code on the server, but being able to kind of take full advantage of what the server offers, and combining that with parts we already have on the client.
+- Dan Abramov, [JS Party](https://changelog.com/jsparty/267)
+
+Deno and Astro are both exciting new tools that are pushing the web forward. They are pretty disparate in nature, but they share a common goal of using the web platform to its full potential while still allowing developers to use modern tooling like TypeScript and JSX. I have only skimmed the surface of their capability, but I wanted to introduce them to you as they seem emblematic of the future of web development.
+
+Our Deno version of the app serves as an example of how far you can push developer experience without a build step. While we sacrifice a bit of performance without compiling, we get the satisfaction of knowing that the code we write is the code that the client receives. Meanwhile, our Astro version of the app explores how much a modern meta-framework can give us out of the box when we relinquish this control-- even while stepping outside of the SPA paradigm.
+
+These approaches bring a new perspective to the connection between client and server by bringing the best of both worlds together while maintaining an emphatic focus on web standards. The future of web development seems to be a hybrid approach. By harnessing the power of both client and server, we can create apps that bring joy to both the developer and the user.
+
+I hope that this series has given you a better understanding of the history of JavaScript and the direction that it is headed through the lens of a single page application built with vanilla JavaScript. I plan on continuing to explore these topics in future articles, but I think that this is a good place to stop for now.
+
+In our final chapter, we'll summarize our findings while taking a quick look at some of the features that we have added to our app. It's changed a lot over the course of these eight chapters, and we have glossed over a lot of the implementation details as we discussed the broader concepts. I'll also give you a sneak peek at what I have planned for the future of this blog. I hope that you'll join me for the conclusion of this series
+
+## Additional Resources
+
+- Ryan Dahl, [Forced Optimization](https://www.youtube.com/watch?v=NWkobLM8LIw)
+
+- [Deno by Example](https://examples.deno.land/)
+
+- [Bun is another exciting new runtime](https://bun.sh/)
+
+- Andy Jiang - [A Gentle Introduction to Islands](https://deno.com/blog/intro-to-islands)
+
+- Astro Docs - [MPA vs SPA](https://docs.astro.build/en/concepts/mpa-vs-spa/)
+
+- Fireship - [Astro just launched... could it be the ultimate web framework?](https://www.youtube.com/watch?v=gxBkghlglTg)
+
+- ThePrimeagen - [Astro IS SO GOOD](https://www.youtube.com/watch?v=Sqp5VSqbQOY)
+
+- Mojtaba Seyedi - [Astro JS Framework: A Practical Guide to Building Faster Websites](https://bejamas.io/blog/practical-guide-to-astro-js-framework/)

@@ -1,10 +1,11 @@
 ---
 title: "TypeScript"
-nextLink: "./7-bundling"
+nextLink: "./7-bundling-and-import-maps"
 githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
+import StackBlitz from "../../../components/StackBlitz.astro"
 
 
 ## Introduction
@@ -14,8 +15,7 @@ Since we're talking about the future of JavaScript, this series of articles woul
 ## Dynamic Typing
 
 > That's a big regret because that breaks an important mathematical property-- the equivalence relation property. It was not totally unknown. Other languages had similar warts.
-
--- [Brendan Eich on Dynamic Typing](https://www.infoworld.com/article/3294999/interview-brendan-eich-on-javascripts-blessing-and-curse.html)
+--[Brendan Eich on Dynamic Typing](https://www.infoworld.com/article/3294999/interview-brendan-eich-on-javascripts-blessing-and-curse.html)
 
 I have heard it said before that JavaScript does not have types. [This is not true](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures). The problem is that JavaScript is a dynamic, weakly typed language. This means that the type of a variable is not known until it is actually executed, and it can be changed at any time. This is in contrast to most statically typed languages where the type of each variable is defined as soon as the code is compiled and cannot be changed. This can lead to some unexpected behavior.
 
@@ -30,6 +30,8 @@ x = "hello" // x is now a string.
 Some consider this [a feature and not a bug](https://www.infoq.com/presentations/dynamic-static-typing/). It allows for a lot of flexibility in the language. However, many developers prefer the guard rails that static typing provides. It allows for better tooling, and it helps catch bugs before they happen. So, people have been trying to add static typing to JavaScript for a long time.
 
 ## Static Typing
+>Detecting errors in code without running it is referred to as static checking. Determining what's an error and what's not based on the kinds of values being operated on is known as static type checking.
+--[TypeScript for the New Programmer](https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html)
 
 Static typing allows the developer to define the data structure of each variable in the code so that it can be interpreted by [a compiler](https://en.wikipedia.org/wiki/Compiler). This is done by adding a type annotation to the variable with a special syntax that tells the compiler what type of data it is. The compiler then checks to make sure that the variable is only used in ways that are consistent with that type, and it will throw an error if it is not.
 
@@ -46,10 +48,12 @@ x.toUpperCase(); // This will cause a compilation error.
 A simple example, but it shows how static typing can help catch bugs before they happen. It also allows for better tooling. For example, if you are using an IDE that supports TypeScript, it will be able to provide you with better auto-complete suggestions because it knows the type of each variable. Or, if it's a function, it will be able to tell you what type of data it expects as an argument and what type of data it will return.
 
 ## JSDoc
+>It is a common development problem: you have written JavaScript code that is to be used by others and need a nice-looking HTML documentation of its API. The de facto standard tool in the JavaScript world for generating API documentation is JSDoc.
+--Dr. Axel Rauschmayer [Exploring JS](https://exploringjs.com/es5/ch29.html)
 
 Before TypeScript was created, there were a few different ways to add static typing to JavaScript. While it wasn't explicitly created for this purpose, one of the most popular methods is using [JSDoc](https://jsdoc.app/). JSDoc is a documentation generator for JavaScript. Inspired by [JavaDoc](https://en.wikipedia.org/wiki/Javadoc), it uses a special comment syntax to add formatted annotations to JavaScript code. 
 
-It is not a compiler, but it can be used by other tools to provide static typing. For example, [Google Closure Compiler](https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler) uses JSDoc, and you can [turn on a setting in IDE's like VSCode](https://code.visualstudio.com/docs/languages/javascript#_type-checking) to check your code for errors using JSDoc. Here's an example of how you can use it to add static typing to a function.
+While it does not provide a type-checking compiler, it can be used by other tools to provide static typing. For example, [Google Closure Compiler](https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler) uses JSDoc, and you can [turn on a setting in IDE's like VSCode](https://code.visualstudio.com/docs/languages/javascript#_type-checking) to check your code for errors using JSDoc. Here's an example of how you can use it to add types to a function.
 
 <CodeBlock noButtons>
 ```js
@@ -67,9 +71,11 @@ function add(x, y) {
 ```
 </CodeBlock>
 
-It's a bit bulky and hard to read, but it also does a few things that TypeScript can't. I really enjoy the ability to add descriptions to each parameter and return value. Now, if you put this code in an IDE that supports it, you can hover over the function and see the description of each parameter and return value. I even included an example of how to use the function. This is a great way to document your code.
+It's a bit bulky and hard to read, but it also does a few things that TypeScript can't. I really enjoy the ability to add descriptions to each parameter and return value. Now, if you put this code in an IDE that supports it, you can hover over the function and see the descriptions. I even included an example of how to use the function. This is a great way to document your code so that it can be understood by others.
 
 ## TypeScript
+>TypeScript allows us to specify what types of values may be provided for parameters and variables... By restricting our code to only being able to be used in the ways you specify, TypeScript can give you confidence that changes in one area of code won't break other areas of code that use it.
+--Josh Goldberg, [Learning TypeScript](https://www.amazon.com/Learning-TypeScript-Josh-Goldberg-ebook/dp/B0B35C211B?asin=B0B35C211B&revisionId=e0891e02&format=1&depth=1)
 
 So, like I said, TypeScript is a superset of JavaScript. This just means that it adds some extra features to JavaScript to help make it more like a statically typed language. If you use `.ts` or `tsx` files and a special syntax, you can use the TypeScript compiler to check the code for errors outside of the context of an IDE. Browsers can't interpret this syntax though, so the compiler will convert it to regular JavaScript. Here's another example.
 
@@ -99,9 +105,13 @@ Because JSDoc is just a documentation generator, it can't actually check the cod
 ```
 </CodeBlock>
 
-Alternatively, one can also use the TypeScript compiler to [check your JSDoc annotated code for errors without using TypeScript syntax at all](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html). This has been recently championed by such tech luminaries as [Rich Harris](https://twitter.com/Rich_Harris/status/1350436286948122625) who has gone so far as to convert the entire [Svelte code base to JSDoc TypeScript](https://t.co/TVfGzuVtw2). The basic idea is that you get most of the benefits of TypeScript without having to go through the hassle of a compilation step. Microsoft has [added support for this method to VSCode](https://code.visualstudio.com/docs/languages/jsconfig#_jsdoc-support), and they maintain [TSDOC](https://tsdoc.org/) as well which is focused strictly on documenting TypeScript code.
+Alternatively, one can also use the TypeScript compiler to [check your JSDoc annotated code for errors without using TypeScript syntax at all](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html). This has been recently championed by such tech luminaries as [Rich Harris](https://twitter.com/Rich_Harris/status/1350436286948122625) who has gone so far as to convert the entire [Svelte code base to JSDoc TypeScript](https://t.co/TVfGzuVtw2). 
+
+The basic idea is that you get most of the benefits of TypeScript without having to go through the hassle of a compilation step. Microsoft has [full support for type checking JSDoc annotations](https://code.visualstudio.com/docs/nodejs/working-with-javascript). They maintain [TSDOC](https://tsdoc.org/) as well which is focused strictly on documenting TypeScript code.
 
 ## Adding Types to our App
+>The most common kinds of errors that programmers write can be described as type errors: a certain kind of value was used where a different kind of value was expected. This could be due to simple typos, a failure to understand the API surface of a library, incorrect assumptions about runtime behavior, or other errors.
+--[The TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
 
 Now that we have a basic understanding of TypeScript, let's add it to our app. We will start by installing the TypeScript compiler. Twenty or so chapters later, and we're finally adding a second dependency to our app. Don't worry, it's not that bad. We just need to install it as a dev dependency.
 
@@ -114,8 +124,10 @@ npm install --save-dev typescript
 From this point on, this series of articles will branch into two paths. On the first path, we will fully embrace the build step and use .ts files that will be compiled to .js files. In the next chapter, this version of the app will be bundled and minified for production. On the second path, we will use JSDoc annotations, and explore how far we can go without compilation. Either way, we'll need to configure TypeScript to work with our app.
 
 ## The tsconfig.json File
+>The presence of a tsconfig.json file in a directory indicates that the directory is the root of a TypeScript project. The tsconfig.json file specifies the root files and the compiler options required to compile the project.
+--[What is a tsconfig.json](https://www.typescriptlang.org/docs/handbook/tsconfig-json.html)
 
-So, we'll start with the compilation path. First, we need to create a `tsconfig.json` file. This tells the compiler exactly how to compile our code. There are a surprising amount of options, but we'll just use a few important ones for now.
+So, we'll start with the compiled version. First, we need to create a `tsconfig.json` file. This tells the compiler exactly how to compile our code. There are a surprising amount of options, but we'll just use a few important ones for now.
 
 <CodeBlock noButtons>
 tsconfig.json
@@ -227,10 +239,15 @@ button.addEventListener('click', (e) => {
   // and we can use target.alreadyAdded without an assertion.
 })
 ```
+</CodeBlock>
 
-If you want to see more of the conversion process, you can watch the video above. Otherwise, let's move on to JSDoc.
+If you want to see more of the conversion process, you can watch the video above or just check out the code below for yourself. Otherwise, let's move on to JSDoc.
+
+<StackBlitz repo="into-the-future" chapter="6-typescript" demo="2-typescript" />
 
 ## JSDoc TypeScript
+>There's all of these points of friction that get added when you use a non-standard language like TypeScript that I have come to believe makes it not worth it. So, instead we put our types in JSDoc annotations and we get all of the type safety but none of the drawbacks because it's just JavaScript. Everything is in comments so you can just run the code.
+--Rich Harris, [Dev Vlog: April 2003](https://www.youtube.com/watch?v=MJHO6FSioPI)
 
 The JSDoc path is a bit more complicated, but it's also more interesting. We still install TypeScript as a dev dependency, but our `tsconfig.json` is going to be a little different this time.
 
@@ -253,13 +270,15 @@ tsconfig.json
 ```
 </CodeBlock>
 
-With these settings, we're not really compiling anything anymore. We're just using TypeScript to check our JavaScript files for errors. But, since we aren't compiling our code with TypeScript, we can no longer use its special type syntax because it is not understood by browsers.
+With these settings, we're not really compiling anything anymore. We're just using TypeScript to check our JavaScript files for errors. But, we can no longer use TypeScript syntax because it is not understood by browsers.
 
-We can still define all of our types centrally though. Most of the articles that I read about this recommended creating a central `.js` file with which we will import and export our types. This is fine, but I don't like how it requires us to import the types into every single file.
+We can still define all of our types centrally though. Most of the articles that I read about this recommended creating a central `.js` file through which we can import and export all of our types. This is fine, but I don't like how it requires us to import the types into every single file.
 
-Personally, the method that I like the best is still using a central `.d.ts` "barrel file" to define all of our types. I see people saying that you will need to add `/// <reference path="index.d.ts" />` to each .js file, but everything just works for me without it in VSCode. I'm not sure if this is a new feature or what, but I'm not complaining. The StackBlitz demos that I've created for this series don't seem to work this way though, so you're not going to get this convenience in every environment. Both the types.js and index.d.ts files are in the repo if you want to try it out for yourself.
+Personally, the method that I like the best is still using a central `.d.ts` "barrel file" to define all of our types, but you can have multiple of these if you don't want everything in one file. I see people saying that you still need to import the types into each .js file, but everything just works for me without doing that in VSCode. When I run the compiler, it still checks the types even though I don't import them.
 
-So, we can still use all of the same types that we defined in `index.d.ts`, but we'll need to use JSDoc annotations to tell the compiler what types we're using. Here's what our `buttonFinderAdd` function looks like with JSDoc annotations. I will show a variety of ways to apply our custom `FancyButton` type.
+I'm not sure if this is a new feature or what, but I'm not complaining. The StackBlitz demos that I've created for this series don't seem to work this way though, so you're not going to get this convenience in every environment. Both the types.js and index.d.ts files are in the repo if you want to try it out for yourself.
+
+So, we can still use all of the same TypeScript definitions in our `index.d.ts`, but we'll need to use JSDoc annotations in each component since the browser can't handle TypeScript syntax. Here's what our `buttonFinderAdd` function looks like with JSDoc annotations. I will show a variety of ways to apply our custom `FancyButton` type.
 
 <CodeBlock>
 render.ts
@@ -302,9 +321,13 @@ export async function buttonFinderAdd() {
 ```
 </CodeBlock>
 
-The worst part for me is the ugly `/** @type {FancyButton} */` syntax, but it's not too bad of a price to pay for static typing in JavaScript without a build step. Again, if you would like to see more of the type conversion process, you can watch the video above.
+The worst part for me is the ugly `/** @type {FancyButton} */` syntax, but it's not too bad of a price to pay for static typing in JavaScript without a build step. Again, if you would like to see more of the type conversion process, you can watch the video above or just check out the code below for yourself.
+
+<StackBlitz repo="into-the-future" chapter="6-typescript" demo="1-JSDOC" />
 
 ## Types in JavaScript
+>The strong demand for ergonomic type annotation syntax has led to forks of JavaScript with custom syntax. This has introduced developer friction and means widely-used JavaScript forks have trouble coordinating with TC39 and must risk syntax conflicts. This proposal formalizes an ergonomic syntax space for comments, to integrate the needs of type-checked forks of JavaScript.
+--[ECMAScript proposal: Type Annotations](https://github.com/tc39/proposal-type-annotations)
 
 So, all of these methods require additional steps to achieve static typing in JavaScript. While JSDoc does not require a build step, you still must use an editor that knows how to read the annotations. Wouldn't it be great if static typing was just a part of JavaScript?
 
@@ -313,13 +336,29 @@ Recently, Gil Tayar, Daniel Rosenwasser and a few others introduced [a TC39 prop
 The general concept is that you would be able to use much of the TypeScript syntax that we know and love in JavaScript without worrying about removing it with compilation. While browsers still would not be able to parse the type annotations, they would simply ignore them rather than throwing an error. This would allow IDE's and build tools to take advantage of these types without requiring a build step or JSDoc's busy syntax. I think this is probably the right move. [Other languages like Python](https://www.python.org/dev/peps/pep-0484/) and [Ruby](https://www.ruby-lang.org/en/news/2020/12/25/ruby-3-0-0-released/) have done similar things, and it seems to work well for them.
 
 ## Conclusion
+> This advice is primarily aimed at people building code for consumption in other contexts, i.e. library authors. It's less beneficial if you're building an application... If you're building an app, you're going to have a build step anyway... Because you want to optimize your code, you want to minify, you want to bundle everything up... unless you're one of the people who have been breaking down the weaving factories in the 19th century.
+--Rich Harris, [Dev Vlog: April 2023](https://www.youtube.com/watch?v=MJHO6FSioPI)
 
 So, now we have two versions of our app. One that requires a build step, and one that doesn't. We're going to maintain this split because I think JavaScript is at a bit of a crossroads. 
 
 On the one hand, [many developers feel overwhelmed](https://www.reddit.com/r/webdev/comments/vsomxr/web_dev_has_gotten_notoriously_complex_and_i_dont/) [with the complexity of modern JavaScript](https://news.ycombinator.com/item?id=20762475). [Some have even begun to question the need for a build step](https://deno.com/blog/you-dont-need-a-build-step). But, modern frameworks have become so complex that it's hard to imagine building a large application without one.
 
-Some frameworks like [Svelte](https://svelte.dev/blog/frameworks-without-the-framework) have fully leaned into the extra benefits that a build step can provide. While others like [Solid.js and React](https://www.youtube.com/watch?v=gOBztmbmXPY) separate their compilation from their runtime. [Both approaches have their merits](https://ryansolid.medium.com/javascript-ui-compilers-comparing-svelte-and-solid-cbcba2120cea). React's optional compile step has traditionally been a simple JSX transform, but they have [recently been experimenting with a more advanced compiler](https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023).
+Some frameworks like [Svelte](https://svelte.dev/blog/frameworks-without-the-framework) have fully leaned into the extra benefits that a build step can provide. While others like [Solid.js and React](https://www.youtube.com/watch?v=gOBztmbmXPY) separate their compilation from their runtime. This means that you can technically use them without a build step, but this is pretty rare in practice.
+
+[Both approaches have their merits](https://ryansolid.medium.com/javascript-ui-compilers-comparing-svelte-and-solid-cbcba2120cea). React's optional compile step has traditionally been a simple JSX transform, but they have [recently been experimenting with a more advanced compiler](https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023). I think it makes sense for them to lean into this direction. They may as well take advantage of compilation if it's going to happen anyway.
 
 I plan on further exploring both approaches in this series. I think it's important to understand the tradeoffs involved in each direction. One aspect that I haven't touched on is the performance implications of a build step. [Static analysis](https://en.wikipedia.org/wiki/Static_program_analysis) of pre-compiled code can allow for better [tree-shaking](https://en.wikipedia.org/wiki/Tree_shaking),[dead code elimination](https://en.wikipedia.org/wiki/Dead_code_elimination), and [minification](https://en.wikipedia.org/wiki/Minification_(programming)). And, it also allows for niceties like [import aliases](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping).
 
-So, in our final chapter of this series, we will explore the world of bundling. We will look at the different types of bundlers, and we will see how they can help us optimize our code. At the same time, we'll try to see how we can get some of the same benefits without a build step.
+So, in the next chapter of this series, we will explore the world of bundling. We will look at the different types of bundlers, and we will see how they can help us optimize our code. At the same time, we'll try to see how we can get some of the same benefits without a build step.
+
+## Additional Resources
+
+- Matt Pocock - [Total TypeScript Free Tutorials](https://www.totaltypescript.com/tutorials)
+
+- Jack Herrington - [No BS TS](https://www.youtube.com/watch?v=LKVHFHJsiO0&list=PLNqp92_EXZBJ4CBroxVBJEpAXoz1g-naZ&index=18)
+
+- Austin Gil - [Get Started with TypeScript the Easy Way](https://austingil.com/typescript-the-easy-way/)
+
+- Gil Tayar - [JSDoc typings: all the benefits of TypeScript, with none of the drawbacks](https://master--gils-blog.netlify.app/posts/jsdoc-typings-all-the-benefits-none-of-the-drawbacks/)
+
+- TypeScript - [JSDOC supported types](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html)

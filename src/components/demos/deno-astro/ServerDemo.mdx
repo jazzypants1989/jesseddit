@@ -1,0 +1,124 @@
+import CodeBlock from "../../CodeBlock.astro"
+import MPADemo from "../../MPADemo.astro"
+
+
+export const filenames = {
+  one: "node-server.ts",
+  two: "deno-server.ts"
+}
+
+<MPADemo title="SPA Server Comparison" filenames={filenames}>
+<CodeBlock slot="one" id="one">
+node-server.ts
+```ts
+import express, { Request, Response } from "express"
+import path from "path"
+import { fileURLToPath } from "url"
+import Stripe from "stripe"
+import dotenv from "dotenv"
+import cors from "cors"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+dotenv.config()
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("Missing Stripe secret key environment variable")
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2022-11-15",
+})
+
+const app = express()
+
+app.use(cors())
+
+app.use(express.static("dist"))
+
+app.use(express.json())
+
+app.post("/create-checkout-session", async (req: Request, res: Response) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: req.body.line_items,
+    mode: "payment",
+    success_url: "http://localhost:3001/success",
+    cancel_url: "http://localhost:3001",
+  })
+
+  console.log("session", session)
+  res.json({ session })
+})
+
+app.get("*", function (req, res) {
+  res.sendFile(__dirname + "/dist/index.html")
+})
+
+app.listen(3001, function () {
+  console.log("Ctrl-Click here to test: http://localhost:3001")
+})
+```
+</CodeBlock>
+<CodeBlock slot="two" id="two">
+deno-server.ts
+```ts
+import { serve } from "https://deno.land/std@0.184.0/http/server.ts"
+import { load } from "https://deno.land/std@0.184.0/dotenv/mod.ts"
+import { serveFile } from "https://deno.land/std@0.184.0/http/file_server.ts"
+import assets from "https://deno.land/x/assets@0.0.1/mod.ts"
+
+import Stripe from "https://esm.sh/stripe@12.3.0"
+
+const env = await load()
+let STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY
+
+if (!STRIPE_SECRET_KEY) {
+  throw new Error("No Stripe API key found in environment")
+}
+
+const stripe = await Stripe(STRIPE_SECRET_KEY, {
+  apiVersion: "2022-11-15",
+})
+
+const handler = async (request: Request): Promise<Response> => {
+  const SPA = await serveFile(request, "./public/index.html")
+  // First, we define the main file, but we want to check for
+  // a couple things before we serve it up.
+
+  // This is checking to see if the browser is asking for something with a file extension
+  // We assuming that this is an asset like a .css file because none of our routes
+  // Are served with a file extension by default.
+  if (request.url.includes(".")) {
+    return assets(request, { root: "./public" })
+  }
+
+  // Then, we check to see if it is a POST request
+  // That can only mean that a user is trying to checkout,
+  // So, we check their cart and redirect them to Stripe.
+  if (request.method === "POST") {
+    const contentType = request.headers.get("content-type")
+    if (contentType?.includes("application/json")) {
+      const body = await request.json()
+      const { line_items } = body
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items,
+        mode: "payment",
+        success_url: "http://localhost:3000/success",
+        cancel_url: "http://localhost:3000",
+      })
+
+      // Take note of the web standard Response here.
+      return new Response(JSON.stringify({ session }))
+    }
+  }
+  // Otherwise, we let our client-side router do it's thing.
+  return SPA
+}
+
+serve(handler, { port: 3000 })
+```
+</CodeBlock>
+</MPADemo>

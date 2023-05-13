@@ -1,0 +1,13 @@
+---
+import IFrame from "./IFrame.astro"
+
+const { repo, chapter, demo } = Astro.props as {
+  repo: string
+  chapter: string
+  demo: string
+}
+---
+
+<IFrame
+  src={`https://stackblitz.com/github/jazzypants1989/${repo}/tree/main/${chapter}/${demo}?ctl=1&embed=1`}
+/>

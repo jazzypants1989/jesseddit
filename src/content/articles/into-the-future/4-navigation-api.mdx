@@ -229,11 +229,11 @@ So, instead of creating a separate function for our event listener, we simply ha
 
 Instead of an entirely separate function to check for the presence of a search query, we just check for it in the Router. If it is present, we call the search handler and return. Otherwise, we continue to our main logic.
 
-Like I said, you don't need to explicitly name the `{committed, finished}` promise pair to take advantage of asychronous loading. Here, I am simply replacing the main content with a spinner as part of the loading process. However, it would be jarring to see this spinner on every navigation.
+Like I said, you don't need to explicitly name the `{committed, finished}` promise pair to take advantage of asychronous loading. Here, I am simply replacing the main content with a spinner as part of this loading process. However, it would be jarring to see this spinner on every navigation.
 
 So, I created a function to determine how long the main content has been loading by simply checking to see if the HTML has changed. If it has been loading for more than 300ms, then we replace the main content with the spinner. Otherwise, we just leave it alone. This was inspired by [this tweet conversation](https://twitter.com/kentcdodds/status/1645796797435215875?s=20).
 
-The last thing we need to do is add a little bit of error handling. If the user clicks on a link while the previous page is still loading, we want to abort the previous page. For this, I opted to use the `onabort` property of the included AbortSignal. If the signal is aborted, we simply replace the main content with the original HTML. If it is a real error, we call the 404 page and embed the error message.
+The last thing we need to do is add a little bit of error handling. If the user clicks on a link while the previous page is still loading, we want to abort the previous page. For this, I opted to use the `onabort` property of the included AbortSignal. If the signal is aborted, we simply replace the main content with the original HTML of the previous page. If it is a real error, we call the 404 page and embed the error message.
 
 As for our dynamic routes and 404 handling, I moved all of that to our `Route` function because it makes sense to keep all of this logic near our source of truth: the Routes array. This is what it looks like now:
 
@@ -274,10 +274,23 @@ While the most attractive feature may be that everything is routed through a cen
 
 Although this is only available in Chromium-based browsers, I think you can see that I'm really excited about the potential of this API-- especially when combined with the topic of our next chapter: the View Transitions API. As a parting note, here is one more demo that I couldn't find an excuse to include in the article. 
 
-This cat picture gallery is inspired by the idea of intercepting routes-- a feature recently introduced in Next.JS. While I understand the concept, I don't personally think it leads to the best UX when a user doesn't know what to expect from a specific URL.
+This cat picture gallery is inspired by the idea of intercepting routes-- a feature recently introduced in Next.JS. While I understand the concept, I don't personally like that sharing a link provides a different experience than navigating to it.
 
 So, in my version, the only way to see a full-screen cat picture on load with the base URL is if you refresh the page while the picture is active, or leave then navigate back to it in the back/forwards cache. Alternatively, you can share the link to a full-screen picture by pressing the button that gives you a URL with a search query.
 
 See you next time!
 
 <KittenGallery />
+
+## Additional Resources
+
+
+- Sam Thorogood and Jake Archibald - [Modern client-side routing: the Navigation API](https://developer.chrome.com/docs/web-platform/navigation-api/)
+
+- The WICG proposal - [Navigation API](https://github.com/WICG/navigation-api)
+
+- HTTP 203 - [The history API is dead. Love live the navigation API](https://www.youtube.com/watch?v=cgKUMRPAliw)
+
+- Romain Trotard - [Back to the Future: Navigation API](https://dev.to/romaintrotard/back-to-the-future-navigation-api-4pil)
+
+- [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API)

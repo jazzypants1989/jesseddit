@@ -1,7 +1,321 @@
 ---
 title: "Bundling and Import Maps"
-nextLink: "8-runtimes"
+nextLink: "8-conclusion"
 githubLink: true
 ---
 
-In our last chapter, we ex
+import CodeBlock from "../../../components/CodeBlock.astro"
+import ConfigFiles from "../../../components/demos/bundling/ConfigFiles.mdx"
+
+## Introduction
+
+So, we now have two versions our app. In one, we have fully embraced a build step, and we are using TypeScript to compile our code to JavaScript. In the other, we are using JSDoc annotations and the `--checkJs` flag to get most of the benefits of TypeScript without the build step. These two versions of our app will diverge even further in this chapter by exploring the world of bundling.
+
+To fully demonstrate the benefits of bundling, we will have to add a few more features to our app. We will add a calendar to our app for upcoming events, and we will bring in [Stripe](https://stripe.com/) to handle our payments. Our beautiful custom checkout form will be replaced with Stripe's boring one. So much for all that hard work, right?
+
+I'll be using some heavy external libraries to demonstrate tree-shaking and code-splitting. Other than Stripe, we will use [FullCalendar](https://fullcalendar.io/) and [date-fns](https://date-fns.org/) for the event calendar. These are some popular libraries, but they are all quite large. `date-fns` alone is larger than our entire app.
+
+In our TypeScript version, we will experiment with a few different bundlers to see how they can help us optimize the process of adding these new features to our app. In our JSDoc version, we will try out a new browser API that will allow us to easily use these external modules without a bundler-- import maps. Now available in every major browser, they can be a great way to get the development experience and reliability of bundling without the build step. Let's get started.
+
+## Why Bundle JavaScript?
+>Including a modular program that consists of 200 different files in a web page produces its own problems... Because fetching a single big file tends to be faster than fetching a lot of tiny ones, web programmers have started using tools that roll their programs (which they painstakingly split into modules) back into a single big file before they publish it to the Web. Such tools are called bundlers.
+--Marijn Haverbeke, [Eloquent JavaScript](https://eloquentjavascript.net/10_modules.html#h_+XkmP1l6w)
+
+As we explored in [our chapter about EcmaScript Modules](../3-ecmascript-modules), people have been trying to make it easier to use multiple javascript files together for a long time. People started by just stringing together multiple script tags in the head of the document, but this led to many issues. Not only did it make it hard to manage dependencies, but it was terrible for performance.
+
+[Until HTTP2](https://medium.com/@asyncmax/the-right-way-to-bundle-your-assets-for-faster-sites-over-http-2-437c37efe3ff), browsers would only download a few files at a time. So, if you had a lot of files, the browser would have to wait for each file to download before it could start downloading the next one. The browser's [main UI thread](https://developer.mozilla.org/en-US/docs/Glossary/Main_thread) is blocked while the browser downloads and executes each script. This means that if you have a large script in the head of your document, the browser stops rendering the page until that script has been downloaded and executed. This can lead to a poor user experience as the user stares at a blank screen or tries to interact with elements that don't have event listeners yet.
+
+## Before Webpack
+>These bundlers started to be created, what they do, their main premise is to allow you to write CommonJS modules. But, then getting it bundled, and stripping those statements, and then executed in the same order so that it works in the web exactly as it might work or you would expect it to work in your code.
+--Sean Larkin, [History of Modules](https://frontendmasters.com/courses/webpack-fundamentals/history-of-modules/)
+
+To solve these issues, the simplest answer is to just put all of your JavaScript in one file. This is called [bundling](https://en.wikipedia.org/wiki/Bundle_(software_distribution)). In the early years of CommonJS, people would sometimes use task runner tools like [Grunt](https://gruntjs.com/) and [Gulp](https://gulpjs.com/) to do this. These tools could concatenate all of your JavaScript files together-- literally putting the code for each file in one big file.
+
+This helped performance, but it didn't solve the dependency management issues. You still had to manually add each file to the task runner, and you had to make sure that you were including the files in the correct order. This was a pain, and it was error-prone.
+
+[Browserify](http://browserify.org/) and [RequireJS](https://requirejs.org/) use a slightly different approach to fix this. These tools provide their own versions of the `require` function and the `module.exports` object. They recursively traverse your code to find all of the dependencies and assign them unique identifiers. Then, they create a bundle by concatenating all of the files together and wrapping them in an [IIFE](https://developer.mozilla.org/en-US/docs/Glossary/IIFE) to prevent the variables from leaking into the global scope. This allowed you to use CommonJS modules in the browser before EcmaScript Modules were supported.
+
+## Benefits of Bundling
+>Bundling modules means combining several files with modules into a single file. That is done for three reasons: Fewer files need to be retrieved in order to load all modules, Compressing the bundled file is slightly more efficient than compressing separate files, [and] during bundling, unused exports can be removed, potentially resulting in significant space savings.
+--Dr. Axel Rauschmayer, [The future of bundling JavaScript modules](https://2ality.com/2015/12/bundling-modules-future.html)
+
+There can be more benefits to bundling than simply putting all of your JavaScript files together. Because you are already processing your code, you can use this compilation step to do other things. Our app uses TypeScript for example. All of the major bundlers either support TypeScript out of the box or have plugins that allow you to use TypeScript. So, you don't have to worry about converting it to JavaScript before you bundle it.
+
+This is called [transpiling](https://en.wikipedia.org/wiki/Source-to-source_compiler). This doesn't have to be limited to TypeScript, however. You can also use features that haven't been added to the language yet or write your code with a different syntax. For example, if you want to use [JSX](https://reactjs.org/docs/introducing-jsx.html) in your app, you can transpile it to JavaScript that browsers can understand while you are bundling it. [Babel](https://babeljs.io/) is the most popular tool for this. Like TypeScript, it is either built into or supported by all of the major bundlers.
+
+[Static analysis](https://en.wikipedia.org/wiki/Static_program_analysis) can also be used to optimize your code. If you are using a library like [lodash](https://lodash.com/), you might only be using a few of the functions in the library. A bundler can analyze your code and only include the functions that you are using. This is called [tree shaking](https://en.wikipedia.org/wiki/Tree_shaking).
+
+[Minification](https://en.wikipedia.org/wiki/Minification_(programming)) is another common optimization that bundlers can do. This is the process of removing unnecessary characters from your code. Not just eliminating whitespace, comments, and semicolons, but also renaming variables to shorter names. Each character is a byte that the browser has to download, so this makes your code smaller and faster to download. [Terser](https://github.com/terser/terser) is one of the industry standards for this, and it is either built into or supported by all of the major bundlers. 
+
+If you've ever tried to look at minified code, you know that it can be hard to read. So, many bundlers also support [source maps](https://developer.mozilla.org/en-US/docs/Tools/Debugger/How_to/Use_a_source_map) to allow you to debug your code in the browser. Here's an example.
+
+<CodeBlock>
+```js
+// index.js
+function verboseThing(youNeedLotsOfContextToUnderstandThisParameter, wtfDoesThisMinifiedVariableEvenMean) {
+  return youNeedLotsOfContextToUnderstandThisParameter + wtfDoesThisMinifiedVariableEvenMean
+}
+const cheese = "cheddar"
+const crackers = "ritz"
+console.log(verboseThing(cheese, crackers))
+```
+
+```js
+// index.min.js
+function verboseThing(e,r){return e+r}const cheese="cheddar",crackers="ritz";console.log(verboseThing(cheese,"ritz"));
+```
+
+```js
+// index.min.js.map
+{
+"file": "index.min.js",
+"sources": ["index.js"],
+"names": ["verboseThing", "youNeedLotsOfContextToUnderstandThisParameter", "wtfDoesThisMinifiedVariableEvenMean", "cheese", "crackers", "console", "log"],
+"mappings": "AAAA,IAAI,IAAI,IAAM,CAAC, etc" // I made these up
+"sourcesContent": ["function verboseThing(youNeedLotsOfContextToUnderstandThisParameter, wtfDoesThisMinifiedVariableEvenMean) {\n  return youNeedLotsOfContextToUnderstandThisParameter + wtfDoesThisMinifiedVariableEvenMean\n}\nconst cheese = \"cheddar\"\nconst crackers = \"ritz\"\nconsole.log(verboseThing(cheese, crackers))"]
+}
+```
+</CodeBlock>
+
+As you can see, the minified code is much harder to read than the original code. But, the source map allows the browser to link the minified code back to the original code. This allows you to debug your code in the browser as if it were the original code. 
+
+Now that we have an idea of what bundlers can do, let's look at some of the most popular ones today. First, I'll introduce you to each one, then we'll take a look at what each configuration file looks like so we can compare and contrast them. Let's get started.
+
+## Webpack
+>Webpack and Browserify are often seen today as solutions to the same problem, but Webpack's initial focus was a bit different from Browserify's. Whereas Browserify's goal was to make Node modules run in the browser, Webpack's goal was to create a dependency graph for all of the assets in a website - not just JavaScript, but also CSS, images, SVGs, and even HTML.
+-Nolan Lawson, [A brief and incomplete history of JavaScript bundlers](https://nolanlawson.com/2017/05/22/a-brief-and-incomplete-history-of-javascript-bundlers/)
+
+It is impossible to talk about bundling without mentioning [Webpack](https://webpack.js.org/). Created in 2014, it is still the most popular bundler by far. It is also the most flexible. It has a [loader system](https://webpack.js.org/concepts/loaders/) that allows you to easily bundle other files like images and CSS files, and it has a [plugin system](https://webpack.js.org/concepts/plugins/) for basically anything else.
+
+This flexibility comes at a cost, however. Webpack has a steep learning curve, and it can be hard to configure. It also has a reputation for being slow, but this has improved in recent years. In my tests, it was only slightly slower than the alternatives.
+
+Because it is a product of the CommonJS era like Browserify and RequireJS, [Webpack works similarly](https://medium.com/webpack/webpack-and-rollup-the-same-but-different-a41ad427058c). It wraps each module in a function and it creates a [dependency graph](https://dev.to/jasmin/how-dependancy-graph-in-webpack-resolve-module-dependency-5ej4) of these functions. Then, it creates a bundle by concatenating all of these functions together and wrapping them in an IIFE.
+
+While Browserify only supported CommonJS modules and RequireJS used its own AMD syntax, Webpack supports both of these. It even allowed you to use EcmaScript Modules before they were supported in the browser. This, along with its healthy ecosystem, gave Webpack a huge advantage over the competition.
+
+## Rollup
+>Rollup was created for a different reason: to build flat distributables of JavaScript libraries as efficiently as possible, taking advantage of the ingenious design of ES2015 modules... ES2015 modules enable a different approach, which Rollup uses. All your code is put in the same place and evaluates in one go, resulting in leaner, simpler code that starts up faster. 
+-- Rich Harris, [Webpack and Rollup: the same but different](https://medium.com/webpack/webpack-and-rollup-the-same-but-different-a41ad427058c)
+
+As I mentioned, Webpack was created before ES Modules were widely supported. Instead, it used CommonJS modules and IIFE's to create its dependency graph. This worked great for the most part, [but it could lead to performance issues as the application grew](https://nolanlawson.com/2016/08/15/the-cost-of-small-modules/). 
+
+Developed by Rich Harris in 2018, [Rollup](https://rollupjs.org/introduction) uses a different approach. Instead of concatenating IIFE's together, Rollup uses the ES Module syntax. Because ES Modules are loaded asynchronously, this allows Rollup to create a more efficient dependency graph. It can do more advanced tree shaking because it can see the entire dependency graph at once-- the static analysis that I mentioned earlier.
+
+Rollup was originally targeted at library authors. But, now that every major browser supports ES Modules, it is a great option for bundling web applications as well. I found Webpack to be slightly more flexible, but Rollup was much easier to configure. It also has a reputation for being faster than Webpack. I found this to be true in my tests, but not as fast as our next bundler.
+
+## ESBuild
+>Our current build tools for the web are 10-100x slower than they could be. The main goal of the esbuild bundler project is to bring about a new era of build tool performance, and create an easy-to-use modern bundler along the way.
+--[ESBuild](https://esbuild.github.io/)
+
+[ESBuild](https://esbuild.github.io/) is a relative newcomer to the bundling scene. Created by Evan Wallace in 2020, it is written in Go and is [much faster than other bundlers](https://dev.to/s1owjke/fastest-way-to-bundle-javascript-in-2023-2oml). It is also much simpler to configure. It supports TypeScript and JSX out of the box, and it doesn't require a configuration file at all. You can simply use the [CLI](https://esbuild.github.io/getting-started/#bundling-for-the-browser). But, we'll use the [JavaScript API](https://esbuild.github.io/api/) for the sake of consistency.
+
+While ESBuild is extremely fast and simple, it is still a bit immature. It doesn't support as many features as the other bundlers, and it doesn't have as many plugins. But, the performance is undeniable.
+
+## Parcel
+>Parcel is a zero configuration build tool for the web. It combines a great out-of-the-box development experience with a scalable architecture that can take your project from just getting started to massive production application.
+--[Parcel](https://parceljs.org/)
+
+
+[Parcel](https://parceljs.org/) is another relative newcomer to the bundling scene. Created by Devon Govett in 2017, it is the simplest bundler to configure by far. All you need to do is add a `source` field to your `package.json` file. Parcel will use this to find the entry point of your app.
+
+Unlike the other bundlers, Parcel expects an `html` file as the entry point. It looks for any `script` and `style` tags in the `html` file, and then finds all of the images, styles, scripts and dependencies from there. It also supports TypeScript out of the box-- as well as JSX, SASS, and many other file types. 
+
+Surprisingly, I could not find a reason to configure anything. But, if you want to, you can add a `.parcelrc` file to your project. Speaking of configuring things, let's take a look at what each configuration file looks like for each bundler.
+
+## Configuring Bundlers
+> Your Webpack configuration is just a JavaScript file which exports an object or an array of object, and that object is your configuration. It's gonna have some properties at the root level, and these properties describe how Webpack is supposed to bundle your code.
+--Sean Larkin, [Changelog 233](https://changelog.com/podcast/233)
+
+These have a few commonalities. Although the naming differs slightly between them, let's define some of the main options that we will be using in each configuration file. We'll use the Webpack terms, but I'll also include the Rollup, ESBuild, and Parcel terms in parentheses.
+
+- `entry` - The entry point of our app. This is the file that the bundler will start with and then recursively find all of the dependencies. (Rollup calls this `input`, ESBuild calls this `entryPoint`, and Parcel calls this `source`.)
+
+- `output` - Where the bundler will put the bundled files. (Rollup also calls this `output`, ESBuild calls this `outdir` or `outfile`, and Parcel doesn't have this option-- it just puts the files in a `dist` directory.)
+
+- `loader` - How the bundler will handle different file types. (Rollup and Parcel just use `plugins`, but ESBuild agrees that this should be called `loader`.)
+
+- `plugin` - Any additional processing that the bundler will do. (Everybody calls this `plugins`.)
+
+We have a few requirements for our app that I will be using to evaluate each bundler. 
+
+- We want to be able to use TypeScript. 
+
+- We want to bundle our main image and our CSS files. 
+
+- We are already using EcmaScript Modules, so we want to make sure that the bundler supports that and treeshakes if possible. 
+
+- We will be using any other easy optimizations possible like minification and source maps. 
+
+Finally, it's a bit of a hassle to copy and paste the index.html and favicon.ico files into the dist folder every time we build. So, we'll use a plugin to do that for us. Let's take a look at how each bundler handles these requirements.
+
+<ConfigFiles />
+
+## Comparing Bundlers
+>You're trusting this bundler for your production. That's why you're using it in the first place, but it's also become your development experience, too. You're trusting it on both sides of that equation.
+--Chris Coyier, [Shop Talk 452](https://shoptalkshow.com/452/)
+
+I am really impressed by Parcel. There was not a single thing that I needed to configure. It just works. Webpack is the most complicated, but it's also the most flexible. Rollup has my favorite plugin system, and it's the easiest to configure. ESBuild is the fastest, but I legitimately could not get it to split my javascript into multiple files. I'm sure that I'm missing something, but I couldn't find any documentation on how to do it.
+
+So, ESBuild was the fastest bundler, but Rollup did a better job of modularizing our code with advanced tree shaking. It also has a great plugin system, and it was the easiest to configure outside of Parcel. It's a bit of a pain to have to even think about how to configure a bundler. Wouldn't it be great if we had a tool that combined the speed of ESBuild for quick development builds with the tree shaking of Rollup for production builds-- all without having to configure anything? Well, that's exactly what [Vite](https://vitejs.dev/) does.
+
+## Vite
+>When we first started on the web - because you just load a script into an HTML file, you refresh the page, everything just reloads… You don't have to wait for things to compile. So native ESM kind of gives you that really snappy thing; you just write native ES modules, the browser can handle it… It's really fast, up to a certain point.
+--Evan You, [Changelog: JSParty 212](https://changelog.com/jsparty/212)
+
+[Vite](https://vitejs.dev/guide/why) is a build tool created by Evan You in 2020. Vite doesn't bundle your code for development. It uses [ESBuild to pre-bundle dependencies](https://vitejs.dev/guide/dep-pre-bundling.html), but the actual source code is served unbundled. This allows Vite to start the development server much faster than something like Webpack, and it uses [Hot Module Replacement](https://vitejs.dev/guide/features.html#hot-module-replacement) to quickly update the page as you make changes to your code.
+
+When you are ready to deploy your app, Vite will use Rollup to bundle your code. This allows Vite to take advantage of the tree shaking that Rollup provides, so you get the best of both worlds. This works with no set-up, but you can also configure Vite with Rollup plugins if you want-- most of them are compatible with [the Vite plug-in system](https://vitejs.dev/guide/api-plugin.html).
+
+I wanted to highlight Vite because it is quickly growing to be a lynchpin of the web development community. Vite's combination of flexibility and simplicity has led to a lot of recent innovation. Because it has [built-in support for server-side rendering](https://vitejs.dev/guide/ssr.html), it has become the build tool of choice for several meta-frameworks. 
+
+[SvelteKit](https://kit.svelte.dev/) led the charge on this. In fact, the ESModule transform on the server that Vite leverages was [conceptualized by Rich Harris himself](https://changelog.com/jsparty/212). This very website is built with [Astro](https://astro.build/), and it also uses Vite under the hood.
+
+## Import Maps
+>The main benefit of this system is that it allows easy coordination across the ecosystem. Anyone can write a module and include an import statement using a package's well-known name, and let the Node.js runtime or their build-time tooling take care of translating it into an actual file on disk (including figuring out versioning considerations).
+--[WICG Proposal for Import Maps](https://github.com/WICG/import-maps)
+
+While Vite and Parcel eliminate the vast majority of the hassle of bundling, they still require a build step. While most developers have simply accepted this as part of modern web development, there are ways to get much of the benefit of bundling without chaining yourself to complex build tools. [Import maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) have recently been added to all major browsers. They allow you to centrally declare all of your app's dependencies so that you can easily use them in your code.
+
+While you can simply import your dependencies directly in each file, this can be repetitive and difficult to manage. For example, if you want to use an external library like [date-fns](https://date-fns.org/), you have to copy and paste the same URL over and over. To avoid bugs, you have to make sure that it is the same version in every file-- imported from the same location. This can make it hard to manage your dependencies.
+
+With import maps, you can centrally declare all of your dependencies in one place. Using JSON syntax, you can declare the name of the dependency and the location of the file. [While you cannot do an external json file for now](https://github.com/WICG/import-maps/issues/235), you can use a script tag to declare your import map. I'm using a little workaround to import a script that appends an import map to the document. Here's what our app's import map looks like.
+
+<CodeBlock>
+importmap.js
+```js
+const im = document.createElement("script")
+im.type = "importmap"
+im.textContent = JSON.stringify({
+  "imports": {
+    "stripe-js":
+      "https://unpkg.com/@stripe/stripe-js@1.52.1/dist/stripe.esm.js",
+    "date-fns": "https://unpkg.com/date-fns@2.27.0/esm/index.js",
+    "@fullcalendar/core": "https://cdn.skypack.dev/@fullcalendar/core@6.1.6",
+    "@fullcalendar/daygrid":
+      "https://cdn.skypack.dev/@fullcalendar/daygrid@6.1.6",
+    "Product": "/components/Product.js",
+    "render": "/components/render.js",
+    "Router": "/components/Router.js",
+    "Routes": "/components/Routes.js",
+    "store": "/components/store.js",
+    "cart": "/features/cart.js",
+    "calendar": "/features/calendar.js",
+    "search": "/features/search.js",
+    "theme": "/features/theme.js",
+    "hamburger": "/features/hamburger.js",
+    "About": "/pages/About.js",
+    "Cart": "/pages/Cart.js",
+    "Checkout": "/pages/Checkout.js",
+    "Home": "/pages/Home.js",
+    "Nope": "/pages/Nope.js",
+    "ProductPage": "/pages/ProductPage.js",
+    "Products": "/pages/Products.js",
+    "Types": "/Types.js",
+  },
+})
+
+document?.currentScript?.after(im)
+```
+</CodeBlock>
+
+This allows us to import our dependencies like this despite not having a bundler.
+
+<CodeBlock>
+calendar.js
+```js
+// without an import map (i'm pretending that we have date-fns installed locally)
+import { differenceInDays, formatISO, add } from "../node_modules/date-fns/esm/index.js"
+import { Calendar } from "https://cdn.skypack.dev/@fullcalendar/core"
+import dayGridPlugin from "https://cdn.skypack.dev/@fullcalendar/daygrid"
+// with an import map
+import { differenceInDays, formatISO, add } from "date-fns"
+import { Calendar } from "@fullcalendar/core"
+import dayGridPlugin from "@fullcalendar/daygrid"
+```
+</CodeBlock>
+
+Unfortunately, since we are checking our JSDoc annotations with TypeScript, we will also have to help the TypeScript compiler understand our import map. We can do this by adding a `paths` field to our `tsconfig.json` file. Here's what that looks like.
+
+<CodeBlock>
+tsconfig.json
+```
+{
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "moduleResolution": "nodenext",
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "stripe-js": [
+        "https://unpkg.com/@stripe/stripe-js@1.52.1/dist/stripe.esm.js"
+      ],
+      "date-fns": ["https://unpkg.com/date-fns@2.27.0/esm/index.js"],
+      "@fullcalendar/core": [
+        "https://cdn.skypack.dev/@fullcalendar/core@6.1.6"
+      ],
+      "@fullcalendar/daygrid": [
+        "https://cdn.skypack.dev/@fullcalendar/daygrid@6.1.6"
+      ],
+      "Product": ["./public/components/Product.js"],
+      "render": ["./public/components/render.js"],
+      "Router": ["./public/components/Router.js"],
+      "Routes": ["./public/components/Routes.js"],
+      "store": ["./public/components/store.js"],
+      "cart": ["./public/features/cart.js"],
+      "hamburger": ["./public/features/hamburger.js"],
+      "search": ["./public/features/search.js"],
+      "theme": ["./public/features/theme.js"],
+      "calendar": ["./public/features/calendar.js"],
+      "About": ["./public/pages/About.js"],
+      "Cart": ["./public/pages/Cart.js"],
+      "Checkout": ["./public/pages/Checkout.js"],
+      "Home": ["./public/pages/Home.js"],
+      "Nope": ["./public/pages/Nope.js"],
+      "ProductPage": ["./public/pages/ProductPage.js"],
+      "Products": ["./public/pages/Products.js"],
+      "Types": ["./public/Types.js"]
+    }
+  },
+  "include": ["public/**/*.js", "public/index.d.ts"],
+  "exclude": ["node_modules"]
+}
+```
+</CodeBlock>
+
+This... almost works! Unfortunately, because the external libraries are not actually installed in our project, the TypeScript compiler will still complain about them. And, for good reason-- we don't have any type definitions for them! 
+
+We could go ahead and install the packages locally, but that seems like a shame when we are already using the import map. I would love to hear some of your workarounds in [the comments](/blog/into-the-future). But, I'm going to take a bit of a dramatic step instead. Join me in the next chapter to find out what it is.
+
+## Conclusion
+>Our general recommendation is to continue using bundlers before deploying modules to production. In a way, bundling is a similar optimization to minifying your code: it results in a performance benefit, because you end up shipping less code. Bundling has the same effect! Keep bundling.
+--V8 blog, [JavaScript Modules](https://v8.dev/features/modules#other-features)
+
+So, I hope the benefits of bundling are clear to you now. It can be a great way to optimize your code and make your app faster. But, it can also be a pain to configure. While Vite and Parcel solve much of this, there is a part of me that wishes things could be even simpler. 
+
+Part of what makes the web so beautiful is how easy it is to get started. You can just write some code, open it in the browser, and it works. It's a shame to pollute that simplicity with complex build tools just to make our apps performant. It feels like there has to be a better way.
+
+While I have been making a great effort to not use a UI framework so far, it is hard to see the full benefits of a build step without using one. In fact, our unbundled app is only marginally larger than the bundled and minified versions. But, this is not the reality of most web apps today. Most use something like React. That, along with Babel or other additions to the transform pipeline, can complicate this process significantly.
+
+And, some frameworks like Svelte and Astro have fully embraced the idea of compilation. They use proprietary files that allow them to do some really cool things, but they are useless without the compiler. It's an ongoing question if this is a good thing or not. While it allows for some incredible optimizations, it also introduces a lot of complexity and domain-specific knowledge.
+
+Anyways, I don't want to add a framework just yet. I want to explore each of them in their own series of articles. But, I want to spend one more chapter exploring some exciting new tools that have been made possible by the advent of EcmaScript Modules. I hope you'll join me to find out what they are.
+
+## Additional Resources
+
+- Ronen Amiel - [Build Your Own Webpack](https://www.youtube.com/watch?v=Gc9-7PBqOC8) **WATCH THIS!!**
+
+- Adrian Bece - [Improving JavaScript Bundle Performance with Code-Splitting](https://www.youtube.com/watch?v=UNMkLHzofQI)
+
+- Tobias Koppers - [Bundling by Hand](https://www.youtube.com/watch?v=UNMkLHzofQI)
+
+- FireShip - [Vite in 100 Seconds](https://www.youtube.com/watch?v=KCrXgy8qtjM)
+
+- Kasra Khosravi - [Using ES Modules in browsers with import-maps](https://blog.logrocket.com/es-modules-in-browsers-with-import-maps/)
+
+- Ayooluwa Isaiah - [Everything You Need to Know About JavaScript Import Maps](https://www.honeybadger.io/blog/import-maps/)
+
+- Pascal Schilp - [Going Buildless](https://css-tricks.com/going-buildless/)

@@ -1,0 +1,245 @@
+import CodeBlock from "../../CodeBlock.astro"
+import MPADemo from "../../MPADemo.astro"
+
+export const filenames = {
+  one: "webpack.config.js",
+  two: "rollup.config.js",
+  three: "esbuild.mjs",
+  four: "package.json (just parcel)",
+  five: "package.json (all)",
+}
+
+<MPADemo title="Bundler Config Files" filenames={filenames}>
+<CodeBlock slot="one" id="one">
+webpack.config.js
+```js
+import path from "path"
+import HtmlWebpackPlugin from "html-webpack-plugin"
+import { fileURLToPath } from "url"
+
+const isProduction = process.env.NODE_ENV == "production"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const srcDir = path.resolve(__dirname, "src")
+
+const config = {
+  entry: "./src/App.ts",
+  output: {
+    path: path.resolve(__dirname, "dist"),
+  },
+  devServer: {
+    open: true,
+    host: "localhost",
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: "./src/index.html",
+      favicon: "./src/favicon.ico",
+    }),
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.(ts|tsx)$/i,
+        loader: "ts-loader",
+        exclude: ["/node_modules/"],
+      },
+      {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
+        include: srcDir,
+      },
+      {
+        test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif|avif)$/i,
+        type: "asset/resource",
+        include: srcDir,
+      },
+    ],
+  },
+  resolve: {
+    extensions: [".tsx", ".ts", ".jsx", ".js", "..."],
+  },
+  optimization: {
+    usedExports: true,
+  },
+}
+
+export default () => {
+  if (isProduction) {
+    config.mode = "production"
+  } else {
+    config.mode = "development"
+  }
+  return config
+}
+```
+</CodeBlock>
+
+<CodeBlock slot="two" id="two">
+rollup.config.js
+```js
+import { defineConfig } from "rollup"
+import typescript from "@rollup/plugin-typescript"
+import css from "rollup-plugin-import-css"
+import terser from "@rollup/plugin-terser"
+import { nodeResolve } from "@rollup/plugin-node-resolve"
+import image from "@rollup/plugin-image"
+import html2 from "rollup-plugin-html2"
+
+export default defineConfig({
+  input: "src/App.ts",
+  treeshake: true,
+  output: {
+    dir: "dist",
+    format: "esm",
+  },
+  plugins: [
+    typescript(),
+    css(),
+    terser(),
+    nodeResolve(),
+    image(),
+    html2({
+      template: "index.html",
+      favicon: "src/favicon.ico",
+      minify: true,
+      entries: {
+        App: {
+          type: "module",
+        },
+      },
+    }),
+  ],
+})
+```
+</CodeBlock>
+<CodeBlock slot="three" id="three">
+esbuild.mjs
+```js
+import * as esbuild from "esbuild"
+import { htmlPlugin } from "@craftamap/esbuild-plugin-html"
+
+await esbuild.build({
+  entryPoints: ["src/App.ts"],
+  bundle: true,
+  outdir: "dist",
+  minify: true,
+  loader: {
+    ".jpg": "file",
+  },
+  treeShaking: true,
+  metafile: true,
+  plugins: [
+    htmlPlugin({
+      files: [
+        {
+          entryPoints: ["src/App.ts"],
+          filename: "index.html",
+          htmlTemplate: "index.html",
+          favicon: "src/favicon.ico",
+        },
+      ],
+    }),
+  ],
+})
+```
+</CodeBlock>
+<CodeBlock slot="four" id="four">
+package.json (just parcel)
+```json
+{
+  "name": "parcel-demo",
+  "version": "1.0.0",
+  "description": "This is way worse in the actual demo since we are using 4 different bundlers.",
+  "source": "src/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server",
+    "parcel": "parcel build",
+    "dev": "parcel",
+  },
+  "type": "module",
+  "author": "Jesse Pence",
+  "license": "ISC",
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.6",
+    "@fullcalendar/daygrid": "^6.1.6",
+    "@stripe/stripe-js": "^1.52.1",
+    "cors": "^2.8.5",
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "stripe": "^12.3.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.13",
+    "@types/dom-navigation": "^1.0.0",
+    "@types/dom-view-transitions": "^1.0.0",
+    "@types/express": "^4.17.17",
+    "parcel": "^2.8.3",
+  }
+}
+```
+</CodeBlock>
+<CodeBlock slot="five" id="five">
+package.json (all)
+```json
+{
+  "name": "my-webpack-project",
+  "version": "1.0.0",
+  "description": "My webpack project",
+  "source": "src/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server",
+    "webpack": "webpack --mode=production --node-env=production",
+    "rollup": "rollup -c",
+    "parcel": "parcel build",
+    "esbuild": "node esbuild.mjs",
+    "build:dev": "webpack --mode=development",
+    "watch": "webpack --watch",
+    "serve": "webpack serve"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "author": "Jesse Pence",
+  "license": "ISC",
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.6",
+    "@fullcalendar/daygrid": "^6.1.6",
+    "@stripe/stripe-js": "^1.52.1",
+    "cors": "^2.8.5",
+    "date-fns": "^2.30.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "stripe": "^12.3.0"
+  },
+  "devDependencies": {
+    "@craftamap/esbuild-plugin-html": "^0.5.0",
+    "@rollup/plugin-image": "^3.0.2",
+    "@rollup/plugin-node-resolve": "^15.0.2",
+    "@rollup/plugin-terser": "^0.4.1",
+    "@rollup/plugin-typescript": "^11.1.0",
+    "@types/cors": "^2.8.13",
+    "@types/dom-navigation": "^1.0.0",
+    "@types/dom-view-transitions": "^1.0.0",
+    "@types/express": "^4.17.17",
+    "@webpack-cli/generators": "^3.0.2",
+    "css-loader": "^6.7.3",
+    "esbuild": "^0.17.18",
+    "html-webpack-plugin": "^5.5.1",
+    "parcel": "^2.8.3",
+    "rollup": "^3.21.2",
+    "rollup-plugin-favicons": "^0.5.0",
+    "rollup-plugin-html2": "^4.0.0",
+    "rollup-plugin-import-css": "^3.2.1",
+    "style-loader": "^3.3.2",
+    "ts-loader": "^9.4.2",
+    "webpack": "^5.81.0",
+    "webpack-cli": "^5.0.2"
+  }
+}
+```
+</CodeBlock>
+</MPADemo>

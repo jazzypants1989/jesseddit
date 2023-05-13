@@ -1,0 +1,18 @@
+---
+import Loader from "../../components/Loader.astro"
+import Layout from "../../layouts/Layout.astro"
+
+Astro.redirect("/blog/into-the-future")
+
+let Others = ["Home", "Blog", "Contact", "Portfolio", "About"]
+---
+
+<Layout now="Nowhere" others={Others} title="Nowhere">
+  <h1>Redirecting to blog page.</h1>
+
+  <Loader />
+</Layout>
+
+<script>
+  window.location.replace("/blog/into-the-future")
+</script>

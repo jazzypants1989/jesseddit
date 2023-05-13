@@ -1,0 +1,729 @@
+import CodeBlock from "../../CodeBlock.astro"
+import MPADemo from "../../MPADemo.astro"
+
+export const filenames = {
+  one: "checkout.js",
+  two: "calendar.js",
+  three: "store.js",
+  four: "render.js",
+  five: "toast.js",
+  six: "hamburger.js",
+}
+
+<MPADemo title="New Features" filenames={filenames}>
+<CodeBlock slot="one" id="one">
+Checkout.js
+```js
+import render from "render"
+import { cart } from "cart"
+
+/**
+ * Loads Stripe.
+ * @returns {Promise<import("stripe-js").Stripe | null>} - The Stripe object.
+ */
+async function stripeLoader() {
+  const { loadStripe } = await import("stripe-js")
+  const pk =
+    "pk_test_51Ls3YjJiFO7cOn9i5GWxoJdBk5iN6FnUgdaHgD2wBxN7bqVFfcMKXQI4v86fwqhxe4b8CjYOKZNjg2VrcU2yply200OxYQlFCt"
+  const stripe = await loadStripe(pk)
+  return stripe
+}
+
+/**
+ * Creates the line items for the Stripe checkout session.
+ * @returns {LineItem[]} - The line items for the Stripe checkout session.
+ */
+function createLineItems() {
+  console.log("createLineItems", cart())
+  return Object.keys(cart()).map((id) => {
+    const idNum = Number(id)
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: cart()[idNum].product.title,
+          images: [cart()[idNum].product.images[0]],
+        },
+        unit_amount: cart()[idNum].product.price * 100,
+      },
+      quantity: cart()[idNum].quantity,
+    }
+  })
+}
+
+/**
+ * Creates a Stripe checkout session.
+ */
+async function createSession() {
+  const button = document.querySelector("#checkout")
+  if (!button || !(button instanceof HTMLButtonElement)) {
+    console.error("No checkout button found")
+    return
+  }
+  button.disabled = true
+  button.innerText = "Redirecting to Stripe... Hold your horses!"
+  console.log("line items", createLineItems())
+  const response = await fetch("/create-checkout-session", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      line_items: createLineItems(),
+    }),
+  })
+  const data = await response.json()
+
+  console.log(data)
+
+  const stripe = await stripeLoader()
+
+  if (!stripe) {
+    console.error("Stripe failed to load")
+    return
+  }
+
+  const result = await stripe.redirectToCheckout({
+    sessionId: data.session.id,
+  })
+
+  console.log(result)
+
+  // location.href = data.session.url
+}
+
+/**
+ * Attaches the event listener to the checkout button.
+ */
+function attachListener() {
+  const checkoutButton = document.querySelector("#checkout")
+  if (checkoutButton) {
+    checkoutButton.addEventListener("click", createSession)
+  }
+}
+
+/**
+ * Collects the products in the cart and renders them to HTML.
+ */
+const renderCartItems = () => {
+  console.log("renderCartItems", cart())
+  const cartItems = Object.keys(cart()).map((id) => {
+    const idNum = Number(id)
+    return `
+      <div class="product">
+      <a href="/product/${cart()[idNum].product.id}">
+        <img src="${cart()[idNum].product.images[0]}" />
+        <h2>${cart()[idNum].product.title}</h3>
+      </a>
+        <span>$${cart()[idNum].product.price}</span>
+        <span>Quantity: ${cart()[idNum].quantity}</span>
+      </div>
+    `
+  })
+  return cartItems.join("")
+}
+
+/**
+ * The checkout page view template.
+ */
+export default function Checkout() {
+  document.title = "Checkout"
+  if (Object.keys(cart()).length === 0) {
+    render({
+      component: `
+        <h1>Checkout</h1>
+        <p>We want to sell you things, but you don't have anything in your cart. You should probably fix that.</p>
+      `,
+    })
+    return
+  }
+
+  render({
+    component: `
+    <div>
+      <h1>Checkout</h1>
+      ${renderCartItems()}
+      
+        <p>Total: $${Object.keys(cart()).reduce(
+          (acc, id) =>
+            acc +
+            cart()[Number(id)].product.price * cart()[Number(id)].quantity,
+          0
+        )}</p>
+      
+        <button 
+        style="margin-bottom: 1rem;"
+        id="checkout">Checkout (Redirect to Stripe)</button>
+    </div>
+`,
+    callback: attachListener,
+  })
+}
+```
+</CodeBlock>
+<CodeBlock slot="two" id="two">
+calendar.js
+```js
+import { differenceInDays, formatISO, add } from "date-fns"
+import { Calendar } from "@fullcalendar/core"
+import dayGridPlugin from "@fullcalendar/daygrid"
+
+/**
+ * Creates a calendar using FullCalendar.
+ */
+export default function createCalendar() {
+  const today = new Date()
+
+  const events = [
+    {
+      name: "Murder Mystery Night",
+      start: add(today, { days: 2, hours: 5 }),
+      end: add(today, { days: 2, hours: 8 }),
+    },
+    {
+      name: "Gorgonzola Enthusiasts Conference",
+      start: add(today, { days: 5 }),
+      end: add(today, { days: 7 }),
+    },
+    {
+      name: "Dragon Appreciation Day",
+      start: add(today, { days: 12 }),
+      end: add(today, { days: 12 }),
+    },
+    {
+      name: "Circus Skills Workshop",
+      start: add(today, { days: 15 }),
+      end: add(today, { days: 16 }),
+    },
+    {
+      name: "Couch Sitting Competition",
+      start: add(today, { days: 20 }),
+      end: add(today, { days: 21 }),
+    },
+    {
+      name: "Three Week Rustic Retreat",
+      start: add(today, { days: 25 }),
+      end: add(today, { days: 45 }),
+    },
+  ]
+
+  const eventsList = document.getElementById("events-list")
+  const calendarEl = document.getElementById("calendar")
+  /**
+   * @type {NodeListOf<HTMLDivElement>}
+   */
+  const calenderEvents = document.querySelectorAll(".fc-event")
+
+  if (!calendarEl || !eventsList || !calenderEvents) return
+
+  const calendar = new Calendar(calendarEl, {
+    plugins: [dayGridPlugin],
+    initialView: "dayGridMonth",
+    events: events.map((event) => ({
+      title: event.name,
+      start: formatISO(event.start),
+      end: formatISO(event.end),
+    })),
+  })
+
+  calendar.render()
+
+  calendarEl.style.backgroundColor = "black"
+  calendarEl.style.padding = "1rem"
+  calendarEl.style.opacity = "0.8"
+  calendarEl.style.borderRadius = "0.5rem"
+  calendarEl.style.margin = "1rem"
+
+  calenderEvents.forEach((event) => {
+    event.style.whiteSpace = "normal"
+    event.style.fontSize = "1.5rem"
+    event.style.textAlign = "center"
+    event.style.padding = "0.5rem"
+    event.style.borderRadius = "0.5rem"
+  })
+
+  eventsList.style.display = "grid"
+  eventsList.style.gap = "1rem"
+  eventsList.style.gridTemplateColumns = "repeat(auto-fit, minmax(200px, 1fr))"
+  eventsList.style.maxWidth = "80vw"
+  eventsList.style.margin = "1rem"
+  events.forEach((event) => {
+    const daysRemaining = differenceInDays(event.start, today)
+    const listItem = document.createElement("li")
+    listItem.textContent = `${event.name} is in ${daysRemaining} days`
+    listItem.style.padding = "1rem"
+    listItem.style.backgroundColor = daysRemaining < 7 ? "red" : "green"
+    listItem.style.color = "white"
+    listItem.style.borderRadius = "0.5rem"
+    listItem.style.textAlign = "center"
+    listItem.style.maxWidth = "200px"
+    eventsList?.appendChild(listItem)
+  })
+}
+```
+</CodeBlock>
+<CodeBlock slot="three" id="three">
+store.js
+```js
+import Nope from "Nope"
+
+/**
+ * The products array.
+ * @type {Product[] | undefined}
+ */
+let products = []
+
+/**
+ * Fetches an object which contains the products array from the database.
+ * @returns {Promise<RawData | Undefined>} The object which contains the products array.
+ */
+
+const db = async () => {
+  try {
+    const response = await fetch("https://dummyjson.com/products")
+
+    if (!response.ok) {
+      alert("HTTP-Error: " + response.status)
+      console.error(response)
+      Nope({ type: "badFetch", prop: response.status.toString() })
+    }
+
+    const data = await response.json()
+
+    return data
+  } catch (error) {
+    console.error(error)
+    Nope({ type: "badFetch", prop: error })
+  }
+}
+
+/**
+ * Fetches the products from the database.
+ * @returns {Promise<Product[] | Undefined>} The products.
+ */
+
+export async function getProducts() {
+  try {
+    const cacheTimeLimit = 1000 * 60 * 10 // 10 minutes
+    const now = Date.now()
+    const cacheTimeStamp = localStorage.getItem("Cache Timestamp")
+    // So, if the timestamp exists and is less than 10 minutes old, we'll use the cache
+    if (cacheTimeStamp && now - Number(cacheTimeStamp) < cacheTimeLimit) {
+      products = JSON.parse(localStorage.getItem("products") || "[]")
+      console.trace("cache is still good, loading from cache")
+      return products
+    }
+    console.trace("cache is empty or expired, loading from server")
+    const data = await db()
+    if (data) {
+      products = data.products
+      localStorage.setItem("products", JSON.stringify(products))
+      localStorage.setItem("Cache Timestamp", now.toString())
+      return products
+    }
+    Nope({ type: "badFetch", prop: "no data" })
+  } catch (error) {
+    console.error(error)
+    Nope({ type: "badFetch", prop: error })
+  }
+}
+
+/**
+ * Fetches a product from the database.
+ * @param {number} id - The id of the product to fetch.
+ * @returns {Promise<Product | Undefined>} The product.
+ */
+export async function getProduct(id) {
+  products = await getProducts()
+  if (!products) {
+    Nope({ type: "badFetch", prop: "no products" })
+    return
+  }
+  return products.find((product) => product.id === Number(id))
+}
+
+export function createSpinner() {
+  const spinner = document.createElement("div")
+  spinner.classList.add("spinner")
+  return spinner
+}
+```
+</CodeBlock>
+<CodeBlock slot="four" id="four">
+render.js
+```js
+/**
+ * @type {(() => void)[] | undefined}
+ */
+let currentListeners = undefined
+
+currentListeners = []
+
+/**
+ * Creates a reactive signal.
+ * @param {any} initialValue - The initial value of the signal.
+ * @returns {[() => any, (newValue: any) => void]} - A tuple containing the read and write functions.
+ * @example
+ * const [read, write] = createSignal(0)
+ */
+export function createSignal(initialValue) {
+  let value = initialValue
+
+  const subscribers = new Set()
+
+  /**
+   * Reads the current value of the signal.
+   * @type {(() => any) | undefined}
+   */
+  const read = () => {
+    if (currentListeners !== undefined) {
+      currentListeners.forEach((fn) => subscribers.add(fn))
+    }
+    return value
+  }
+
+  /**
+   * Writes a new value to the signal.
+   * @type {(newValue: any) => void}
+   * @param {any} newValue - The new value to set.
+   * @returns {void}
+   */
+  const write = (newValue) => {
+    if (value !== newValue) {
+      value = newValue
+      subscribers.forEach((fn) => fn())
+    }
+  }
+
+  return [read, write]
+}
+
+/**
+ * Used to run a callback function when a signal changes.
+ * @param {() => void} callback - The callback function to run.
+ * @returns {void}
+ */
+export function createEffect(callback) {
+  if (!currentListeners) {
+    throw new Error("createEffect must be called within a component")
+  }
+
+  currentListeners.push(callback)
+  try {
+    callback()
+  } catch (e) {
+    console.error("Error in effect", e)
+  } finally {
+    currentListeners.pop()
+  }
+}
+
+/**
+ * The options for the render function.
+ * @typedef {object} RenderOptions
+ * @property {string | (() => string)} component - The component to render.
+ * @property {string} [element] - The element to render the component to.
+ * @property {() => void} [callback] - A callback to run after the component has been rendered.
+ */
+
+/**
+ * The render function-- renders the component to the active element.
+ * @param {RenderOptions} options
+ * @returns {void}
+ * @example
+ * render({
+ * component: () => `<h1>Home</h1>`,
+ * element: "#main",
+ * callback: () => console.log("Home rendered"),
+ * })
+ */
+export default function render({ component, element, callback }) {
+  if (!element) element = ".main"
+  const activeArray = document.querySelectorAll(element)
+  if (!activeArray.length) {
+    console.error(`No element found with selector ${element}`)
+    return
+  }
+
+  addOldActiveClass()
+  activeArray.forEach((activeElement) => {
+    if (!activeElement) return
+
+    transitionHelper({
+      updateDOM: () =>
+        createEffect(() => {
+          activeElement.innerHTML = conditionalRender(component)
+          activeElement.scrollTop = 0
+          Array.isArray(callback)
+            ? callback.forEach((fn) => fn())
+            : callback && callback()
+          addNewActiveClass()
+        }),
+    })
+  })
+}
+
+/**
+ * Helper function to handle view transitions
+ * @param {object} options
+ * @param {boolean} [options.skipTransition]
+ * @param {string[]} [options.classNames]
+ * @param {() => void} options.updateDOM
+ * @returns {ViewTransition}
+ */
+export function transitionHelper({ skipTransition = false, updateDOM }) {
+  if (skipTransition || !document.startViewTransition) {
+    const updateCallbackDone = Promise.resolve(updateDOM())
+
+    return {
+      ready: Promise.reject(Error("View transitions unsupported")),
+      updateCallbackDone,
+      finished: updateCallbackDone,
+      skipTransition: () => {},
+    }
+  }
+  const transition = document.startViewTransition(updateDOM)
+
+  return transition
+}
+
+/** @type {boolean} */
+let clickedImage = false
+/** @type {HTMLImageElement | null} */
+let oldImage = null
+
+document.addEventListener("click", (e) => {
+  let element = e.target
+  if (
+    element instanceof HTMLImageElement ||
+    element instanceof HTMLHeadingElement
+  ) {
+    if (element instanceof HTMLHeadingElement && element.parentNode) {
+      element = element.parentNode.querySelector("img")
+    }
+    if (element instanceof HTMLImageElement) {
+      oldImage = element
+      clickedImage = true
+    }
+  } else {
+    clickedImage = false
+  }
+})
+
+/**
+ * Adds the activeImage class to the old image.
+ * @returns {void}
+ */
+function addOldActiveClass() {
+  if (!clickedImage || !oldImage) return
+  oldImage.style.viewTransitionName = "activeImage"
+}
+
+/**
+ * Adds the activeImage class to the new image.
+ * @returns {void}
+ */
+function addNewActiveClass() {
+  if (!clickedImage) return
+  const newImage = document.querySelector("img")
+  if (!newImage) return
+
+  newImage.classList.add("activeImage")
+  newImage.style.viewTransitionName = "activeImage"
+}
+
+/**
+ * Determines whether to render a string or a function.
+ * @param {string | (() => string)} component
+ * @returns {string}
+ */
+function conditionalRender(component) {
+  if (typeof component === "string") {
+    return component
+  } else if (typeof component === "function") {
+    return component()
+  }
+  throw new Error("Component must be a string or a function")
+}
+
+```
+</CodeBlock>
+<CodeBlock slot="five" id="five">
+toast.js
+```js
+/**
+ * The array of toasts.
+ * @type {toast[]}
+ */
+let toasts = []
+let toastCount = 0
+
+/**
+ * The toast container.
+ * @type {HTMLElement | null}
+ */
+const toastContainer = document.querySelector("#toast-container")
+
+/**
+ * The toast object.
+ * @typedef {object} toast
+ * @property {string} id - The id of the toast.
+ * @property {string} message - The message to display in the toast.
+ * @property {toastOptions} [options] - The options for the toast.
+ */
+
+/**
+ * The options for the toast.
+ * @typedef {object} toastOptions
+ * @property {number} [duration] - The duration of the toast in milliseconds.
+ * @property {string} [type] - The type of toast to display.
+ */
+
+/**
+ * Adds a toast to the page.
+ * @param {string} message - The message to display in the toast.
+ * @param {toastOptions} [options] - The options for the toast.
+ * @returns {string} - The id of the toast.
+ */
+
+export function addToast(message, options) {
+  const id = `toast-${toastCount++}`
+  const newToast = {
+    id,
+    message,
+    options,
+  }
+  toasts.push(newToast)
+
+  const duration = options?.duration ?? 3000
+
+  setTimeout(() => {
+    removeToast(id)
+  }, duration)
+
+  if (!toastContainer) return id
+
+  toastContainer.appendChild(ToastComponent(newToast))
+
+  return id
+}
+
+/**
+ * Removes a toast from the page.
+ * @param {string} id - The id of the toast to remove.
+ * @returns {void}
+ */
+function removeToast(id) {
+  const toast = document.querySelector(`#${id}`)
+  if (!toast || !(toast instanceof HTMLElement)) return
+  toast.classList.add("toast-out")
+  toast.addEventListener("animationend", () => {
+    toasts = toasts.filter((thisToast) => thisToast.id !== id)
+    toast.remove()
+  })
+}
+
+/**
+ * The toast component.
+ * @param {toast} toast - The toast object.
+ * @returns {HTMLElement} - The toast element.
+ */
+function ToastComponent({ id, message, options }) {
+  // Create a div and set the class, id, and aria attributes
+  const toast = document.createElement("div")
+  const type = options?.type
+  toast.classList.add("toast")
+  toast.id = id
+  type && toast.classList.add(type)
+  toast.setAttribute("role", "alert")
+  toast.setAttribute("aria-live", "assertive")
+  toast.setAttribute("aria-atomic", "true")
+
+  // Set the innerHTML of the toast
+  toast.innerHTML = `
+    <div class="toast-header">
+        ${type === "success" ? "Hooray!" : "Aww, shucks!"}
+    </div>
+    <div class="toast-body">
+        ${message}
+    </div>
+    `
+
+  // Create a close button, add the event listener, and add it to the toast
+  const closeBtn = document.createElement("button")
+  closeBtn.textContent = "X"
+  closeBtn.addEventListener("click", () => {
+    removeToast(id)
+  })
+  toast.appendChild(closeBtn)
+  return toast
+}
+```
+</CodeBlock>
+<CodeBlock slot="six" id="six">
+hamburger.js
+```js
+export default function hamburger() {
+  /**
+   * Creates a hamburger menu for mobile devices.
+   * @returns {void}
+   */
+
+  /**
+   * The hamburger menu. You know, the three lines.
+   * @type {HTMLElement | null}
+   */
+  const hamburgerMenu = document.querySelector("#hamburger")
+  if (!hamburgerMenu) {
+    throw new Error("Hamburger menu not found")
+  }
+
+  hamburgerMenu.addEventListener("click", () => {
+    /**
+     * The nav element as a whole.
+     * @type {HTMLElement | null}
+     */
+    const nav = document.querySelector("nav")
+    if (!nav) {
+      throw new Error("Nav element not found")
+    }
+    /**
+     * The nav ul element. This is the actual menu.
+     * @type {HTMLElement | null}
+     */
+    const navUL = document.querySelector("nav ul")
+    if (!navUL) {
+      throw new Error("Nav ul element not found")
+    }
+    const screenH = window.innerHeight
+
+    if (nav.style.display === "flex") {
+      navUL.style.height = "0px"
+      navUL.style.fontSize = "initial"
+      setTimeout(() => {
+        nav.style.display = "none"
+      }, 480)
+    } else {
+      nav.style.display = "flex"
+      setTimeout(() => {
+        navUL.style.height = screenH + "px"
+        navUL.style.fontSize = "2rem"
+      })
+    }
+
+    globalThis.addEventListener("resize", () => {
+      if (window.innerWidth > 768) {
+        nav.style.display = "flex"
+        navUL.style.height = "initial"
+        navUL.style.fontSize = "initial"
+      } else {
+        nav.style.display = "none"
+        navUL.style.height = "0px"
+        navUL.style.fontSize = "initial"
+      }
+    })
+  })
+}
+```
+</CodeBlock>
+</MPADemo>

@@ -11,10 +11,14 @@ import CodeBlock from "../../../components/CodeBlock.astro"
 Although they may seem ubiquitous if you're a new developer starting with React, **ESM** [(ECMAScript Modules)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) have only recently become the standard. Migration has been a bit slow and painful, as the community had largely coalesced around [CommonJS modules](https://nodejs.org/api/modules.html). Other than that, there are also AMD and UMD modules, but those will soon be lost to the sands of time as they fall into disuse.
 
 ## Why Modules?
+>We can use functions and closure to make modules. A module is a function or object that presents an interface but that hides its state and implementation. By using functions to produce modules, we can almost completely eliminate our use of global variables, thereby mitigating one of JavaScript's worst features.
+--Douglas Crockford, [JavaScript: The Good Parts](https://www.oreilly.com/library/view/javascript-the-good/9780596517748/ch04s12.html)
 
-Web development is not modular by nature. Due to the all-or-nothing nature of the [request-response cycle](https://backend.turing.edu/module2/lessons/how_the_web_works_http), each page is loaded as a single unit. As we saw in the [my other series of articles](../client-side-routing), this can lead to a lot of unnecessary code being loaded on each page. And, we had to use the `defer` attribute to ensure that the scripts that relied on the DOM were loaded after the DOM was ready.
+Web development is not modular by nature. Due to the all-or-nothing nature of the [request-response cycle](https://backend.turing.edu/module2/lessons/how_the_web_works_http), each page is loaded as a single unit. The browses parses the document line by line, and each time it sees an external resource like a script tag, it pauses the parsing of the document and loads that resource. So, if you have a lot of scripts, the browser has to stop and make a request for each one. 
 
-This is fine for simple pages, but as websites grew more dynamic and complex with the emergence of [AJAX](../client-side-routing/2-a-brief-history-of-client-side-routing), it became difficult to manage how these scripts interacted with each other. As we saw in [the last chapter](./2-separation-of-concerns), even if you split your application into multiple files, you had to worry about when each file was loaded into the global scope. Loading files from multiple libraries required great care to ensure that the correct order was maintained, and if two libraries had a variable or function with the same name... you could run into some serious issues.
+This can be especially problematic on poor connections, as each request has to wait for the previous one to complete before it can be sent. This is part of why [HTTP 2](https://en.wikipedia.org/wiki/HTTP/2) introduced [multiplexing](https://en.wikipedia.org/wiki/Multiplexing)  and [server push](https://en.wikipedia.org/wiki/HTTP/2_Server_Push). But, even with these improvements, it is still not ideal to load everything at once. This is especially true for large applications with a lot of code. 
+
+As websites grew more dynamic and complex with the emergence of [AJAX](../client-side-routing/2-a-brief-history-of-client-side-routing), it also became difficult to manage how these scripts interacted with each other. As we saw in [the last chapter](./2-separation-of-concerns), even if you split your application into multiple files, you had to worry about when each file was loaded into the global scope. Loading files from multiple libraries required great care to ensure that the correct order was maintained, and if two libraries had a variable or function with the same name... you could run into some serious issues.
 
 Due to the issues with scoping in JavaScript, the eventual emergence of the [IIFE](https://developer.mozilla.org/en-US/docs/Glossary/IIFE) (Immediately Invoked Function Expression) was inevitable. An **IIFE** is a function that is executed as soon as it is defined. This allows the developer to create a local scope for the variables and functions defined within it. This was even more crucial before [let](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/let) and [const](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/const) were introduced in ES6 which allow for block scoping.
 
@@ -39,6 +43,8 @@ This pattern creates a local scope for each library through what is known as a [
 However, this was still not ideal. It was verbose and it didn't alleviate the need for the developer to manually curate the order of the scripts. Like I said, this could get really messy because you had to ensure that each library's dependencies were already loaded before adding them to the application. And, this was even more difficult outside of the browser without the inherent top-down nature of a document-- in Node.js, for example.
 
 ## CJS, AMD, and UMD
+>Prior to ECMAScript 6, JavaScript did not have built-in modules. Therefore, the flexible syntax of the language was used to implement custom module systems within the language. Two popular ones are CommonJS (targeting the server side) [and] AMD (Asynchronous Module Definition, targeting the client side).
+--Dr. Axel Rauschmayer, [JavaScript for impatient programmers (ES2022 edition)](https://exploringjs.com/impatient-js/ch_modules.html)
 
 As JavaScript moved server-side, [developers such as Kevin Dangoor](https://www.blueskyonmars.com/2010/01/29/commonjs-the-first-year/) began to advocate for a standard module system. [Node.js](https://nodejs.org/en/) was the first major platform to adopt a version of this standard, and it was eventually even used in the browser via [Browserify](http://browserify.org/). This standard is known as [CommonJS modules](https://nodejs.org/api/modules.html) which rely on the require() function to load modules and the module object to export modules.
 
@@ -51,7 +57,7 @@ function cheeseGrater(cheese) {
     return cheese + ' is grated now';
 }
 module.exports = cheeseGrater;
-````
+```
 </CodeBlock>
 
 Now, we can import this module into another file and use it. But, we don't have to just export one thing from a module. We can export multiple things by adding them to the module.exports object.
@@ -73,7 +79,7 @@ module.exports = {
     superCheeseGrater,
     tinyCheeseGrater
 };
-````
+```
 </CodeBlock>
 
 Now, we can import both of these modules into another file and use them.
@@ -88,7 +94,7 @@ console.log(superCheeseGrater('cheddar'));
 console.log(tinyCheeseGrater('gouda'));
 // gouda is grated now... in a really cute way!
 
-````
+```
 </CodeBlock>
 
 The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
@@ -116,7 +122,7 @@ define(['./cheeseGrater'], function(cheeseGrater) {
 
     return superCheeseGrater;
 });
-````
+```
 </CodeBlock>
 
 But, these two standards are not compatible with each other. This led to the emergence of UMD modules, which are a combination of the two. UMD modules are designed to be compatible with both AMD and CommonJS module loaders. This is done by checking for the presence of the define() function, which is used by AMD loaders, and the presence of the module object, which is used by CommonJS loaders. If neither of these is present, the module is loaded into the global scope.
@@ -148,8 +154,10 @@ But, these two standards are not compatible with each other. This led to the eme
 Oof. While it is a clever use of an IIFE, it is not very readable. But, ESM are here to save the day!
 
 ## ESM
+>CommonJS modules work quite well and, in combination with NPM, have allowed the JavaScript community to start sharing code on a large scale. But they remain a bit of a duct-tape hack... This is why the JavaScript standard from 2015 introduces its own, different module system.
+--Marijn Haverbeke, [Eloquent JavaScript](https://eloquentjavascript.net/10_modules.html)
 
-In 2015, [TC39](https://tc39.es/) (the committee that defines the JavaScript language) began work on a new module system. This new system was designed to be compatible with both the browser and Node.js, and to be asynchronous by default. This is done by using the `import` and `export` keywords.
+In 2014, [TC39](https://tc39.es/) (the committee that defines the JavaScript language) finalized work on a new module system. This new system was designed to be compatible with both the browser and Node.js, and to be asynchronous by default. This is done by using the `import` and `export` keywords.
 
 <CodeBlock>
 ```js
@@ -189,6 +197,8 @@ ESM are also asynchronous by default, and they can even be dynamically imported.
 This is useful for applications that have a lot of code, or for applications that have a lot of pages. While previously this could only be achieved with a bundler like the previously mentioned Browserify, [WebPack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/guide/en/), ESM allows us to do this natively in the browser. Unlike in the last chapter where everything was loaded onto the browser at once, modules will allow us to specify which files get loaded for each page. Speaking of our application, let's take a look at how we can use ESM to improve it.
 
 ## Applying ESM to our App
+>Finally, looking at this app doesn't make me puke.
+--Jesse Pence
 
 So, bundling is a whole thing of its own, and we will discuss it in greater detail in [chapter 7](/7-bundling), but for now let's just focus on how we can use ESM to improve our app. At this point, ESM is supported by all major browsers, so we can start using it right away. But, how? It's simple. First, let's clean up our index.html file.
 
@@ -273,3 +283,17 @@ Forms are an essential part of the web, and I wanted to include it in our demo a
 So, our app is finally becoming modern! It's split up into individual files, and we are using ESM to load them on-demand. While it has taken a while to coalesce, I think it's pretty clear that ECMAScript Modules are superior to their predecessors in almost every way.
 
 In the next couple of chapters, we're going to jump **INTO THE FUTURE** as we start playing with some experimental web API's. First up: modern client-side routing with the **Navigation API**. See you there!
+
+## Additional Resources
+
+- Lin Clark - [ES Modules - a cartoon deep dive](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/)
+
+- Tyler McGinnis - [JavaScript Modules: From IIFEs to CommonJS to ES6 Modules](https://www.youtube.com/watch?v=qJWALEoGge4)
+
+- Mejin Leechor - [JavaScript Modules Past & Present](https://www.youtube.com/watch?v=GQ96b_u7rGc)
+
+- Jake Archibald - [ES Modules in Browsers](https://jakearchibald.com/2017/es-modules-in-browsers/)
+
+- [javascript.info](https://javascript.info/modules-intro)
+
+- [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
