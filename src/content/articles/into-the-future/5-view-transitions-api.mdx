@@ -7,6 +7,7 @@ githubLink: true
 import CodeBlock from "../../../components/CodeBlock.astro"
 import IFrame from "../../../components/IFrame.astro"
 import InfoBox from "../../../components/InfoBox.astro"
+import StackBlitz from "../../../components/StackBlitz.astro"
 import SimpleAnimation from "../../../components/demos/view-transitions/SimpleAnimation.mdx"
 import AnimationSandbox from "../../../components/demos/view-transitions/AnimationSandbox.mdx"
 import KittenGalleryOne from "../../../components/demos/view-transitions/KittenGalleryOne.mdx"
@@ -78,7 +79,11 @@ As of the time of writing this article (04/23), View Transitions are only suppor
 
 <ViewTransitionOne />
 
-When the button is clicked, we call the document.startViewTransition() method. The API starts by taking a screenshot of the current state of the page. Next, it invokes whatever callback function we give it. We're just completely blowing away the main content of the page here. After this functions runs and the DOM begins updating, the API captures the new state of the page as a live representation. Finally, the browser constructs a nested tree of pseudo-elements with these screenshots and covers the entire affected area with them as it transitions from the old state to the new state. 
+When the button is clicked, we call the document.startViewTransition() method. The API starts by taking a screenshot of the current state of the page. Next, it invokes whatever callback function we give it. We're just completely blowing away the main content of the page here. 
+
+After this functions runs and the DOM begins updating, the API captures the new state of the page as a live representation. This doesn't have to be a still image-- [it can even be a video](https://developer.chrome.com/docs/web-platform/view-transitions/#transitioning-without-freezing). The browser uses this live view of the new DOM and the screenshot of the old one to construct a nested tree of pseudo-elements. Finally, it places all of these pseudo-elements on top of the entire affected area as it transitions from the old state to the new state. 
+
+## The Pseudo Element Tree
 
 The most important of these pseudo-elements are `::view-transition-old` and `::view-transition-new` which represent the old and new page views respectively. These are held within a `::view-transition-image-pair` which is responsible for isolating these views from the rest of the page so that their images can correctly cross-fade. Zooming out even further, each of these "image pairs" is nested within a `::view-transition-group` that manages animating the size and position difference of the two states. Every group is a sibling of one another, but [there are plans to enhance the nesting structure](https://github.com/WICG/view-transitions/blob/main/explainer.md#nested-transition-groups) in the future.
 
@@ -87,6 +92,8 @@ The `view-transition-name` CSS property is used to specify which elements are us
 If you want to customize the transition, you can add CSS rules to one of the pseudo-elements-- usually `::view-transition-old` or `::view-transition-new`. If you know an element will persist between states, you can give it a unique `view-transition-name`. This is enough for the API to automatically interpolate the position and size of the element between the old and new views. This keeps it from fading out only to fade back in-- although the animation is a little rough without tweaking it. In the example above, you can uncomment the CSS rule for the footer element to watch it slide to make room for the new content on each transition.
 
 Alternatively, you can opt any element out of the transition entirely by giving it a `view-transition-name` property with a value of "none". This is the only name which can be shared. Generally, if you want to use the API for fine-grained updates, it seems like a good idea to put this on the root element. Otherwise, you may cover an unintended element with the transition. Notice how we can't click the button in the example above while the content is transitioning? That's because the button is covered by the parent `::view-transition` pseudo-element. Just uncomment the html selector in the CSS, and you'll be able to click the button again.
+
+## Graceful Degredation & The `transitionHelper` Function
 
 However, we are barely scratching the surface of the API. And, like I said, it's only in Chrome right now. What about all of our Firefox and Safari users? The site just doesn't work for them! Or, worse yet, what if the user doesn't want to see any animations? We need to be able to gracefully degrade (my life motto in my twenties). Let's look at a more robust example.
 
@@ -106,7 +113,7 @@ This is also our first and only use of the incredibly powerful [Web Animations A
 
 There is not a single bit of traditional CSS animation here! Remember, the idea is that we don't know how many images will be in our gallery ahead of time. Because of this, we cannot give each element a unique `view-transition-name` in the stylesheet. Unfortunately, the biggest rule of the View Transitions API is that no two items can have the same view-transition-name. So, we have to get creative.
 
-[My original method](https://stackblitz.com/edit/view-transition-api-reject?file=index.html) was to loop through and give each item a unique name in the JavaScript. There is a big issue with this, however. Because the `::view-transition` animation properties are pseudo-elements, we can't easily adjust them with JS the way we did with the elements in the animation sandbox.
+[My original method](https://stackblitz.com/edit/view-transition-api-reject?file=index.html) was to loop through and give each item a unique name in the JavaScript. This actually worked even better at creating a smooth transition without configuration. There is a big issue with this, however. Because the `::view-transition` animation properties are pseudo-elements, we can't easily adjust them with JS the way we did with the elements in the animation sandbox.
 
 Pseudo-elements are not a part of the DOM, so they are not accessible to JavaScript. So, while we can give an item a name, we can't change the animation properties of that name. I found [a crazy IIFE on StackOverflow that allows you to append a new style tag to the head of the document](https://stackoverflow.com/questions/4481485/changing-css-pseudo-element-styles-via-javascript). This was pretty hacky, and it only seemed to partially work. So, I decided to try a different approach.
 
@@ -126,7 +133,9 @@ But, within the context of a full application, it actually simplifies things qui
 
 Like the last chapter on the Navigation API, the View Transitions API is extremely easy to use. And, what's more-- they go hand in hand. As you can see in [our app](/articles/into-the-future/4-navigation-api), changing out the DOM on the client-side with the navigation API can be jarring without some sort of transition. 
 
-I created a [version of the app](https://stackblitz.com/github/jazzypants1989/into-the-future/tree/main/6-typescript/3-rejected-router) that tied the view transition to the router which made sense to me initially. But, I realized that this was a mistake. While this worked well for the most part, it required every transition to be a part of the routing process. This made it hard to do things like smoothly transition features that I added later like a multi-step checkout or a loading spinner-- things that don't have a URL. Instead, it makes more sense to initiate the transition in the render function itself because that is where we are actually changing the DOM.
+I created a [version of the app](https://stackblitz.com/github/jazzypants1989/into-the-future/tree/main/6-typescript/3-rejected-router) that tied the view transition to the router which made sense to me initially. But, I realized that this was a mistake. While this worked well for the most part, it required every transition to be a part of the routing process. 
+
+This made it hard to do things like smoothly transition features that I added later like a multi-step checkout or a loading spinner-- things that don't have a URL. I added a timeout to the db function in the broken version, and the loading spinner doesn't pop up anymore no matter how long you set it. Instead, it makes more sense to initiate the transition in the render function itself because that is where we are actually changing the DOM.
 
 Coming into this chapter, our render function is comically simple. Currently, when we route to a new page, we unceremoniously switch out the innerHTML for the new view template. If our app was more complex, [this could lead to performance issues](https://blog.stevenlevithan.com/archives/faster-than-innerhtml), and this is not the best for user experience. In addition, our [rendering process](https://web.dev/rendering-on-the-web/) is currently completely unrelated to our [hydration process](https://dev.to/this-is-learning/why-efficient-hydration-in-javascript-frameworks-is-so-challenging-1ca3). 
 
@@ -247,11 +256,13 @@ main {
 ```
 </CodeBlock>
 
-With that, the vast majority of our work is complete. One note: The h1 `view-transition-name` only works because there should always be only one h1 on the screen at a time. Because of the big rule of "only one element per viewTransitionName", we can't use this for the transitioning our product images. 
+With that, the vast majority of our work is complete. One note: The `h1` `view-transition-name` only works because there should always be only one `h1` on the screen at a time. This rule of semantic HTML coincides with the View Transition API's one big rule of "only one element per `viewTransitionName`". This works for the header, but we'll need to think of something else for our product images. 
 
-Since there is more than one image on the products page, the entire transition will break. However, we do need a way to tell our app when a user has clicked on a product so that we can get a cool animation there. So, we're going to have to be a little creative with our implementation.
+Since there is more than one image on the products page, the entire transition will break if we give them all the same name. However, we do need a way to tell our app when a user has clicked on a product so that we can get a cool animation there. So, we're going to have to be a little creative with our implementation.
 
-[Jake Archibald did a fantastic demo of how to do image continuity.](https://glitch.com/edit/#!/simple-set-demos?path=6-expanding-image%2Fscript.js%3A15%3A17)-- I swear I made my cat gallery before I saw this. We're going to be doing something similar, but a little less gracefully. In addition, we're going to take care of a few other things while we're changing things up. Here's what our render function looks like now. I'll also show the activeImage helper functions that we're using.
+[Jake Archibald did a fantastic demo of how to do image continuity.](https://glitch.com/edit/#!/simple-set-demos?path=6-expanding-image%2Fscript.js%3A15%3A17). I swear I made my cat gallery before I saw this. We're going to be doing something similar for our images, but a little less gracefully. 
+
+In addition, we're going to do a little house-keeping while we're changing things up. Here's what our render function looks like now. I'll also show the activeImage helper functions that we're using.
 
 <CodeBlock>
 ```js
@@ -298,9 +309,9 @@ function addNewActiveClass() {
 ```
 </CodeBlock>
 
-We check on every single click if the user is clicking on an image or something inside of an anchor tag that contains an image (because each product's image and title are wrapped in an anchor tag). If that is the case, we set a flag, store the image that was clicked, and then add a `viewTransitionName` to the image. Next, as we update the DOM, we apply the same `viewTransitionName` to the first image we find. 
+We check on every single click if the user is clicking on an image or something inside of an anchor tag that contains an image (because each product's image and title are wrapped in a link). If either of these conditions are true, we set a flag, store the image that was clicked, and then add a `viewTransitionName` to the image. Next, we apply the same `viewTransitionName` to the first image we find as we update the DOM as well as a class that increases the size of the image.
 
-This whole process only works if you are sure that the first image on the next page is the same image that was clicked on the previous page. This is rarely the case on most webpages, but it's fine for our simple app. If we wanted, we could add an activeID to the new page as we render it and then use that to find the correct image. But, we don't need to worry about that. Instead, let's liven up our checkout form a bit.
+This whole process only works if you are sure that the first image on the next page is the same image that was clicked on the previous page. This is rarely the case on most webpages, but it's fine for our simple app. If we wanted, we could add an activeID to the new image as we render the new page, and then use that to find the correct image. But, we don't need to worry about that. Instead, let's liven up our checkout form a bit.
 
 ## The Form Example
 
@@ -313,6 +324,8 @@ Not bad. We display and hide steps as the user progresses through the form. We v
 <NewForm />
 
 So, we added error handling and a progress bar. We change the background color based on whether the user makes an error, goes backward or forward, or reaches the end of the form. We also added not one but two progress indicators: a progress bar and a number which automatically animates as the user progresses through the form. Almost everything has a `view-transition-name`, so all of the elements adapt in terms of their position and size as the user goes through the form.
+
+<StackBlitz repo="into-the-future" chapter="5-view-transitions-api" file="public/pages/Checkout.js" />
 
 Overall, this is probably over-extending the View Transitions API. Should we be using it for all of this? Probably not. But it's a fun example of what you can do with it. And, the most exciting part is coming up next!
 

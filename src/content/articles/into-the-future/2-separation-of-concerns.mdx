@@ -4,6 +4,7 @@ nextLink: "./3-ecmascript-modules"
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
+import StackBlitz from "../../../components/StackBlitz.astro"
 
 ## Introduction
 
@@ -13,7 +14,7 @@ Broadly, this just means splitting our code into different files, each with a si
 
 ## Separation by Language
 >One of the best practices you'll hear about when you're trying to learn how to CSS good is "separation of concerns." The idea is that your HTML should only contain information about your content, and all of your styling decisions should be made in your CSS.
-- Adam Wathan, [CSS Utility Classes and "Separation of Concerns"](https://adamwathan.me/css-utility-classes-and-separation-of-concerns/)
+--Adam Wathan, [CSS Utility Classes and "Separation of Concerns"](https://adamwathan.me/css-utility-classes-and-separation-of-concerns/)
 
 Since the majority of the code will be the same here, There won't be many snippets. Instead, I'll just show you the file structure. But, we will be changing one function. To simplify our file structure, I will be using an external API to get our data. This also shows that these concepts work outside of our current project. I also added some minimal error handling to our fetch function.
 
@@ -61,11 +62,13 @@ Now, we can link our CSS and JavaScript files in our HTML file.
 ```
 </CodeBlock>
 
+<StackBlitz repo="into-the-future" chapter="2-separation-of-concerns" demo="1-classic" />
+
 So, instead of over 400 lines of code in one file, we have around 50 lines of HTML, 70 lines of CSS, and 300 lines of JavaScript. This is a lot better, but it's still not ideal. We have a lot of code in our JavaScript file, and it's not very clear what each part does. Let's break this up into smaller pieces.
 
 ## Our New Architecture
 > It is what I sometimes have called "the separation of concerns", which, even if not perfectly possible, is yet the only available technique for effective ordering of one's thoughts, that I know of. This is what I mean by "focusing one's attention upon some aspect": it does not mean ignoring the other aspects, it is just doing justice to the fact that from this aspect's point of view, the other is irrelevant. It is being one- and multiple-track minded simultaneously.
--Edsger W. Dijkstra, [Notes on Structured Programming (1970)](https://www.cs.utexas.edu/users/EWD/ewd02xx/EWD249.PDF)
+--Edsger W. Dijkstra, [Notes on Structured Programming (1970)](https://www.cs.utexas.edu/users/EWD/ewd02xx/EWD249.PDF)
 
 There are a million different ways to do this, and I'm not going to pretend that mine is the best. But, I will try to explain some of my decisions. I plan on splitting my files up into three folders: components, features, and pages. I will explain the purpose of each of these folders soon, but first let's see what the file structure looks like:
 
@@ -102,7 +105,7 @@ Hopefully, my comments and naming conventions make it clear what each folder is 
 
 ## Components, Features, and Pages
 > We all like separation of concerns, right? This has kind of been a fundamental tenet of building apps on the web ever since like the PHP-pocalypse of 1999 where we were putting `mysql_fetch_row` in the middle of our table rendering. But, let's talk about what Separation of Concerns actually means. We're talking about reducing coupling and increasing cohesion.
-- Pete Hunt, [Rethinking Best Practices](https://www.youtube.com/watch?v=x7cQ3mrcKaY)
+-- Pete Hunt, [Rethinking Best Practices](https://www.youtube.com/watch?v=x7cQ3mrcKaY)
 
 **Components** are the core pieces of our app. Generally, these refer to reusable visual elements, but I am also including anything that is necessary for our app to function. I want this folder structure to remain throughout every future iteration of this project, and I hope this will make more sense as we go along.
 
@@ -112,7 +115,7 @@ Hopefully, my comments and naming conventions make it clear what each folder is 
 
 ## A House of Cards
 > The holy grail is having a set of scripts download immediately without blocking rendering and execute as soon as possible in the order they were added. Unfortunately HTML hates you and won't let you do that.
->Jake Archibald, [Deep dive into the murky waters of script loading](https://web.dev/speed-script-loading/)
+--Jake Archibald, [Deep dive into the murky waters of script loading](https://web.dev/speed-script-loading/)
 
 So, now our App.js is pretty barebones. It just needs to bootstrap our app, load up any additional features, and then pass control over to our router.
 
@@ -168,17 +171,19 @@ index.html
 ```
 </CodeBlock>
 
-Play close attention to the order of these scripts. Hopefully, our folder structure makes a bit more sense now. The view templates are mostly just strings of HTML and some event listeners. They don't rely on much, but they are relied on by a lot of other files. So, they have to come first.
+Play close attention to the order of these scripts. Hopefully, our folder structure makes a bit more sense now. The view templates are mostly just strings of HTML and some event listeners. They don't actually do very much, but the strings they produce are essential for our app to function. So, they have to come first.
 
 The components are the functions that actually do the work. So, they have to come next-- followed by the features that rely on them. Finally, we have our App.js file which is the entry point for our application. It's the first thing that runs when our page loads, but it needs all of the other files to be loaded first.
 
+<StackBlitz repo="into-the-future" chapter="2-separation-of-concerns" demo="2-house-of-cards" />
+
 ## Conclusion
 
-So, now our code is much more nicely organized. But, we've built a bit of a house of cards. All it takes to break the entire app is moving one file-- or even one line of code. Luckily, we've built everything here ourselves. If we were using multiple third-party libraries, it would be really difficult to know what order to load them in. What if one depends on the other?
+So, now our code is much more nicely organized. But, we've built a bit of a house of cards. All it takes to break the entire app is moving one file-- or even one line of code containing the wrong global variable. Luckily, we've built everything here ourselves. If we were using multiple third-party libraries, it would be really difficult to know what order to load them in. What if one depends on the other?
 
-And, we're loading the entire app every time we navigate to a new page. Every time we click on a link, we're loading every single file again. Even with a small app like this, that's a lot of unnecessary code. Just imagine if we were loading in a bunch of third-party libraries. We'd be wasting a lot of bandwidth and slowing down our app.
+And, we're loading the entire app as soon as the first page loads. Although we have split the code into individual files, we're still sending every single one to the browser no matter what page we're on. Even with a small app like this, that's a lot of unnecessary code. 
 
-So, hopefully you can see why the web development world naturally drifted towards modules and bundlers. But, we'll get to that in the next article.
+Just imagine if we were loading in a bunch of third-party libraries. If just one route depends on a large library-- like the events page that we will be adding in a few chapters-- it slows down the entire app. So, hopefully you can see why the web development world naturally drifted towards modules and bundlers. We will be discussing these in more detail as we progress through this series. First up-- ECMAScript Modules.
 
 ## Additional Resources
 

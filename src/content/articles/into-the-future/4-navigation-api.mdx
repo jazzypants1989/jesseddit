@@ -8,12 +8,14 @@ import CodeBlock from "../../../components/CodeBlock.astro"
 import IFrame from "../../../components/IFrame.astro"
 import Demo from "../../../components/Demo.astro"
 import InfoBox from "../../../components/InfoBox.astro"
+import StackBlitz from "../../../components/StackBlitz.astro"
 import SimpleRouter from "../../../components/demos/navigation/SimpleRouter.mdx"
 import PreventDefault from "../../../components/demos/navigation/PreventDefault.mdx"
 import FavoriteState from "../../../components/demos/navigation/FavoriteState.mdx"
 import IFrameRecursion from "../../../components/demos/navigation/IFrameRecursion.mdx"
 import LoadingAndError from "../../../components/demos/navigation/ErrorAndLoading.mdx"
 import KittenGallery from "../../../components/demos/navigation/KittenGallery.mdx"
+
 export const demoURL = "/demos/into-the-future/4-navigation-api/"
 
 ## Introduction
@@ -265,6 +267,8 @@ export async function Route(path) {
 }
 ```
 </CodeBlock>
+
+<StackBlitz repo="into-the-future" chapter="4-navigation-api" />
 
 ## Conclusion
 

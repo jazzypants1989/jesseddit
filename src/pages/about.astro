@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro"
-let others = ["Home", "Blog", "Contact", "Portfolio"]
+let others = ["Home", "Blog", "Portfolio"]
 
 const cookie = Astro.cookies.get("user").value
 
@@ -14,22 +14,17 @@ const user = cookie
 const image = user.avatar_url
 ---
 
-<Layout
-  title="All about the man, the myth, the legend"
-  now="About"
-  others={others}
->
+<Layout title="What even is this?" now="About" others={others}>
   <main class="min-h-screen">
     <h1
       class="text-4xl pt-4 font-bold text-center text-purple-900 animate-fade-in-down dark:text-blue-200"
     >
-      {user.name ? user.name : "Jazzy Pants"} is the <span
-        class="text-blue-500 animate-pulse"
-        >most vaguely penguin-shaped
-      </span>developer in the world.
+      This is a repository of words.
     </h1>
+
     <button
       aria-label="This button spins the picture in a very annoying way."
+      title="This button spins the picture in a very annoying way."
       onclick="(
         document.getElementById('pengy').style.transform = 'rotate(0deg)',
         document.getElementById('pengy').style.transition = 'transform 1s',
@@ -43,7 +38,7 @@ const image = user.avatar_url
       )"
       class="bg-blue-500 hover:bg-purple-700 hover:scale-110 animate-fade-in-left text-white font-bold py-2 px-4 rounded-full mt-10 mx-auto block transition-all duration-500"
     >
-      Click me to trigger your OCD
+      Click me to trigger your inner child
     </button>
     <div class="flex flex-col items-center justify-center w-full">
       <img
@@ -52,12 +47,20 @@ const image = user.avatar_url
         src="/pengy.png"
         alt="Pengy"
       />
-      <h3
-        id="boogy"
-        class="text-4xl font-bold text-center text-purple-900 animate-fade-in-down dark:text-blue-200"
+      <p
+        class="mx-auto text-center text-xl bg-purple-800 animate-fade-in-up rounded-3xl p-4 max-w-3xl text-white shadow-lg drop-shadow-2xl"
       >
-        You're cool
-      </h3>
+        I'm just some guy writing words on the internet. I like words, and I
+        like to build websites. So, I built a website where I can write words
+        about building websites. It's all just as thrilling as this paragraph
+        makes it sound, I promise. There's a comments section in the blog area
+        if you want to tell me how wrong I am. Or, you can just stay here and
+        spin these pictures around. I love you either way.
+      </p>
+      <small
+        >(For real though, please tell me how wrong I am. I'm trying to learn
+        here.)</small
+      >
       <img
         class="rounded-3xl mx-auto mt-16 mb-4 animate-fade-in-up h-96 w-96"
         src={image}
@@ -66,6 +69,7 @@ const image = user.avatar_url
       />
       <button
         aria-label="This button spins the picture in a very annoying way."
+        title="This button spins the picture in a very annoying way."
         onclick="(
           document.getElementById('jdawg').style.transform = 'rotate(0deg)',
           document.getElementById('jdawg').style.transition = 'transform 1s',
@@ -77,16 +81,10 @@ const image = user.avatar_url
           }, 1)
 
         )"
-        class="bg-blue-500 hover:bg-purple-700 hover:scale-110 animate-fade-in-left text-white font-bold py-2 px-4 rounded-full mt-10 mx-auto block transition-all duration-500"
+        class="bg-blue-500 hover:bg-purple-700 hover:scale-110 animate-fade-in-left text-white font-bold py-2 px-4 rounded-full my-10 mx-auto block transition-all duration-500"
       >
         I guess you probably want to spin this one too
       </button>
     </div>
   </main>
-
-  <style>
-    .hidden {
-      display: none;
-    }
-  </style>
 </Layout>

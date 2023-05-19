@@ -1,11 +1,13 @@
 ---
 title: "Bundling and Import Maps"
-nextLink: "8-conclusion"
+nextLink: "8-deno-and-astro"
 githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
 import ConfigFiles from "../../../components/demos/bundling/ConfigFiles.mdx"
+import StackBlitz from "../../../components/StackBlitz.astro"
+
 
 ## Introduction
 
@@ -26,14 +28,16 @@ As we explored in [our chapter about EcmaScript Modules](../3-ecmascript-modules
 [Until HTTP2](https://medium.com/@asyncmax/the-right-way-to-bundle-your-assets-for-faster-sites-over-http-2-437c37efe3ff), browsers would only download a few files at a time. So, if you had a lot of files, the browser would have to wait for each file to download before it could start downloading the next one. The browser's [main UI thread](https://developer.mozilla.org/en-US/docs/Glossary/Main_thread) is blocked while the browser downloads and executes each script. This means that if you have a large script in the head of your document, the browser stops rendering the page until that script has been downloaded and executed. This can lead to a poor user experience as the user stares at a blank screen or tries to interact with elements that don't have event listeners yet.
 
 ## Before Webpack
->These bundlers started to be created, what they do, their main premise is to allow you to write CommonJS modules. But, then getting it bundled, and stripping those statements, and then executed in the same order so that it works in the web exactly as it might work or you would expect it to work in your code.
+>These bundlers started to be created, what they do, their main premise is to allow you to write CommonJS modules. But, then getting it bundled, stripping those statements, and then executing it in the same order so that it works in the web exactly as it might work or you would expect it to work in your code.
 --Sean Larkin, [History of Modules](https://frontendmasters.com/courses/webpack-fundamentals/history-of-modules/)
 
 To solve these issues, the simplest answer is to just put all of your JavaScript in one file. This is called [bundling](https://en.wikipedia.org/wiki/Bundle_(software_distribution)). In the early years of CommonJS, people would sometimes use task runner tools like [Grunt](https://gruntjs.com/) and [Gulp](https://gulpjs.com/) to do this. These tools could concatenate all of your JavaScript files together-- literally putting the code for each file in one big file.
 
 This helped performance, but it didn't solve the dependency management issues. You still had to manually add each file to the task runner, and you had to make sure that you were including the files in the correct order. This was a pain, and it was error-prone.
 
-[Browserify](http://browserify.org/) and [RequireJS](https://requirejs.org/) use a slightly different approach to fix this. These tools provide their own versions of the `require` function and the `module.exports` object. They recursively traverse your code to find all of the dependencies and assign them unique identifiers. Then, they create a bundle by concatenating all of the files together and wrapping them in an [IIFE](https://developer.mozilla.org/en-US/docs/Glossary/IIFE) to prevent the variables from leaking into the global scope. This allowed you to use CommonJS modules in the browser before EcmaScript Modules were supported.
+[Browserify](http://browserify.org/) and [RequireJS](https://requirejs.org/) use a slightly different approach to fix this. These tools provide their own versions of the `require` function and the `module.exports` object. They recursively traverse your code to find all of the dependencies and assign them unique identifiers. 
+
+Then, they create a bundle by concatenating all of the files together and wrapping them in an [IIFE](https://developer.mozilla.org/en-US/docs/Glossary/IIFE) to prevent the variables from leaking into the global scope. This allowed you to use modules in the browser before EcmaScript Modules were supported. While Browserify was built to use CommonJS modules in the browser, RequireJS used its own [AMD syntax](https://en.wikipedia.org/wiki/Asynchronous_module_definition) which allowed asynchronous loading of modules rather than loading everything at once.
 
 ## Benefits of Bundling
 >Bundling modules means combining several files with modules into a single file. That is done for three reasons: Fewer files need to be retrieved in order to load all modules, Compressing the bundled file is slightly more efficient than compressing separate files, [and] during bundling, unused exports can be removed, potentially resulting in significant space savings.
@@ -142,7 +146,7 @@ We have a few requirements for our app that I will be using to evaluate each bun
 
 - We want to bundle our main image and our CSS files. 
 
-- We are already using EcmaScript Modules, so we want to make sure that the bundler supports that and treeshakes if possible. 
+- We are already using EcmaScript Modules, so we want to make sure that the bundler supports that and treeshakes (removes unused code) if possible. 
 
 - We will be using any other easy optimizations possible like minification and source maps. 
 
@@ -158,6 +162,8 @@ I am really impressed by Parcel. There was not a single thing that I needed to c
 
 So, ESBuild was the fastest bundler, but Rollup did a better job of modularizing our code with advanced tree shaking. It also has a great plugin system, and it was the easiest to configure outside of Parcel. It's a bit of a pain to have to even think about how to configure a bundler. Wouldn't it be great if we had a tool that combined the speed of ESBuild for quick development builds with the tree shaking of Rollup for production builds-- all without having to configure anything? Well, that's exactly what [Vite](https://vitejs.dev/) does.
 
+<StackBlitz repo="into-the-future" chapter="7-bundling-and-import-maps" demo="1-bundling" />
+
 ## Vite
 >When we first started on the web - because you just load a script into an HTML file, you refresh the page, everything just reloads… You don't have to wait for things to compile. So native ESM kind of gives you that really snappy thing; you just write native ES modules, the browser can handle it… It's really fast, up to a certain point.
 --Evan You, [Changelog: JSParty 212](https://changelog.com/jsparty/212)
@@ -169,6 +175,8 @@ When you are ready to deploy your app, Vite will use Rollup to bundle your code.
 I wanted to highlight Vite because it is quickly growing to be a lynchpin of the web development community. Vite's combination of flexibility and simplicity has led to a lot of recent innovation. Because it has [built-in support for server-side rendering](https://vitejs.dev/guide/ssr.html), it has become the build tool of choice for several meta-frameworks. 
 
 [SvelteKit](https://kit.svelte.dev/) led the charge on this. In fact, the ESModule transform on the server that Vite leverages was [conceptualized by Rich Harris himself](https://changelog.com/jsparty/212). This very website is built with [Astro](https://astro.build/), and it also uses Vite under the hood.
+
+<StackBlitz repo="into-the-future" chapter="7-bundling-and-import-maps" demo="2-vite" />
 
 ## Import Maps
 >The main benefit of this system is that it allows easy coordination across the ecosystem. Anyone can write a module and include an import statement using a package's well-known name, and let the Node.js runtime or their build-time tooling take care of translating it into an actual file on disk (including figuring out versioning considerations).
@@ -288,7 +296,9 @@ tsconfig.json
 
 This... almost works! Unfortunately, because the external libraries are not actually installed in our project, the TypeScript compiler will still complain about them. And, for good reason-- we don't have any type definitions for them! 
 
-We could go ahead and install the packages locally, but that seems like a shame when we are already using the import map. I would love to hear some of your workarounds in [the comments](/blog/into-the-future). But, I'm going to take a bit of a dramatic step instead. Join me in the next chapter to find out what it is.
+We could go ahead and install the packages locally, but that seems like a shame when we are already using the import map. It would be nice to **only** download the types, but the `@types/date-fns` library is deprecated. I would love to hear some of your workarounds in [the comments](/blog/into-the-future). But, I'm going to take a bit of a dramatic step instead. Join me in the next chapter to find out what it is.
+
+<StackBlitz repo="into-the-future" chapter="7-bundling-and-import-maps" demo="3-import-maps" />
 
 ## Conclusion
 >Our general recommendation is to continue using bundlers before deploying modules to production. In a way, bundling is a similar optimization to minifying your code: it results in a performance benefit, because you end up shipping less code. Bundling has the same effect! Keep bundling.
@@ -317,5 +327,7 @@ Anyways, I don't want to add a framework just yet. I want to explore each of the
 - Kasra Khosravi - [Using ES Modules in browsers with import-maps](https://blog.logrocket.com/es-modules-in-browsers-with-import-maps/)
 
 - Ayooluwa Isaiah - [Everything You Need to Know About JavaScript Import Maps](https://www.honeybadger.io/blog/import-maps/)
+
+- Andy Jiang - [You Don't Need a Build Step](https://deno.com/blog/you-dont-need-a-build-step)
 
 - Pascal Schilp - [Going Buildless](https://css-tricks.com/going-buildless/)

@@ -8,7 +8,7 @@ import Features from "../../../components/demos/conclusion/Features.mdx"
 
 ## Introduction
 
-So, we are reaching the end of our journey. By using a new runtime and cutting-edge web APIs, we have updated our vanilla JavaScript Single Page Application to create a type-safe, immersive experience without requiring a framework or a build step. However, we also explored how we could use a meta-framework like Astro to transition this into an MPA to maximize the benefits of both approaches (which will only grow more appealing as the View Transitions API becomes stable). I might be overselling it a bit, but I think we have come a long way.
+So, we are reaching the end of our journey. By using a new runtime and cutting-edge web APIs, we have updated our vanilla JavaScript Single Page Application to create a type-safe, immersive experience without requiring a framework or a build step. However, we also explored how we could use a meta-framework like Astro to transition this into a Multi-Page Application to maximize the benefits of both approaches (which will only grow more appealing as the View Transitions API becomes stable). I might be overselling it a bit, but I think we have come a long way.
 
 While we have covered a lot of ground in these articles, there is still so much more to learn. I have a lot of ideas for future topics, but I want to hear from you. [Let me know in the comments](/blog/into-the-future) what I got wrong or what you want to see next!
 
@@ -20,23 +20,23 @@ Let's take a look at the code. I'll explain each feature after the demo. Hopeful
 
 ## Stripe
 
-I needed to integrate some outside libraries to make the [bundling chapter](./7-bundling-and-import-maps) make more sense. Considering that we have been building a pretend e-commerce application for a store, integrating a payment provider like Stripe [seemed like a good idea](https://twitter.com/JessePence5/status/1650985102061764608).  I don't recommend using this code in production as it has been simplified for the sake of demonstration. But, this should give you a good idea of how we are not that far away from something viable.
+I needed to integrate some outside libraries to make the [bundling chapter](./7-bundling-and-import-maps) make more sense. Considering that we have been building a pretend e-commerce application for a store, integrating a payment provider like Stripe [seemed like a good idea](https://twitter.com/JessePence5/status/1650985102061764608).  I don't recommend using this code in production as it has been simplified for the sake of demonstration, but this should give you a good idea of how we are not that far away from something viable.
 
-Hilariously, Stripe loads around 100kb of unnecessary JavaScript onto the page-- just to redirect you to a custom URL. To diminish the impact of this on the performance of our app, I'm using this as a chance to demonstrate dynamic imports. This allows us to load the Stripe library only when the customer clicks the "Redirect to Stripe" button. 
+Hilariously, Stripe loads around 100kb of unnecessary JavaScript onto the page-- just to redirect you to a custom URL. To diminish the impact of this on the performance of our app, I'm using this as an opportunity to demonstrate dynamic imports. This allows us to only load the Stripe library when the customer actually clicks the "Redirect to Stripe" button. I saw that there is [a different import](https://github.com/stripe/stripe-js#importing-loadstripe-without-side-effects) mentioned the docs to avoid this, but it's good to know how to do it yourself.
 
-But, funnily enough, even this isn't necessary. When I was inspecting the response that I get from the server, I noticed that you can just pluck out the URL and redirect the customer yourself. Stripe probably doesn't want people to know this so they can keep injecting their cookies at will, but you can uncomment the code in the `Checkout` page in the demo to see what I mean.
+Funnily enough, it turns out that you don't really need to load Stripe on the client side at all. When I was inspecting the response that I get from the server, I noticed that you can just pluck out the URL and redirect the customer yourself. Stripe probably doesn't want people to know this so they can keep injecting their cookies at will. I left the dynamic import in the code for the sake of showing off the code-splitting, but you can uncomment the code in the `Checkout` page in the demo to see what I mean
 
 ## Calendar
 
 I had heard date libraries could be a contributor to bloated bundle size, and `date-fns` is no exception. Not only does it seem to add around 100kb to the unbundled page, but it makes over 100 requests for each individual script it uses-- even though we're only using three functions. Even with modern multiplexing, this is a lot of overhead. I was hoping tree shaking would help, but maybe it is actually using all of those scripts. I'm not sure.
 
-I also brought in a calendar library called [FullCalendar](https://fullcalendar.io/). It imports Preact and a few thousand lines of code as well, so the events page is definitely a great spot to check out the loading spinner. Between the two, we're adding around over 300kb of JavaScript to the unbundled page somehow. I'm not sure how much of that is actually being used, but this is pretty typical of the kind of bloat you can expect from most modern JavaScript libraries.
+I also brought in a calendar library called [FullCalendar](https://fullcalendar.io/). It imports Preact and a few thousand lines of code as well, so the events page is definitely a great spot to check out the loading spinner. Between the two, we're adding over 300kb of JavaScript to the unbundled page somehow. I'm not sure how much of that is actually being used, but this is pretty typical of the kind of bloat you can expect from most modern JavaScript libraries.
 
 This is a great example of being wary of the dependencies you bring into your app. The Astro version of the app has a simple calendar I built with vanilla JavaScript that is only around 1kb. Most things can be achieved with a little hard work, and it is often worth it to avoid bringing in a dependency. Just look at it as an opportunity to learn something new!
 
 ## Signals
 
-Signals are a concept that have gained popularity in JavaScript recently. Although recently popularized with their use in [SolidJS](https://www.solidjs.com/), the concept traces its roots to [MobX](https://medium.com/hackernoon/becoming-fully-reactive-an-in-depth-explanation-of-mobservable-55995262a254), [RxJS](https://rxjs.dev/guide/overview), and most notably [Knockout](https://knockoutjs.com/documentation/observables.html). You can read more about [the history here](https://dev.to/this-is-learning/the-evolution-of-signals-in-javascript-8ob), but many frameworks have picked them up recently-- most notably [Angular](https://angular.io/guide/signals).
+Signals are a concept that have gained popularity in JavaScript recently. Although recently popularized with their use in [SolidJS](https://www.solidjs.com/), the concept traces its roots to [MobX](https://medium.com/hackernoon/becoming-fully-reactive-an-in-depth-explanation-of-mobservable-55995262a254), [RxJS](https://rxjs.dev/guide/overview), and most notably [Knockout](https://knockoutjs.com/documentation/observables.html). You can read more about [the history here](https://dev.to/this-is-learning/the-evolution-of-signals-in-javascript-8ob), but many frameworks have picked them up recently. Even [Angular](https://angular.io/guide/signals) has joined the party.
 
 Listen-- I am no [Ryan Carniato](https://twitter.com/ryancarniato). This is an **extremely simple** implementation of signals. I combined [Ryan's article here](https://dev.to/ryansolid/building-a-reactive-library-from-scratch-1i0p) with [this one](https://www.lksh.dev/blog/writing-your-own-reactive-signal-library/). This is not perfect, but it works for what I need-- updating the header and the cart page when the user adds or removes an item.
 
@@ -44,9 +44,9 @@ I probably should have stuck closer to Ryan's example. If you want to use signal
 
 ## Improved Cache 
 
-[In the conclusion to the first series of articles](../client-side-routing/15-conclusion#known-issues), I explained the deficiencies in the cache as it was. We fixed the error handling at the beginning of this series, but I never got around to explaining how I fixed the cache. It's nothing crazy, but it fits most use cases honestly.
+[In the conclusion to the first series of articles](../client-side-routing/15-conclusion#known-issues), I explained the deficiencies in the cache as it stood. We fixed the error handling at the beginning of this series, but I never got around to explaining how I fixed the cache. It's nothing crazy, but it fits most use cases honestly.
 
-Previously, when the user first opened the app to a products page or used the search bar, we simply set a global variable and used it for the rest of the session. This was fine for the most part as we never expected our products to change. I just wanted to show how simply setting a timestamp in localStorage can be used to invalidate the cache. If you expect the items to change often, but you still don't want to make a request every time, you can use this method to only make a request every few minutes or so.
+Previously, when the user first opened the app to a products page or used the search bar, we simply set a global variable and used it for the rest of the session. This was fine for the most part as we never expected our products to change. I wanted to show how you can simply set a timestamp in localStorage, and use it to invalidate the cache. If you expect the items to change often, but you still don't want to make a request every time, this is an easy method for preventing stale data while limiting network activity.
 
 ## Toast
 
@@ -58,7 +58,7 @@ Previously, when a user added or removed an item from their cart, we just used t
 
 After adding all these awesome, new features, I realized that our website wasn't really mobile responsive-- [despite me joking about flexbox doing all the work for us](../client-side-routing/10-the-skeleton). The navigation links in our header were already pretty cluttered at the end of the last series. Now that we added the events page, it was getting a little out of hand.
 
-So, I decided to hide the header behind a hamburger menu on mobile devices. You know-- the three lines that you click to expand the menu. Nothing too crazy, but it was a good opportunity to show off a simple media query. And, I added a cute, little CSS transition to make it slide up and down.
+It seemed like a shame to try to show off exciting new web API's on a dirt ugly website. Anyone who looked at this thing on a mobile device would be immediately turned off. So, I decided to conditionally hide the header on mobile devices behind a [hamburger button](https://en.wikipedia.org/wiki/Hamburger_button). You know-- those three lines that you click to see the navigation links for a website. I didn't go too crazy, but I figured this was a good opportunity to show off a simple media query. And, I added a cute, little CSS transition to make it slide up and down.
 
 ## Conclusion
 
@@ -68,7 +68,7 @@ However, this is not truly representative of the state of modern web development
 
 In many cases, the code that you write is not the same as the code that is run. It is compiled and transformed into something else. When much of the difficulty is abstracted away, it can be harder to debug when things go wrong. If you don't even understand how the framework actually works, how can you be expected to fix things when they break?
 
-So, unless there are further requests for simple implementations of new features, these will be the final versions of our application written with vanilla JavaScript. Hopefully, you understand all the moving parts of the application that we have built. I want to leverage that understanding by porting this app to different JavaScript frameworks so you can see how they all accomplish the same goals. 
+So, unless there are further requests for demonstrations of how to do things without a framework, these will be the final versions of our application written with vanilla JavaScript. Hopefully, you understand all the moving parts of the application that we have built. I want to leverage that understanding by porting this app to different JavaScript frameworks so you can see how they all accomplish the same goals. 
 
 There are still a lot of difficulties in building a single page application that I didn't cover or only briefly mentioned. CSS scoping, accessibility, performance-- there's a lot I could talk about. Heck, I only briefly mentioned state management! I would be interested in doing a continuation, but I need direction. [Let me know in the comments](/blog/into-the-future)! 
 

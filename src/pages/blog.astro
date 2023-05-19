@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro"
 import prisma from "../utils/db"
-let others = ["Home", "About", "Contact", "Portfolio"]
+let others = ["Home", "About", "Portfolio"]
 
 const fetchData = async () => {
   const posts = await prisma.post.findMany()

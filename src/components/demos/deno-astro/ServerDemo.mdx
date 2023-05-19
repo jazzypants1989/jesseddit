@@ -66,8 +66,10 @@ deno-server.ts
 ```ts
 import { serve } from "https://deno.land/std@0.184.0/http/server.ts"
 import { load } from "https://deno.land/std@0.184.0/dotenv/mod.ts"
-import { serveFile } from "https://deno.land/std@0.184.0/http/file_server.ts"
-import assets from "https://deno.land/x/assets@0.0.1/mod.ts"
+import {
+  serveDir,
+  serveFile,
+} from "https://deno.land/std@0.184.0/http/file_server.ts"
 
 import Stripe from "https://esm.sh/stripe@12.3.0"
 
@@ -83,18 +85,7 @@ const stripe = await Stripe(STRIPE_SECRET_KEY, {
 })
 
 const handler = async (request: Request): Promise<Response> => {
-  const SPA = await serveFile(request, "./public/index.html")
-  // First, we define the main file, but we want to check for
-  // a couple things before we serve it up.
-
-  // This is checking to see if the browser is asking for something with a file extension
-  // We assuming that this is an asset like a .css file because none of our routes
-  // Are served with a file extension by default.
-  if (request.url.includes(".")) {
-    return assets(request, { root: "./public" })
-  }
-
-  // Then, we check to see if it is a POST request
+  // First, we check to see if it is a POST request
   // That can only mean that a user is trying to checkout,
   // So, we check their cart and redirect them to Stripe.
   if (request.method === "POST") {
@@ -114,11 +105,23 @@ const handler = async (request: Request): Promise<Response> => {
       return new Response(JSON.stringify({ session }))
     }
   }
-  // Otherwise, we let our client-side router do it's thing.
-  return SPA
+
+  // Next, we make sure that we don't serve any files
+  // That have a file extension. We don't expect the user
+  // To request any specific files-- just routes.
+  if (!request.url.split("/").pop()?.includes(".")) {
+    return serveFile(request, "public/index.html")
+  }
+
+  // Finally, we make our public directory available to the user.
+  // This is where our JS, CSS, and images are stored.
+  return serveDir(request, {
+    showIndex: true,
+    fsRoot: "public",
+  })
 }
 
-serve(handler, { port: 3000 })
+serve(handler)
 ```
 </CodeBlock>
 </MPADemo>

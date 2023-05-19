@@ -5,6 +5,8 @@ githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
+import StackBlitz from "../../../components/StackBlitz.astro"
+
 
 ## Introduction
 
@@ -46,7 +48,9 @@ However, this was still not ideal. It was verbose and it didn't alleviate the ne
 >Prior to ECMAScript 6, JavaScript did not have built-in modules. Therefore, the flexible syntax of the language was used to implement custom module systems within the language. Two popular ones are CommonJS (targeting the server side) [and] AMD (Asynchronous Module Definition, targeting the client side).
 --Dr. Axel Rauschmayer, [JavaScript for impatient programmers (ES2022 edition)](https://exploringjs.com/impatient-js/ch_modules.html)
 
-As JavaScript moved server-side, [developers such as Kevin Dangoor](https://www.blueskyonmars.com/2010/01/29/commonjs-the-first-year/) began to advocate for a standard module system. [Node.js](https://nodejs.org/en/) was the first major platform to adopt a version of this standard, and it was eventually even used in the browser via [Browserify](http://browserify.org/). This standard is known as [CommonJS modules](https://nodejs.org/api/modules.html) which rely on the require() function to load modules and the module object to export modules.
+As JavaScript moved server-side, [developers such as Kevin Dangoor](https://www.blueskyonmars.com/2010/01/29/commonjs-the-first-year/) began to advocate for a standard module system. [Node.js](https://nodejs.org/en/) was the first major platform to adopt a version of this standard, and it was eventually even used in the browser via [Browserify](http://browserify.org/). 
+
+This standard is known as [CommonJS modules](https://nodejs.org/api/modules.html) which rely on the require() function to load modules and the module object to export modules. The module object is just a plain javascript object in which you can add properties that you want to export. Or, you can replace the entire object with a function that you want to export.
 
 So, let's take a look at how this works. First, we'll create a module that exports a function that grates cheese. Notice how this completely replaces the module.exports object with a function.
 
@@ -99,7 +103,7 @@ console.log(tinyCheeseGrater('gouda'));
 
 The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
 
-AMD modules were designed to solve this problem by introducing an asynchronous loading mechanism that enables modules to be loaded in parallel without blocking the main thread. In AMD, modules are defined with an appropriately named define() function that takes both an array of dependencies and a factory function that defines the module's behavior. The dependencies are loaded asynchronously and passed to the factory function as parameters, which allows the module to start executing as soon as its dependencies are loaded.
+AMD modules were designed to solve this problem by introducing an asynchronous loading mechanism that enables modules to be loaded in parallel without blocking the main thread. In AMD, modules are defined with an appropriately named define() function that takes both an array of dependencies and a factory function that controls the module's behavior. The dependencies are not actually loaded until the factory function is called which alleviates the inherent blocking behavior of CJS modules.
 
 <CodeBlock>
 ```js
@@ -153,7 +157,7 @@ But, these two standards are not compatible with each other. This led to the eme
 
 Oof. While it is a clever use of an IIFE, it is not very readable. But, ESM are here to save the day!
 
-## ESM
+## ECMAScript Modules
 >CommonJS modules work quite well and, in combination with NPM, have allowed the JavaScript community to start sharing code on a large scale. But they remain a bit of a duct-tape hack... This is why the JavaScript standard from 2015 introduces its own, different module system.
 --Marijn Haverbeke, [Eloquent JavaScript](https://eloquentjavascript.net/10_modules.html)
 
@@ -277,6 +281,8 @@ This is where the magic happens. Notice how we can simply await the import of a 
 We also added a new page to the app: the checkout page! No e-commerce app would be complete without a checkout page, right? This page is pretty simple. It's just a form that collects the user's information and sends it with their cart to an imaginary server. We will be using the [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) API.
 
 Forms are an essential part of the web, and I wanted to include it in our demo app-- especially as we will be converting it to different frameworks in later articles. It's interesting to see how each framework handles forms-- the most primitive form of mutation on the web. I'm not going to include the code here as we will be covering forms in detail in another article. As always, the code is avaiable below.
+
+<StackBlitz repo="into-the-future" chapter="3-ecmascript-modules" file="public/pages/Checkout.js"/>
 
 ## Conclusion
 

@@ -5,6 +5,8 @@ githubLink: true
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+import StackBlitz from "../../../components/StackBlitz.astro"
 import ServerDemo from "../../../components/demos/deno-astro/ServerDemo.mdx"
 
 ## Introduction
@@ -112,7 +114,9 @@ So, this takes the place of both our `tsconfig.json` and our `package.json` whil
 
 Unfortunately, this `json` file cannot be used in the browser as we discussed in the last chapter. So, we still have to maintain two separate sources of truth for our app. But, at least we can copy and paste this into the script tag we use for the browser-- unlike the array that `tsconfig.json` uses for paths. 
 
-So, now we get the convenience of being able to import and export by [bare module specifiers](https://dev.to/thepassle/the-javascript-ecosystem-for-the-dazed-and-confused-36il#bare-module-specifiers) just like using a bundler. We already got this just by using import maps, but now we have TypeScript definitions for all of our external packages through Deno! 
+So, now we get the convenience of being able to import and export by [bare module specifiers](https://dev.to/thepassle/the-javascript-ecosystem-for-the-dazed-and-confused-36il#bare-module-specifiers) just like using a bundler. We already got this just by using import maps, but now we have TypeScript definitions for all of our external packages through Deno!
+
+<IFrame src="https://replit.com/@jazzypants1989/Deno-Demo?embed=true" id="deno-demo" />
 
 I think this is about as good as it gets for developing a single page application with vanilla JavaScript in 2023. And still-- no build step! We get full type safety, bare import aliases that are locally cached, and full code splitting. My question to you as a reader is this: What are we missing that a build tool could provide? The code isn't properly minified, but the difference in code sent to the client is kind of negligible. [Let me know in the comments](/blog/into-the-future#comments) what you think.
 
@@ -240,11 +244,15 @@ Finally, we have the `addToCart` function which is called when the user clicks t
 
 Everything in between the `<script>` tags is handled with client-side JavaScript. So, instead of sending the entire app as JavaScript and then rendering it on the client, we send just enough to give the user a good experience. This adheres to a concept called "Islands of Interactivity"-- coined by Jason Miller, the creator of Preact.
 
-While we are simply using vanilla JavaScript, this idea is even more powerful when used with a framework like React. React applications can quickly get out of hand when you bring in a few dependencies. Astro allows you to render your React components on the server and then only hydrate the parts that need to be interactive. Ultimately, there is not much of a difference between this and React Server Components-- except [RSC's can refetch the server content on the client](https://twitter.com/dan_abramov/status/1631642742395658243). But, we'll get to that in a future article.
+Here's the demo. We're using the view transitions meta tag to maintain our animations. This doesn't work in cross-origin iframes, so you'll have to open the preview link in a new tab if you want to see those. Remember-- the MPA version of the View Transitions API is still experimental, so I've had a few bugs pop up. There seems to be a memory leak somewhere, but this is still very exciting stuff.
+
+<StackBlitz repo="into-the-future" chapter="8-deno-and-astro" demo="2-astro" />
+
+While we are simply using vanilla JavaScript, the use of island architecture is even more powerful when used with a framework like React. React applications can quickly get out of hand when you bring in a few dependencies. Astro allows you to render your React components on the server and then only hydrate the parts that need to be interactive. Ultimately, there is not much of a difference between this and React Server Components-- except [RSC's can refetch the server content on the client](https://twitter.com/dan_abramov/status/1631642742395658243). But, we'll get to that in a future article.
 
 ## Conclusion
-> I think what's been happening recently is we've actually felt like the whole field got reenergized again. And you see, there are new players, so there are new libraries, there are new frameworks… And I think what we're seeing - one thing we're seeing a lot is a lot more emphasis on the server, particularly being able to not just run your existing client code on the server, but being able to kind of take full advantage of what the server offers, and combining that with parts we already have on the client.
-- Dan Abramov, [JS Party](https://changelog.com/jsparty/267)
+>I think what's been happening recently is we've actually felt like the whole field got reenergized again. And you see, there are new players, so there are new libraries, there are new frameworks… And I think what we're seeing - one thing we're seeing a lot is a lot more emphasis on the server, particularly being able to not just run your existing client code on the server, but being able to kind of take full advantage of what the server offers, and combining that with parts we already have on the client.
+--Dan Abramov, [JS Party](https://changelog.com/jsparty/267)
 
 Deno and Astro are both exciting new tools that are pushing the web forward. They are pretty disparate in nature, but they share a common goal of using the web platform to its full potential while still allowing developers to use modern tooling like TypeScript and JSX. I have only skimmed the surface of their capability, but I wanted to introduce them to you as they seem emblematic of the future of web development.
 

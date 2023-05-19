@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro"
-import { adjectives, randomAdjective } from "../components/Adjective.astro"
-let others = ["Blog", "About", "Contact", "Portfolio"]
+import AsWhatGenerator from "../components/AsWhatGenerator"
+let others = ["Blog", "About", "Portfolio"]
 
 const cookie = Astro.cookies.get("user").value
 
@@ -13,24 +13,45 @@ const user = cookie
     }
 
 const { name } = user
+
+const first = AsWhatGenerator()
 ---
 
 <Layout now="Home" others={others}>
   <main
-    class="min-h-max max-w-4xl mx-auto bg-blue-200 border-2 rounded-lg border-purple-900 shadow-2xl shadow-blue-500"
+    class="min-h-max max-w-4xl mx-auto bg-blue-200 border-2 rounded-lg border-purple-900 shadow-2xl shadow-blue-500 flex flex-col items-center justify-center"
   >
     <h1
+      class="text-6xl pt-4 font-bold text-center text-purple-900 animate-fade-in-down"
+    >
+      {Math.random() > 0.5 ? "jessedit.tech" : "jesseddit.com"}
+    </h1>
+    <h2
       class="text-4xl pt-4 font-bold text-center text-purple-900 animate-fade-in-down"
     >
-      {name ? `${name} is the` : "Jesse is the"}
-      <span class="text-blue-500 animate-pulse"
-        >{randomAdjective(adjectives)}
-      </span>developer in the world.
-      <div
-        class="flex items-center justify-center mt-10 animate-bounce hover:animate-fade-out-up"
-      >
-        <img class="w-32 h-32 rounded-full" src="/Cat.svg" alt="Cat" />
-      </div>
-    </h1>
+      {
+        name
+          ? `${name} is a web developer. Today, I think they are`
+          : "Jesse is a web developer. Today, I think they are"
+      }
+      <span class="text-blue-500 animate-pulse">{first}.</span>
+    </h2>
+    <div class="mt-10 animate-bounce hover:animate-fade-out-up">
+      <img
+        title="Not a cat. It's more like a weird series of concentric circles."
+        alt="Not a cat. It's more like a weird series of concentric circles."
+        class="w-32 h-32 rounded-full"
+        src="/Cat.svg"
+        alt="Cat"
+      />
+    </div>
+    <small class="text-center text-purple-900 animate-fade-in-down p-4">
+      (This is what happens when you ask Github CoPilot to give you an SVG of a
+      cat. Also, the remark above is randomly generated. If it's my name, and it
+      seems like I'm full of myself-- I'm sorry. If you're logged in, and it
+      insulted you-- I'm more sorry. I'm sure you're not{" "}
+      {first} at all. I'm sure you're {AsWhatGenerator()}. That's better,
+      right?)
+    </small>
   </main>
 </Layout>
