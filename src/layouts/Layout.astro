@@ -10,6 +10,8 @@ import Nav from "../components/Nav.astro"
 import "../styles/global.css"
 
 const { title = "Jessedit", now, others } = Astro.props
+
+const url = new URL(Astro.url)
 ---
 
 <meta charset="UTF-8" />
@@ -31,7 +33,7 @@ const { title = "Jessedit", now, others } = Astro.props
 <meta property="og:site_name" content="Jessedit" />
 <meta property="og:title" content={title} />
 <meta property="og:description" content="Jessedit" />
-<meta property="og:url" content="https://jessedit.tech" />
+<meta property="og:url" content="https://jessedit.tech/blog/into-the-future" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:site" content="@jesse_pence5" />
 <meta name="twitter:creator" content="@jesse_pence5" />
@@ -39,7 +41,7 @@ const { title = "Jessedit", now, others } = Astro.props
 <meta name="twitter:description" content="Jessedit" />
 <meta name="twitter:image" content="/pengy.png" />
 <meta name="twitter:image:alt" content="Jovial Penguin, LLC" />
-<meta name="twitter:url" content="https://jessedit.tech" />
+<meta name="twitter:url" content="https://jessedit.tech/blog/into-the-future" />
 <meta name="twitter:label1" content="Est. reading time" />
 <meta name="twitter:data1" content="5-3000 minutes" />
 <title>{title}</title>
