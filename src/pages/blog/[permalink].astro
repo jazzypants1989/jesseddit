@@ -5,7 +5,6 @@ import Layout from "../../layouts/Layout.astro"
 import type { Comment } from "@prisma/client"
 import ToC from "../../components/ToC.astro"
 import CommentList from "../../components/comments/CommentList"
-import IFrame from "../../components/IFrame.astro"
 import type { PostProps } from "../../components/comments/CommentItem"
 import PostLike from "../../components/comments/PostLike"
 
@@ -107,11 +106,6 @@ if (!userInDB && user.login) {
           >
             Updated: {new Date(updatedAt).toLocaleString()}
           </span>
-        )
-      }
-      {
-        permalink === "into-the-future" && (
-          <IFrame src="https://www.youtube.com/embed/2l4OlrrjP5w" />
         )
       }
       <ToC />
