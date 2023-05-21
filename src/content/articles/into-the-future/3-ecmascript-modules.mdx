@@ -200,6 +200,8 @@ ESM are also asynchronous by default, and they can even be dynamically imported.
 
 This is useful for applications that have a lot of code, or for applications that have a lot of pages. While previously this could only be achieved with a bundler like the previously mentioned Browserify, [WebPack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/guide/en/), ESM allows us to do this natively in the browser. Unlike in the last chapter where everything was loaded onto the browser at once, modules will allow us to specify which files get loaded for each page. Speaking of our application, let's take a look at how we can use ESM to improve it.
 
+<StackBlitz repo="into-the-future" chapter="3-ecmascript-modules" demo="1-silly-demos" />
+
 ## Applying ESM to our App
 >Finally, looking at this app doesn't make me puke.
 --Jesse Pence
@@ -282,7 +284,7 @@ We also added a new page to the app: the checkout page! No e-commerce app would 
 
 Forms are an essential part of the web, and I wanted to include it in our demo app-- especially as we will be converting it to different frameworks in later articles. It's interesting to see how each framework handles forms-- the most primitive form of mutation on the web. I'm not going to include the code here as we will be covering forms in detail in another article. As always, the code is avaiable below.
 
-<StackBlitz repo="into-the-future" chapter="3-ecmascript-modules" file="public/pages/Checkout.js"/>
+<StackBlitz repo="into-the-future" chapter="3-ecmascript-modules" demo="2-our-app" file="public/pages/Checkout.js"/>
 
 ## Conclusion
 
