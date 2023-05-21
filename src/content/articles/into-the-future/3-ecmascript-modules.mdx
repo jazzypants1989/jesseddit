@@ -101,9 +101,11 @@ console.log(tinyCheeseGrater('gouda'));
 ```
 </CodeBlock>
 
-The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
+Unfortunately, browsers cannot understand this code without a bundler like Browserify. And, even if they could, it would still be problematic. The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. 
 
-AMD modules were designed to solve this problem by introducing an asynchronous loading mechanism that enables modules to be loaded in parallel without blocking the main thread. In AMD, modules are defined with an appropriately named define() function that takes both an array of dependencies and a factory function that controls the module's behavior. The dependencies are not actually loaded until the factory function is called which alleviates the inherent blocking behavior of CJS modules.
+While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
+
+[AMD modules were designed to solve this problem](https://requirejs.org/docs/whyamd.html) by introducing an asynchronous loading mechanism that enables modules to be loaded in parallel without blocking the main thread. In AMD, modules are defined with an appropriately named define() function that takes both an array of dependencies and a factory function that controls the module's behavior. The dependencies are not actually loaded until the factory function is called which alleviates the inherent blocking behavior of CJS modules.
 
 <CodeBlock>
 ```js
@@ -129,7 +131,9 @@ define(['./cheeseGrater'], function(cheeseGrater) {
 ```
 </CodeBlock>
 
-But, these two standards are not compatible with each other. This led to the emergence of UMD modules, which are a combination of the two. UMD modules are designed to be compatible with both AMD and CommonJS module loaders. This is done by checking for the presence of the define() function, which is used by AMD loaders, and the presence of the module object, which is used by CommonJS loaders. If neither of these is present, the module is loaded into the global scope.
+But, these two standards are not compatible with each other. This led to the emergence of UMD modules, which are a combination of the two. UMD modules are designed to be compatible with both AMD and CommonJS module loaders. 
+
+This is done by checking for the presence of the define() function, which is used by AMD loaders, and the presence of the module object, which is used by CommonJS loaders. If neither of these is present, the module is loaded into the global scope. To do this, we bring back our old friend the IIFE.
 
 <CodeBlock>
 ```js
@@ -198,9 +202,11 @@ In my opinion, this is much cleaner than the previous standards, and much more f
 
 ESM are also asynchronous by default, and they can even be dynamically imported. This means that you can import modules on-demand which is especially useful for code-splitting. [Code-splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting) is exactly what it sounds like: splitting your code into multiple smaller chunks that can be loaded on-demand. [Tree-shaking](https://developer.mozilla.org/en-US/docs/Glossary/Tree_shaking) is a similar concept that involves removing unused code from your application. Both of these techniques can be used to improve the performance of your application by reducing the amount of code that needs to be loaded.
 
-This is useful for applications that have a lot of code, or for applications that have a lot of pages. While previously this could only be achieved with a bundler like the previously mentioned Browserify, [WebPack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/guide/en/), ESM allows us to do this natively in the browser. Unlike in the last chapter where everything was loaded onto the browser at once, modules will allow us to specify which files get loaded for each page. Speaking of our application, let's take a look at how we can use ESM to improve it.
+This is useful for applications that have a lot of code, or for applications that have a lot of pages. While previously this could only be achieved with a bundler like the previously mentioned Browserify, [WebPack](https://webpack.js.org/) or [Rollup](https://rollupjs.org/guide/en/), ESM allows us to do this natively in the browser. 
 
 <StackBlitz repo="into-the-future" chapter="3-ecmascript-modules" demo="1-silly-demos" />
+
+Unlike in the last chapter where everything was loaded onto the browser at once through script tags, modules will allow us to specify which files get loaded for each page. Speaking of our application, let's take a look at how we can use ESM to improve it.
 
 ## Applying ESM to our App
 >Finally, looking at this app doesn't make me puke.

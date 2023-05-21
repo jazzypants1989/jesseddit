@@ -188,9 +188,11 @@ The components are the functions that actually do the work. So, they have to com
 
 I want to take a brief aside and discuss what separation of concerns means in web development today. Ever since React popularized the concept of components and introduced JSX, the web development world has been moving away from separating our code by language. Instead, we separate our code by feature.
 
-This has led to the rise of single file components in which we put all of our HTML, CSS, and JavaScript for a single component in one file. In this way, we can see all of the code that is responsible for a single feature in one place. Frameworks such as Svelte and Vue have fully embraced this approach.
+This has led to the rise of single file components in which we put all of our HTML, CSS, and JavaScript for each component together in one file. This way, we can easily edit each piece of the website as a whole without having to jump between multiple files. This also makes it easier to move components around and reuse them in different projects.  
 
-This is the approach that we will be taking in future articles, but I think it's important to see how we got here. While our CSS file is only around seventy lines of code and it's easy to find everything for now, it gets pretty intense by the end of this series. But, I decided to not focus on CSS scoping here much. I may discuss this more in a future article if there is interest.
+Frameworks such as Svelte, Vue, and Astro have fully embraced this approach. While CSS-in-JS has fallen out of favor, libraries like TailwindCSS continue to grow in popularity. Tailwind allows us to write our CSS in our HTML files using utility classes. This makes it easier to see what styles are being applied to each element without having to refer to a stylesheet. When combined with JSX, the entire behavior and appearance of a component can be seen all at once.
+
+This is the approach that we will be taking in future articles, but I think it's important to see how we got here. While our CSS file is only around seventy lines of code and it's easy to find everything for now, it gets pretty intense by the end. I don't focus on CSS scoping in detail in this series, but I may discuss it more in a future article if there is interest.
 
 ## Conclusion
 
