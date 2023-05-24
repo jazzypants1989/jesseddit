@@ -1,6 +1,7 @@
 ---
 title: "ESM: ECMAScript Modules"
 nextLink: "./4-navigation-api"
+video: "https://youtube.com/embed/hnLRRN9DU6A"
 githubLink: true
 ---
 
@@ -16,9 +17,10 @@ Although they may seem ubiquitous if you're a new developer starting with React,
 >We can use functions and closure to make modules. A module is a function or object that presents an interface but that hides its state and implementation. By using functions to produce modules, we can almost completely eliminate our use of global variables, thereby mitigating one of JavaScript's worst features.
 --Douglas Crockford, [JavaScript: The Good Parts](https://www.oreilly.com/library/view/javascript-the-good/9780596517748/ch04s12.html)
 
-Web development is not modular by nature. Due to the all-or-nothing nature of the [request-response cycle](https://backend.turing.edu/module2/lessons/how_the_web_works_http), each page is loaded as a single unit. The browses parses the document line by line, and each time it sees an external resource like a script tag, it pauses the parsing of the document and loads that resource. So, if you have a lot of scripts, the browser has to stop and make a request for each one. 
+The process of loading a web page does not lend itself to modularity. Due to the all-or-nothing nature of the [request-response cycle](https://backend.turing.edu/module2/lessons/how_the_web_works_http), each page is loaded as a single unit. The browser parses the document line by line, and each time it sees an external resource like a script tag, it pauses the parsing of the document and loads that resource.
 
-This can be especially problematic on poor connections, as each request has to wait for the previous one to complete before it can be sent. This is part of why [HTTP 2](https://en.wikipedia.org/wiki/HTTP/2) introduced [multiplexing](https://en.wikipedia.org/wiki/Multiplexing)  and [server push](https://en.wikipedia.org/wiki/HTTP/2_Server_Push). But, even with these improvements, it is still not ideal to load everything at once. This is especially true for large applications with a lot of code. 
+On slower connections, the latency of each request can add up, leading to significant delays. This is part of why [HTTP 2](https://en.wikipedia.org/wiki/HTTP/2) introduced [multiplexing](https://en.wikipedia.org/wiki/Multiplexing)  and [server push](https://en.wikipedia.org/wiki/HTTP/2_Server_Push). Using the [`defer`
+and `async` attributes](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) on script tags can also help to alleviate this issue. But, even with these improvements, it is still not ideal to load all the scripts at once. This is especially true for large applications with a lot of code.
 
 As websites grew more dynamic and complex with the emergence of [AJAX](../client-side-routing/2-a-brief-history-of-client-side-routing), it also became difficult to manage how these scripts interacted with each other. As we saw in [the last chapter](./2-separation-of-concerns), even if you split your application into multiple files, you had to worry about when each file was loaded into the global scope. Loading files from multiple libraries required great care to ensure that the correct order was maintained, and if two libraries had a variable or function with the same name... you could run into some serious issues.
 
@@ -48,9 +50,9 @@ However, this was still not ideal. It was verbose and it didn't alleviate the ne
 >Prior to ECMAScript 6, JavaScript did not have built-in modules. Therefore, the flexible syntax of the language was used to implement custom module systems within the language. Two popular ones are CommonJS (targeting the server side) [and] AMD (Asynchronous Module Definition, targeting the client side).
 --Dr. Axel Rauschmayer, [JavaScript for impatient programmers (ES2022 edition)](https://exploringjs.com/impatient-js/ch_modules.html)
 
-As JavaScript moved server-side, [developers such as Kevin Dangoor](https://www.blueskyonmars.com/2010/01/29/commonjs-the-first-year/) began to advocate for a standard module system. [Node.js](https://nodejs.org/en/) was the first major platform to adopt a version of this standard, and it was eventually even used in the browser via [Browserify](http://browserify.org/). 
+As JavaScript moved server-side, [developers such as Kevin Dangoor](https://www.blueskyonmars.com/2010/01/29/commonjs-the-first-year/) began to advocate for a standard module system. [Node.js](https://nodejs.org/en/) was the first major platform to adopt a version of this standard, and it was eventually even used in the browser via [Browserify](http://browserify.org/) and [Webpack](https://webpack.js.org/).
 
-This standard is known as [CommonJS modules](https://nodejs.org/api/modules.html) which rely on the require() function to load modules and the module object to export modules. The module object is just a plain javascript object in which you can add properties that you want to export. Or, you can replace the entire object with a function that you want to export.
+This standard is known as [CommonJS modules](https://nodejs.org/api/modules.html) which rely on the require() function to load modules and the module object to export modules. The module object is just a plain javascript object in which you can add properties that you want to export. Or, you can replace the entire object with a different object or a function that you want to export.
 
 So, let's take a look at how this works. First, we'll create a module that exports a function that grates cheese. Notice how this completely replaces the module.exports object with a function.
 
@@ -101,7 +103,7 @@ console.log(tinyCheeseGrater('gouda'));
 ```
 </CodeBlock>
 
-Unfortunately, browsers cannot understand this code without a bundler like Browserify. And, even if they could, it would still be problematic. The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. 
+Unfortunately, browsers cannot understand this code without a bundler like WebPack. And, even if they could, it would still be problematic. The problem is that this code is synchronous. When a CJS module is required, the entire module code is loaded and executed immediately-- blocking the main thread. 
 
 While this is fine for server-side code (which can be multi-threaded), it is not ideal for the browser which is [single-threaded](https://dev.to/nodedoctors/an-animated-guide-to-nodejs-event-loop-3g62) (although [Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) were introduced to solve this problem). This is especially true when loading large files or on poor connections. Blocking the main thread can cause the [browser to appear unresponsive](https://web.dev/rendering-performance/) and can even cause the browser to crash.
 
