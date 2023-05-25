@@ -5,8 +5,8 @@ const articleCollection = defineCollection({
   schema: z.object({
     title: z.string(),
     nextLink: z.string(),
+    githubLink: z.string().optional(),
     video: z.string().optional(),
-    githubLink: z.boolean().optional(),
   }),
 })
 // 3. Export a single `collections` object to register your collection(s)

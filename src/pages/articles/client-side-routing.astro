@@ -2,9 +2,9 @@
 import Loader from "../../components/Loader.astro"
 import Layout from "../../layouts/Layout.astro"
 
-Astro.redirect("/blog/client-side-routing")
+return Astro.redirect("/blog/client-side-routing")
 
-let Others = ["Home", "Blog", "Contact", "Portfolio", "About"]
+let Others = ["Home", "Blog", "Portfolio", "About"]
 ---
 
 <Layout now="Nowhere" others={Others} title="Nowhere">

@@ -6,13 +6,13 @@ video: "https://www.youtube.com/embed/GOsTR2HrE3A"
 
 import CodeBlock from "../../../components/CodeBlock.astro"
 
-## **Introduction**
+## Introduction
 
-There are few things as important to the web experience as the URL. Whether we type one into our address bar or click on a link from a friend, we expect to get the same results every time. Despite this familiarity, there has been a surprising amount of innovation behind the way you get those results. Much of this has been in an attempt to give **Client-Side Routing** this sense of familiarity that we unknowingly appreciate.
+There are few things as important to the web experience as the URL. Whether we type one into our address bar or click on a link from a friend, we expect to get the same results every time. Despite this static expectation, there has been a surprising amount of innovation behind the way you get those results. Much of this has been in an attempt to give **Client-Side Routing** this sense of familiarity that we unknowingly appreciate.
 
 Routing on the client side is not a new concept. The idea is based around a central theme: a reduction of reliance on the HTTP request-response cycle by limiting the amount of unique web pages that a user needs to experience your application. Naturally, this led to the birth of the **Single Page Application**. And, while it's much easier today than it used to be, people have been making these single page applications for a long time. So, join me as we take a look at how client-side routing came to be, and how it has evolved over the years.
 
-## **How It's Always Been Done**
+## How It's Always Been Done
 
 > It is the the duty of a Webmaster to allocate URIs which you will be able to stand by in 2 years, in 20 years, in 200 years. This needs thought, and organization, and commitment.
 
@@ -24,7 +24,7 @@ This process is called the HTTP request-response cycle, and it's the foundation 
 
 This is generally not a problem for simple web pages, but it's a huge problem for web applications with complex, short-lived interactions. When the user wants to change things multiple times a minute, the server has to process every request, and the user has to wait for the response. This is why web applications have traditionally been slow and clunky-- especially for those with poor internet or cheap cell phones. Additionally, processing all these requests could quickly become expensive for the server, both in terms of time and money. So naturally, developers began to look for ways to reduce the number of requests.
 
-## **Origins of JavaScript**
+## Origins of JavaScript
 
 > JS does not need to become Java, or C#, or any other language.
 
@@ -34,9 +34,9 @@ To understand why client-side routing ever became a thing, we have to take a loo
 
 It was just a simple scripting language however, and each browser had its own implementation. This meant that if you wanted to write a web application with JavaScript, you had to write it in multiple, slightly different ways to get it to work in every web browser. This was a huge pain, and it was a major reason why the web was so slow to adopt JavaScript.
 
-Soon, a group called ECMA International decided to bring order to this wild west. In 1997, the first version of ECMAScript was released. In theory, each browser would implement the same language, and web developers could write code that would work in any browser. It took some time for this to affect things, but this was a seminal moment for the web. However, JavaScript still wasn't considered a serious option for much more than simple, fleeting interactions.[^5]
+Soon, a group called ECMA International decided to bring order to this wild west. In 1997, the first version of ECMAScript was released. In theory, each browser would implement the same language, and web developers could write code that would work in all of them. It took some time for this to affect things, but this was a seminal moment for the web. However, JavaScript still wasn't considered a serious option for much more than simple, fleeting interactions.[^5]
 
-## **The DOM and the BOM**
+## The DOM and the BOM
 
 > The DOM originated as a specification to allow JavaScript scripts and Java programs to be portable among Web browsers.
 
@@ -60,7 +60,7 @@ Because we have this **model**, we can target that **object** in the **document*
 <CodeBlock>
 ```js
 const windowLocation = window.location
-// The location object represents the current URL.
+// The location object represents the current URL of this window or tab
 console.log(windowLocation.href)
 // https://example.com | If in a browser context, you can just type location.href
 ```
@@ -72,7 +72,7 @@ Unlike the DOM, the BOM has never been fully standardized-- although a few commo
 
 There are many objects in the BOM, but they all stem from a root `window` object. It has a whole lot of properties and methods, but the most pertinent ones-- that HTML5 guarantees every browser will have right now-- are the `location` and `history` objects. The `location` object represents the current URL as displayed by the address bar of the browser, and the `history` object represents the browser's history of previously viewed web pages. These are the keys to unlocking the secrets of client-side routing. We'll learn more about these APIs in Chapters 6 and 7.
 
-## **The World Before AJAX**
+## The World Before AJAX
 
 > As websites become more and more like traditional applications, the call-response-reload model used in HTTP transactions becomes increasingly cumbersome.
 
@@ -86,7 +86,7 @@ Not only that, you also had to have these things installed on your device. This 
 
 For instance, another problem was that the browser's back and forward buttons did not work, and if you accidentally closed the browser-- your work was lost. This was because the browser could not be aware of what was happening inside the plugin. The browser only knew about the page that was loaded when it was first opened. Unless it set a cookie immediately before closing, the application's state was not saved anywhere.
 
-## **The Birth of AJAX**
+## The Birth of AJAX
 
 > Ajax gives interaction designers more flexibility. However, the more power we have, the more caution we must use in exercising it. We must be careful to use Ajax to enhance the user experience of our applications, not degrade it.
 
@@ -98,9 +98,9 @@ XMLHttpRequest was originally an extension of Microsoft's ActiveX that we mentio
 
 Soon, others copied these techniques with varying level of success. Companies like Facebook and Twitter built their empires on this new technology, and it was the dawn of the immersive web we know today. But, there were inherent limitations with this approach that were the same as using the old, outside technologies. You could not use the browser's back and forward buttons, bookmark the page, refresh the page... You could not even copy the URL and paste it into a new tab without losing your state. In short, you could not use the browser as a browser.[^11] How can a post go viral if you can not easily link to it?
 
-## **Hash Routing**
+## Hash Routing
 
-There is no piece of dynamic AJAXy magic that requires beating the Web to a bloody pulp with a sharp-edged hashbang. Please stop doing it.
+> There is no piece of dynamic AJAXy magic that requires beating the Web to a bloody pulp with a sharp-edged hashbang. Please stop doing it.
 
 --Tim Bray, Broken Links, 2011/02/11[^12]
 
@@ -116,9 +116,9 @@ In addition, it was awful for Search Engine Optimization (SEO). The hash symbol 
 
 To fix this, Google and the development community came up with a silly thing called the HashBang. This involved adding an exclamation point (!) after the hash symbol, like so: https://example.com/#!/profile, to indicate to search engines that the site was using client-side routing. Luckily, around this time, the History API was introduced which allowed us to use the browser's history object without using the hash symbol-- although you may have noticed that the web development community is still struggling with many of the problems mentioned above.
 
-## **The History API**
+## The History API
 
-Despite the usual browser inconsistencies and other gotchas, we're pretty happy with the HTML 5 History API.
+> Despite the usual browser inconsistencies and other gotchas, we're pretty happy with the HTML 5 History API.
 
 -- Todd Kloots, "Implementing pushState for twitter.com", 2012/12/7 [^14]
 
@@ -152,7 +152,7 @@ The first wave between 2000 and 2010 consisted of names like MooTools, Prototype
 
 But, out of this first wave, there arose a new champion and her name was jQuery. jQuery was a simple library that included a few methods for selecting elements, imperatively traversing the DOM, and making AJAX requests. Crucially, jQuery ensured that these actions would be compatible with as many browsers as possible. The problem with this was that jQuery gave developers great tools, but it didn't provide structure. And, as applications became more complex, with multiple routes, and shared, mutable state-- spaghetti code emerged. Thus, full-fledged frameworks were born.
 
-## **MVC Goes Client-Side**
+## MVC Goes Client-Side
 
 While the ideal case can lead to a nice, clean separation of concerns, inevitably some bits of application logic or view logic end up duplicated between client and server, often in different languages.
 
@@ -164,7 +164,7 @@ The model represents the data that is stored in the database. The view represent
 
 After AJAX and early libraries gave developers the ability to create complex single-page applications that could be updated without reloading the page, the amount of content reliant on JavaScript grew. Having an app depend on application logic on a server far away was no longer a performant option, but putting all of that logic into a website's internal scripts was a new challenge. Thus, JavaScript developers looked back at some of these design patterns and tried to apply them to the client-side. Knockout.js, Backbone.js, and AngularJS were all attempts to bring MV\* client-side.
 
-## **The Rise of the SPA**
+## The Rise of the SPA
 
 > I'd rather see developers build kick-ass apps that are well-designed and follow separation of concerns, than see them waste time arguing about MV\_ nonsense. And for this reason, I hereby declare AngularJS to be MVW framework - Model-View-Whatever. Where Whatever stands for "whatever works for you"
 
@@ -184,7 +184,7 @@ The modern framework landscape was starting to take effect, but moving all of th
 
 In addition, even using tricks like the hashbang, SEO was still a problem. To overcome this, developers had to write their own server-side rendering solutions that played nicely with the client-side framework. If you used something like Backbone.js, you would have to mirror the routes on the server and render the appropriate HTML. If only there was an easy way to run JavaScript on the server and render it beforehand...
 
-## **Isomorphic JavaScript**
+## Isomorphic JavaScript
 
 > I think where Node has shined [is], weirdly, on the client side. So, doing kind of scripting around building websites... So, you can have all this server-side processing of client-side JavaScript.
 
@@ -229,7 +229,7 @@ This solved some of the problem of slow page loads and SEO. But, if you were usi
 
 You had to write your own server-side code to handle the requests-- being careful to match all of the routes to the correct data. This resulted in two slightly different code bases to maintain. The article I linked talks about some of the challenges people were having with this approach using frameworks like Backbone.js.[^17] Coincidentally, this is around the time that React was released.
 
-## **React**
+## React
 >We should express our UI as a function of all the things that it depends on at any given point in time. And, then we should just re-run that function in order to create a new description of what the UI should look like. And, then we should reconcile that later in a separate phase of the application framework.
 
 -- Jordan Walke [^21]
@@ -247,7 +247,7 @@ Most importantly, because the view is simply a result of composable functions, R
 
 The React team thought that by limiting their functionality to the connection between UI and state, they would free developers to use whatever application logic they wanted. But, with that limited scope, things like client-side routing were left to the user to implement once again. Around a year after its release, Ryan Florence and Michael Jackson helped fill this gap with React Router.
 
-## **React Router**
+## React Router
 >We had no idea what we were doing with React when we started with the router. But, we made it and it worked! ...  I was never able to pick up something as quickly as I did with React.
 
 -- Michael Jackson, CodeWinds podcast, 2015-04-11[^23]
@@ -258,7 +258,7 @@ While the routes were technically React components in these first versions, they
 
 People needed flexibility with their routes, especially when the rendering logic was conditional or they needed relative links. With the release of v4 two years later in 2016, React Router went through its first major change as the route components simply became functions that result in UI-- just like the rest of React. While breaking changes in established libraries always result in mixed feelings (and the team soon regretted certain aspects of these changes), v4 allowed the router to do things likes nested routes with code-splitting much more dynamically.[^24]
 
-## **Nested Routes**
+## Nested Routes
 >After an hour, I had my face in my hands thinking 'Oh... Shoot, I want to use this everywhere!' But, I knew that wasn't plausible, especially with how amazing Ember's router is. So, for the next two hours ... I just kind of did a quick, little proof of concept about how I could make a router that worked a lot like Ember's in React. And, after two hours, I actually had something working. That probably impressed me the most about React is that I could build something from an abstraction like that in two hours.
 
 -- Ryan Florence, CodeWinds podcast, 2015-04-11[^23]
@@ -267,7 +267,7 @@ Another classic server-side concept that goes back at least as far as Ruby on Ra
 
 Much has been made of the inclusion of nested routes in React Router v6 and Remix(which we'll get to later), but one might be surprised that the original name of the library was actually `react-nested-router`. And, from the interview snippets I posted above, it's pretty clear that the React Router team have had a progressive vision for quite some time. What has made these announcements most exciting recently is the addition of data loading to the router.
 
-## **Data Loading**
+## Data Loading
 >Yeah, you can render your routes on the server, but what about all that data? And, once your app grows large... Well, how are you doing code splitting?
 
 --Michael Jackson, React Podcast 2020-07-02[^25]
@@ -282,7 +282,7 @@ While the React team have recently announced an experimental data-loading hook s
 
 These breaking changes aroused angry grumbles from the masses yet again, but it is hard to argue with all the new features like flexible outlets and better relative links. And, they have offered backwards compatibility tools for those still on v5. This new codebase allowed them to bring back a central route configuration object, only in a much more dynamic fashion because of hooks. But, they still allow people to compose their routes with the old/new, component-centric method with the adjustment of a few property and function names. One of the most recent versions, v6.4, brings in the data loading concept they apply in their meta-framework Remix. Speaking of which...
 
-## **Meta Frameworks**
+## Meta Frameworks
 >As we've been developing Remix, what's interesting is we're actually drawing way more inspiration from [Ruby on] Rails than Gatsby or Create React App or anything we've done before.
 
 -- Ryan Florence, React Podcast 2020-07-02[^25]
@@ -293,7 +293,7 @@ While the React team has been working on simplifying this design process with Se
 
 Generally, these meta-frameworks provide out of the box solutions to common problems when using something like React. Not just server rendering! Routing, data-loading, and code-splitting are all handled for you. And, because they are built on top of an existing framework, you can still use all of the same tools and libraries that you normally would. One commonality among many of them is a file-based routing system reminiscent of old-school Apache HTTP servers-- only setting up things like dynamic parameters is a lot easier. What is old is new again!
 
-## **Transitional Apps**
+## Transitional Apps
 >We talk about documents versus apps as though there is a dichotomy, but it's not: it's a spectrum. When we erase the stuff in the middle, we do the web a great disservice. It's a medium that by its very nature resists definitional boundaries.
 
 -- Rich Harris, "Have Single-Page Apps Ruined the Web?", 2021/10/07[^29]
@@ -306,7 +306,7 @@ Even with the introduction of exciting concepts like serverless edge functions t
 
 While React can stream HTML, it has never been easy. This is one of the many challenges that they are attempting to conquer with suspense and server components. Next.JS 13 uses these to include a new experimental directory that streams by default, but things like mutation and issues with not-quite isomorphic code are still being worked out.[^32] While there are a lot of interesting concepts emerging, it's abundantly clear that this is still a difficult problem to solve.
 
-## **The Future**
+## The Future
 >Routing is the backbone of everything on the web. Honestly, when we blur these lines, a whole lot is possible still without building in a way that pushes everything into the browser. We can scale from simple full-page reloaded MPA to the most sophisticated apps. Maybe these are the #transitionalapps Rich Harris predicted. But as far as I'm concerned there is only one way to find out. Let's get building.
 
 --Ryan Carniato, "The Return of Server Side Routing", 2022/01/25[^33]
@@ -321,7 +321,7 @@ The experimental **Navigation API** is certainly a sign of new innovations in cl
 
 The technology isn't all the way there yet, but it feels inevitable that we will have the best of both worlds. We've been building Single Page Applications for twenty years now, but it only seems like we're just figuring it out. And, with the innovations in Web APIs around the corner, many of these convoluted terms may soon become a thing of the past-- especially when you contemplate concepts like WASM or Isomorphic Rust[^42]. I'm excited to see what comes next.
 
-## **Conclusion**
+## Conclusion
 
 Wow. That was a lot. I felt like I put too much in there, but there was so much I edited out-- TypeScript, Bun, Deno, TanStack Router, SolidStart and more! It hurt cutting out things that I love, but I wanted people to actually read the whole thing. If you're still with me, I hope you enjoyed this "brief" history of client-side routing. Lots of research went into it, and I'm really sorry if I misrepresented anything or anyone. I'm sure I made a few mistakes. Just let me know and I'll fix it.
 

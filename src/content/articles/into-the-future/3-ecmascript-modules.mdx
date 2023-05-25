@@ -2,7 +2,7 @@
 title: "ESM: ECMAScript Modules"
 nextLink: "./4-navigation-api"
 video: "https://youtube.com/embed/hnLRRN9DU6A"
-githubLink: true
+githubLink: "repo"
 ---
 
 import CodeBlock from "../../../components/CodeBlock.astro"
@@ -151,8 +151,12 @@ This is done by checking for the presence of the define() function, which is use
     root.superCheeseGrater = factory(root.cheeseGrater);
   }
 }(this, function(cheeseGrater) {
-    // this will be the global object in the browser, 
-    // or the module.exports object in Node.js
+  // 'this' is the global context ('Window' in browser) in non-AMD/CJS environments;
+  // It is discarded if using AMD or CJS modules.
+  // 'cheeseGrater' will be:
+  // in an AMD environment: the module './cheeseGraterAMD'
+  // in a Node.js/CommonJS environment: the module './cheeseGraterCJS'
+  // in the browser: `root.cheeseGrater`
   function superCheeseGrater(cheese) {
       return cheeseGrater(cheese) + '... in a really impressive way!';
   }
