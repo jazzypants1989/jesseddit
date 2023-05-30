@@ -1,3 +1,11 @@
+export default function asWhatGenerator() {
+  const randomAdverb = adverbs[Math.floor(Math.random() * adverbs.length)]
+  const randomAdjective =
+    adjectives[Math.floor(Math.random() * adjectives.length)]
+  const randomNoun = nouns[Math.floor(Math.random() * nouns.length)]
+  return `as ${randomAdverb} ${randomAdjective} as a ${randomNoun}`
+}
+
 const adverbs = [
   "strikingly",
   "profoundly",
@@ -250,11 +258,3 @@ const nouns = [
   "raccoon",
   "wombat",
 ]
-
-export default function asWhatGenerator() {
-  const randomAdverb = adverbs[Math.floor(Math.random() * adverbs.length)]
-  const randomAdjective =
-    adjectives[Math.floor(Math.random() * adjectives.length)]
-  const randomNoun = nouns[Math.floor(Math.random() * nouns.length)]
-  return `as ${randomAdverb} ${randomAdjective} as a ${randomNoun}`
-}

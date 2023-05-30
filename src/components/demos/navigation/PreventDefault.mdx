@@ -12,7 +12,7 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Navigation API demo 1</title>
+    <title>preventDefault vs. intercept</title>
   </head>
   <body>
     <form action="/search">
@@ -24,6 +24,7 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
       <button type="submit">Search</button>
     </form>
     <button id="mode-button"> Current mode: preventDefault</button>
+    <button id="redirect">Redirect Off</button>
     <p id="url"></p>
     <a href="https://www.google.com">Google</a>
     <a href="/internal">Internal</a>
@@ -35,22 +36,54 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
       const button = document.querySelector("#mode-button")
       const urlDisplay = document.querySelector("#url")
       const mainText = document.querySelector("#mainText")
-      const inputs = document.querySelectorAll("input")
+      const redirect = document.querySelector("#redirect")
 
       if (!urlDisplay) throw new Error("No url display")
+
       urlDisplay.textContent = "current URL: " + location.href
 
       let mode = "preventDefault"
+      let redirectMode = "off"
+
+      redirect?.addEventListener("click", () => {
+        if (redirectMode === "off") {
+          redirectMode = "on"
+          redirect.textContent = "Redirect On"
+          if (
+            button?.textContent === "Current mode: neither (redirect off)" &&
+            mainText
+          ) {
+            button.textContent = "Current mode: intercept (redirect on)"
+            mainText.innerHTML = `<h6>Ahh, that's better.</h6>`
+          }
+        } else {
+          redirectMode = "off"
+          redirect.textContent = "Redirect Off"
+          if (
+            button?.textContent === "Current mode: intercept (redirect on)" &&
+            mainText
+          ) {
+            button.textContent = "Current mode: neither (redirect off)"
+            mainText.innerHTML = `<h6>This ain't quite right...</h6>`
+          }
+        }
+      })
 
       button?.addEventListener("click", modeSwap)
-      navigation.addEventListener("navigate", navigationHandler)
+
+      window.navigation.addEventListener("navigate", navigationHandler)
 
       function modeSwap() {
         if (!button || !mainText) return console.log("no button or mainText")
         if (mode === "preventDefault") {
           mode = "intercept"
-          button.textContent = "Current mode: intercept"
-          mainText.innerHTML = `<h6>Okay, you can leave if you want to. But, I'll miss you.</h6>`
+          if (redirectMode === "off") {
+            button.textContent = "Current mode: neither (redirect off)"
+            mainText.innerHTML = `<h6>This ain't quite right...</h6>`
+          } else {
+            button.textContent = "Current mode: intercept"
+            mainText.innerHTML = `<h6>Okay, you can leave if you want to. But, I'll miss you.</h6>`
+          }
         } else {
           mode = "preventDefault"
           button.textContent = "Current mode: preventDefault"
@@ -58,7 +91,7 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
         }
       }
 
-      async function navigationHandler(event) {
+      async function navigationHandler(event: any) {
         if (!button || !urlDisplay || !mainText) return
 
         const url = new URL(event.destination.url)
@@ -83,30 +116,18 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
             mainText.innerHTML = `<h1>Yeah, just stay here. It's nice here.</h1>`
             return
           } else {
-            if (checkInputs()) {
-              if (
-                !confirm(
-                  "You have unsaved changes. Are you sure you want to leave?"
-                )
-              ) {
-                mainText.innerHTML = `<h1>I mean, you can't leave anyway, but I'm glad you're staying.</h1>`
-                return
-              }
-            }
             mainText.innerHTML = `<h1>NO! You can't go to ${url.href}.</h1>
             <small>I would miss you too much.</small>`
           }
         } else {
-          // You don't need a whole different handler.
-          // This is all you need to do to check for unsaved changes.
-          // if (checkInputs()) {
-          //   if(!confirm("You have unsaved changes. Are you sure you want to leave?")) {
-          //     event.preventDefault()
-          //     return
-          //   }
-          // }
+          console.log("intercepting")
+          if (redirectMode === "off") {
+            return
+          }
+          console.log("handling")
           event.intercept({
-            handler() {
+            async handler() {
+              console.log(event)
               if (path === "/internal") {
                 mainText.innerHTML = `<h1>Yeah, you can stay here... But, really... you can leave now.</h1>`
               }
@@ -116,26 +137,22 @@ export const demoURL = "/demos/into-the-future/4-navigation-api/"
               }
               const formData = event.formData
               const search = formData.get("search")
-              mainText.textContent = `You searched for ${search} with a POST request. Boooring. Just go to Google already.`
+              fetch("/search", {
+                method: "POST",
+                body: JSON.stringify({ search }),
+              })
+              mainText.textContent = `You searched for ${search} with a POST request to /search. Boooring. Just go to Google already.`
+              await window.navigation.navigate("/differentURL", {
+                history: "replace",
+              }).finished
             },
           })
         }
         setTimeout(() => {
           urlDisplay.textContent = "current URL: " + location.href
-        }) // this is just to wait until after the promise resolves
-        // we'll explore better ways to do this later
-      }
-
-      function checkInputs() {
-        for (const input of inputs) {
-          if (input.value) {
-            return true
-          }
-        }
-        return false
+        })
       }
     </script>
-
   </body>
 </html>
 ```

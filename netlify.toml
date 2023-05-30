@@ -1,4 +1,7 @@
 # example netlify.toml
+[dev]
+  framework = "astro"
+
 [build]
   command = "astro build"
   functions = "netlify/functions"

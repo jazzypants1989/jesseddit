@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Navigation API demo 1</title>
+    <title>Loading and Error State</title>
     <style is:global>
       .spinner {
         width: 40px;
@@ -38,6 +38,7 @@
     <button id="navigate">Navigate</button>
     <button id="force-error">Force an error: false</button>
     <button id="abort" style="display: none;">Stop</button>
+    <p id="event-info"></p>
     <script>
       const message = document.querySelector("#message")
       const abort = document.querySelector("#abort") as HTMLButtonElement
@@ -48,6 +49,7 @@
       const forceError = document.querySelector(
         "#force-error"
       ) as HTMLButtonElement
+      const eventInfo = document.querySelector("#event-info")
 
       let error = false // Initial value for the error button
 
@@ -68,8 +70,7 @@
       navigateBtn.addEventListener("click", async () => {
         if (!message) return
 
-        // @ts-ignore DON'T JUDGE ME, I MAKE CUSTOM TYPES IN A FEW CHAPTERS
-        const { committed, finished } = navigation.navigate(link.href)
+        const { committed, finished } = window.navigation.navigate(link.href)
         // The navigate function returns two promises
         // The first one is resolved at the beginning of the navigation
         // The second one is resolved when the navigation is finished
@@ -95,14 +96,16 @@
       //@ts-ignore
       navigation.addEventListener("navigate", navigationHandler)
 
-      // We can do a global error listener, but it's overrules the error listener in the handler function
-      // This would be best for something like a global 404 page
-      // navigation.addEventListener("navigateerror", (e) => {
-      //   document.body.textContent = `Could not load ${location.href}: ${e.error}, ${e.message}`
-      // })
+      window.navigation.addEventListener("navigateerror", (e) => {
+        console.log("navigateerror event", e)
+      })
+
+      window.navigation.addEventListener("navigatesuccess", (e) => {
+        console.log("navigatesuccess event", e)
+      })
 
       function navigationHandler(event: any) {
-        if (!message) return
+        if (!message || !eventInfo) return
         const signal = event.signal
 
         signal.onabort = () => {
@@ -110,6 +113,12 @@
             "This log is coming from the 'onabort' event that is fired by the abort signal. You can do anything you want in this function-- including updating the DOM. I just chose to use the catch block to show you all your options."
           )
         }
+
+        // eventInfo.innerHTML = `<pre>Event info: ${JSON.stringify(
+        //   stringifyObject(event),
+        //   null,
+        //   2
+        // )}</pre>`
 
         event.intercept({
           async handler() {
@@ -126,8 +135,7 @@
                 : (message.innerHTML = `<h1>${(error as Error).message}</h1>`)
               return
             }
-            message.innerHTML = `<h1>Page loaded! You can click the link again.</h1`
-            abort.style.display = "none"
+            message.innerHTML = `<h1>Page loaded! You can click the link again.</h1>`
           },
         })
       }
@@ -155,6 +163,38 @@
         spinner.classList.add("spinner")
         style && spinner.classList.add(style)
         message?.appendChild(spinner)
+      }
+
+      type StringifyObjectType = {
+        [key: string]: any
+      }
+
+      function stringifyObject(
+        obj: StringifyObjectType,
+        depth = 0,
+        maxDepth = 3
+      ): StringifyObjectType {
+        if (depth > maxDepth) return obj
+
+        let output: StringifyObjectType = {}
+
+        for (let key in obj) {
+          let value = obj[key]
+
+          if (typeof value === "function") {
+            output[key] = "function"
+          } else if (value instanceof Node) {
+            output[key] = "Node"
+          } else if (value instanceof Window) {
+            output[key] = "Window"
+          } else if (value instanceof Object) {
+            output[key] = stringifyObject(value, depth + 1, maxDepth)
+          } else {
+            output[key] = value
+          }
+        }
+
+        return output
       }
     </script>
   </body>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Navigation API demo 1</title>
+    <title>Nested iFrames</title>
   </head>
   <body>
     <a id="top" href="#bottom">Bottom</a>
@@ -11,7 +11,8 @@
     <button id="btn-3"> State 1, URL 2</button>
     <button id="btn-2"> State 2, URL 1</button>
     <button id="btn-4"> State 2, URL 2</button>
-    <pre id="state">Recursion, Whoa!</pre>
+    <p id="state">Recursion, Whoa!</p>
+    <p id="stack">STACK IT UP</p>
     <p id="url"></p>
     <a id="bottom" href="#top">Top</a>
     <button id="navigationMode"
@@ -19,8 +20,12 @@
     >
     <button id="markStateAsFavorite"> Mark current state as favorite</button>
     <button id="goToFavoriteState">Go to favorite state</button>
-    <button id="back">Back</button>
-    <iframe style="width: 100%; height: 250px;"></iframe>
+    <button id="back">History Back</button>
+    <button id="forward">History Forward</button>
+    <div id="historyEntries"></div>
+    <iframe id="self" style="width: 100%; height: 250px;"></iframe>
+    <iframe src="https://build.chromium.org" style="width: 100%; height: 250px;"
+    ></iframe>
   </body>
 </html>
 
@@ -33,23 +38,36 @@
   const markFavoriteStateButton = document.querySelector("#markStateAsFavorite")
   const goToFavoriteStateButton = document.querySelector("#goToFavoriteState")
   const back = document.querySelector("#back")
+  const forward = document.querySelector("#forward")
+  const historyEntriesDiv = document.querySelector("#historyEntries")
   const stateDisplay = document.querySelector("#state")
+  const stackDisplay = document.querySelector("#stack")
   const urlDisplay = document.querySelector("#url")
   const top = document.querySelector("#top")
   const bottom = document.querySelector("#bottom")
-  const iframe = document.querySelector("iframe")
+  const iframe = document.querySelector("#self")
+
+  if (!iframe || !(iframe instanceof HTMLIFrameElement))
+    throw new Error("iframe not found")
 
   iframe.src = location.href
 
-  const state1 = { name: "John", favColor: "blue", favNumber: 42 }
-  const state2 = { name: "Jane", favColor: "red", favNumber: 7 }
+  const state1 = {
+    cheese: "cheddar",
+    zombies: "scary",
+    gardening: "a rewarding experience",
+  }
+  const state2 = {
+    cheese: "gouda",
+    zombies: "kinda silly",
+    gardening: "pretty dang boring",
+  }
 
   let navigationMode = "off"
   let favoriteState = {
-    name: "Dick",
-    favColor: "green",
-    favNumber: 69,
-    key: 420,
+    cheese: "brie",
+    zombies: "servants in my mansion",
+    gardening: "foolin' around in the dirt",
   }
 
   urlDisplay!.textContent = "current URL: " + location.href
@@ -71,12 +89,16 @@
       navigationMode = "on"
       navigationModeButton!.textContent =
         "Toggle navigation API mode - Currently On"
+      back.textContent = "Navigation Back"
+      forward.textContent = "Navigation Forward"
       // @ts-ignore
       navigation.addEventListener("navigate", navigationHandler)
     } else {
       navigationMode = "off"
       navigationModeButton!.textContent =
         "Toggle navigation API mode - Currently Off"
+      back.textContent = "History Back"
+      forward.textContent = "History Forward"
       // @ts-ignore
       navigation.removeEventListener("navigate", navigationHandler)
     }
@@ -137,9 +159,27 @@
   back?.addEventListener("click", () => {
     if (navigationMode === "on") {
       // @ts-ignore
-      navigation.back()
+      if (navigation.canGoBack) {
+        navigation.back()
+      } else {
+        console.log("can't go back")
+      }
     } else {
       history.back()
+      updateUI()
+    }
+  })
+
+  forward?.addEventListener("click", () => {
+    if (navigationMode === "on") {
+      // @ts-ignore
+      if (navigation.canGoForward) {
+        navigation.forward()
+      } else {
+        console.log("can't go forward")
+      }
+    } else {
+      history.forward()
       updateUI()
     }
   })
@@ -149,11 +189,60 @@
 
   function updateUI() {
     urlDisplay!.textContent = "current URL: " + location.href
-    stateDisplay!.textContent = `Items on the history stack: ${
+    stackDisplay!.textContent = `Items on the history stack: ${
       history.length
     }, Items on THIS FRAME's Navigation entries stack: ${
       navigation.entries().length
     }`
+
+    if (navigationMode === "on") {
+      displayHistoryEntries()
+      stateDisplay!.textContent = JSON.stringify(
+        // @ts-ignore
+        navigation.currentEntry.getState()
+      )
+    } else {
+      historyEntriesDiv!.textContent = ""
+      stateDisplay!.textContent = JSON.stringify(history.state)
+    }
+  }
+
+  function displayHistoryEntries() {
+    // @ts-ignore
+    const entries = navigation.entries()
+
+    historyEntriesDiv.innerHTML = ""
+    entries.forEach((entry) => {
+      const entryButton = document.createElement("button")
+      entryButton.textContent = `Go to Entry Key: ${entry.key} at ${entry.url}`
+
+      if (entry.key === navigation.currentEntry.key) {
+        entryButton.style.fontWeight = "bold"
+        entryButton.style.color = "red"
+        entryButton.style.backgroundColor = "yellow"
+      }
+
+      if (entry.index < navigation.currentEntry.index) {
+        entryButton.style.backgroundColor = "lightgreen"
+        entryButton.style.color = "black"
+      }
+
+      if (entry.index > navigation.currentEntry.index) {
+        entryButton.style.backgroundColor = "lightblue"
+        entryButton.style.color = "black"
+      }
+
+      entryButton.addEventListener("click", async () => {
+        try {
+          // @ts-ignore
+          await navigation.traverseTo(entry.key)
+          updateUI()
+        } catch {
+          console.error("Unable to navigate to the selected entry.")
+        }
+      })
+      historyEntriesDiv.appendChild(entryButton)
+    })
   }
 
   function markStateAsFavorite() {
