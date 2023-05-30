@@ -1,0 +1,34 @@
+---
+if (Astro.request.method === "POST") {
+  console.log("POST request received")
+  return new Response("You just tried to POST to " + Astro.request.url, {
+    status: 200,
+  })
+}
+
+// const URLSearchParams = new URL(Astro.url).searchParams
+// const search = URLSearchParams.get("search")
+// ---
+
+// hi, you searched for {search}
+---
+
+<main>
+  <h1>Search</h1>
+  <p id="search">This is not supposed to be here</p>
+</main>
+<script>
+  const URLSearchParams = new URL(location.href).searchParams
+  const search = URLSearchParams.get("search")
+  const searchElement = document.getElementById("search")
+
+  if (!searchElement) {
+    throw new Error("No search element found")
+  }
+
+  if (!search || search === "") {
+    searchElement.innerHTML = "You didn't search for anything"
+  } else {
+    searchElement.innerHTML = "You searched for " + search
+  }
+</script>

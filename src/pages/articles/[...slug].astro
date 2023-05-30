@@ -1,17 +1,30 @@
 ---
 import Headings from "../../components/Headings.astro"
 import IFrame from "../../components/IFrame.astro"
-
-import { getEntryBySlug } from "astro:content"
 import Layout from "../../layouts/Layout.astro"
 
-const { slug } = Astro.params
+// server side rendering version
+// import { getEntryBySlug } from "astro:content"
+// const { slug } = Astro.params
 
-if (slug === undefined) {
-  throw new Error("Slug is required")
+// if (slug === undefined) {
+//   throw new Error("Slug is required")
+// }
+// const entry = await getEntryBySlug("articles", slug)
+// const { Content } = await entry.render()
+
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const articleEntries = await getCollection("articles");
+  return articleEntries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
 }
 
-const entry = await getEntryBySlug("articles", slug)
+const { entry } = Astro.props;
+const { Content } = await entry.render();
 
 if (entry === undefined) {
   return Astro.redirect("/404")
@@ -19,10 +32,9 @@ if (entry === undefined) {
 
 const { title, nextLink, video, githubLink } = entry.data
 
-const { Content } = await entry.render()
 
-const blog = slug.split("/")[0]
-const article = slug.split("/")[1]
+const blog = entry.slug.split("/")[0]
+const article = entry.slug.split("/")[1]
 
 const github = "https://www.github.com/jazzypants1989"
 
@@ -31,6 +43,8 @@ const demoFolder = `${github}/jesseddit/tree/main/src/pages/demos/${blog}/${arti
 const repo = `${github}/${blog}/tree/main/${article}`
 
 let others = ["Home", "About", "Portfolio"]
+
+export const prerender = true
 ---
 
 <title>{title}</title>

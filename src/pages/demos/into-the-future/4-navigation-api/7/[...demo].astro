@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus and Scroll Management</title>
+    <style>
+      .page {
+        height: 300px;
+        overflow: auto;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+
+      .focused {
+        background-color: lightblue;
+        transition: background-color 0.3s ease;
+      }
+
+      .scroll-highlight {
+        background-color: rgba(255, 255, 0, 0.5);
+        animation: highlight 1s infinite alternate;
+      }
+
+      @keyframes highlight {
+        0% {
+          background-color: rgba(255, 255, 0, 0.5);
+        }
+        100% {
+          background-color: rgba(255, 255, 0, 0);
+        }
+      }
+
+      .fade-transition {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+
+      .fade-transition.visible {
+        opacity: 1;
+      }
+
+      .slide-transition {
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      .slide-transition.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .focus-indicator {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 2px solid #ff0000;
+        box-sizing: border-box;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .focus-indicator.visible {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <button class="navigateSpecial">Go to Special Page</button>
+    <button class="navigateBoring">Go to Boring Page</button>
+    <main id="mainContent"></main>
+    <p>
+      Lorem ipsum, dolor sit amet consectetur adipisicing elit. A dolorum
+      accusamus iure consequatur eum necessitatibus perferendis in possimus,
+      nisi temporibus quidem quod maiores rerum. Quibusdam minima perspiciatis
+      excepturi dolorem iure! Nobis velit corporis vel odio a est eius
+      voluptatum, blanditiis molestias sapiente at ipsum soluta tempore. Eos
+      error, officia quaerat perspiciatis veniam animi iste inventore quas
+      impedit laudantium, nobis dolores. Itaque modi natus fugiat adipisci,
+      repellendus repellat minima praesentium culpa reprehenderit porro a, saepe
+      mollitia. Vel tempore sint facere porro omnis quos. Eum hic incidunt alias
+      enim in itaque similique. Maiores odio aperiam cupiditate magni molestias
+      vero aut obcaecati. Ex numquam atque excepturi aliquid debitis itaque
+      veniam. Eaque recusandae, veritatis iste animi libero odio nemo, quasi
+      rerum sunt omnis ab. Quia ratione animi consectetur? Delectus placeat
+      aperiam ea. Molestias distinctio inventore explicabo in placeat ipsa
+      possimus temporibus impedit dolore eius, necessitatibus sit optio maiores,
+      rerum quam incidunt voluptatibus, facere veritatis? Quis cupiditate
+      voluptatibus qui error ea non necessitatibus repudiandae magni, blanditiis
+      omnis debitis nobis, odio itaque, soluta quaerat vel sequi et tenetur iure
+      earum accusantium id dignissimos quas. Quasi, dicta! Deserunt mollitia qui
+      quas facilis eaque, distinctio, cupiditate asperiores quae sequi sit
+      perferendis ex dicta eos quis ipsum nisi voluptatem at molestiae! Mollitia
+      quaerat atque animi harum perspiciatis itaque minima? Facilis, quae. Quae
+      quasi veritatis, magnam rem, magni culpa eveniet quo voluptatem at qui
+      debitis quos nesciunt architecto aut necessitatibus fugit. Vitae neque
+      officiis voluptate magnam quibusdam doloribus enim quos? Error, aperiam,
+      non fuga temporibus nam harum debitis voluptatibus perferendis ipsam eos
+      expedita nobis veritatis sapiente tempora? Nisi, commodi cupiditate! Error
+      repellat quo voluptas veniam dolores rem quia culpa voluptatibus. Aliquid
+      ducimus vitae eum neque necessitatibus corporis ipsa saepe voluptatum et
+      atque cum pariatur facere aspernatur distinctio sed beatae, quisquam
+      suscipit! Nemo error est dolor non, unde sint ducimus quod! Adipisci ipsum
+      minima officia iste exercitationem animi nobis impedit? Doloremque harum
+      saepe molestias quia sequi! Architecto dignissimos quia, eius distinctio
+      itaque, accusantium numquam aut ducimus voluptas, accusamus deleniti
+      explicabo autem? Reprehenderit excepturi voluptas, porro laudantium odio
+      perferendis esse iure distinctio corporis ipsa facere illum magnam
+      doloribus enim blanditiis fuga minus culpa quasi expedita harum odit? Quae
+      numquam eveniet doloribus quaerat. Accusantium cum placeat, beatae hic
+      explicabo minus, deleniti aliquid quisquam in officia, ex quibusdam
+      consequuntur fugiat repudiandae quaerat consequatur veritatis tempore
+      obcaecati accusamus vero. Nobis inventore dolorem fuga accusantium
+      quibusdam. Eius nisi magni sed assumenda quasi illo dicta temporibus
+      incidunt! Commodi cumque corrupti laudantium tempora ex maxime neque
+      voluptatum modi, ipsum exercitationem? Quos esse, accusamus fugiat fugit
+      autem temporibus. Deserunt! Magni esse libero asperiores necessitatibus
+      harum aspernatur vitae ipsum amet tempore? Sint culpa nesciunt perferendis
+      eligendi veritatis repellendus laboriosam reprehenderit perspiciatis
+      molestiae, quam, amet neque vero minima harum odit quis. Hic aliquid
+      voluptatibus nostrum pariatur facilis, ab consectetur officia aspernatur
+      iure eaque, officiis nesciunt et eum tenetur expedita repellat, provident
+      eligendi unde fuga quaerat repellendus tempora corrupti placeat! Minus,
+      obcaecati? Nemo sed, magni error sint corrupti ipsum voluptatem sunt?
+      Delectus, obcaecati. Animi sint, illum quibusdam nihil, aliquid quis a
+      sunt officia voluptates nulla quos quod adipisci eveniet excepturi amet
+      minima. Similique dolore commodi magni temporibus! Natus, expedita iure.
+      Suscipit fugit nesciunt quia, odit necessitatibus blanditiis, eos aliquam
+      pariatur expedita repellat reprehenderit cumque sed, eius quod vero
+      placeat totam consequuntur recusandae? Sit numquam dolore dolorem id a
+      eius doloribus omnis totam natus optio sed ab, placeat nostrum praesentium
+      consequatur fuga nesciunt ipsa eveniet repellat harum aut, sapiente animi
+      veritatis alias! Rem! Illum reprehenderit, accusantium explicabo nisi
+      necessitatibus labore deserunt, blanditiis eligendi totam, quasi deleniti
+      consectetur officia earum maiores ab velit asperiores temporibus maxime ex
+      sapiente. Dignissimos soluta repellendus nihil aut reiciendis. Odio
+      dolorem pariatur quasi! Rem debitis soluta vitae ea ratione in unde, vel
+      quo sapiente accusamus. Eum soluta a expedita, dolorum, reiciendis, libero
+      facilis facere ab assumenda eligendi eveniet enim. Quod eius vero incidunt
+      nostrum earum facere aperiam saepe impedit excepturi, facilis nihil animi
+      obcaecati fuga, dolorem odit dolore reiciendis omnis laboriosam. Qui
+      debitis non, quisquam molestias error deserunt nemo? Quo reiciendis vero
+      voluptatem nesciunt illo consectetur explicabo provident, laudantium
+      adipisci recusandae quam? Vel quam odit sit beatae aperiam. Dolorem amet
+      facilis impedit voluptatem perspiciatis tempora, veniam quaerat dolore ut.
+      Ea nemo soluta sit sequi doloribus beatae architecto cupiditate ab
+      excepturi, officiis pariatur laboriosam veritatis consequatur deleniti
+      tempore accusantium in! Quis, ea nulla officia dignissimos ratione dicta!
+      Distinctio, molestiae tempore. Eum, molestiae alias aliquid omnis beatae
+      maxime repudiandae nemo nesciunt pariatur laboriosam natus et sequi animi
+      optio rerum vel, veritatis illum dignissimos! Perspiciatis debitis at a
+      quas natus inventore nesciunt.
+    </p>
+    <button class="navigateSpecial">Go to Special Page</button>
+    <button class="navigateBoring">Go to Boring Page</button>
+    <span id="focusNotice"></span>
+
+    <script>
+      const main = document.querySelector("#mainContent")
+      const focusNotice = document.querySelector("#focusNotice")
+      const navigateSpecial = document.querySelectorAll(".navigateSpecial")
+      const navigateBoring = document.querySelectorAll(".navigateBoring")
+
+      function Router(path) {
+        if (path === "/special") {
+          main.innerHTML =
+            `
+            <div class="page">
+              <h1 id="specialHeader" tabindex="-1">This page is special 🎉</h1>
+              <p class="fade-transition">Click 'Go to Boring Page' button to navigate to the boring page.</p>
+              <button tabindex="0" class="fade-transition">Button 1</button>
+              <button tabindex="0" class="fade-transition">Button 2</button>
+              <button tabindex="0" class="fade-transition">Button 3</button>
+            </div>` + "hello".repeat(1000)
+        } else {
+          main.innerHTML =
+            `
+            <div class="page">
+              <h1 id="boringHeader" tabindex="-1">This page is boring</h1>
+              <p class="slide-transition">Click 'Go to Special Page' button to navigate to the special page.</p>
+              <button tabindex="0" class="slide-transition">Button A</button>
+              <button tabindex="0" class="slide-transition">Button B</button>
+              <button tabindex="0" class="slide-transition">Button C</button>
+            </div>` + "hello".repeat(1000)
+        }
+      }
+
+      function updateFocusNotice(identifier) {
+        focusNotice.textContent = `Focus set to: ${identifier}`
+        const focusedElement = document.getElementById(identifier)
+        if (focusedElement) {
+          const previouslyFocusedElement = document.querySelector(".focused")
+          if (previouslyFocusedElement) {
+            previouslyFocusedElement.classList.remove("focused")
+          }
+          focusedElement.classList.add("focused")
+          showFocusIndicator(focusedElement)
+        }
+      }
+
+      function showFocusIndicator(element) {
+        const focusIndicator = document.createElement("div")
+        focusIndicator.classList.add("focus-indicator")
+        element.appendChild(focusIndicator)
+        setTimeout(() => {
+          focusIndicator.classList.add("visible")
+          setTimeout(() => {
+            focusIndicator.remove()
+          }, 1000)
+        }, 10)
+      }
+
+      function scrollToElement(element) {
+        const originalBackgroundColor = element.style.backgroundColor
+        element.style.backgroundColor = "rgba(255, 255, 0, 0.5)"
+        element.scrollIntoView({ behavior: "smooth" })
+        setTimeout(() => {
+          element.style.backgroundColor = originalBackgroundColor
+        }, 1000)
+      }
+
+      window.navigation.addEventListener("navigate", (event) => {
+        const shouldIntercept =
+          event.canIntercept &&
+          new URL(event.destination.url).origin === location.origin
+
+        if (!shouldIntercept) return
+
+        event.intercept({
+          handler: async () => {
+            const url = new URL(event.destination.url)
+            Router(url.pathname)
+            const focusedIdentifier =
+              url.pathname === "/special" ? "specialHeader" : "boringHeader"
+            const elementToFocus = document.getElementById(focusedIdentifier)
+            if (elementToFocus) {
+              elementToFocus.focus()
+              elementToFocus.classList.add("focused")
+              updateFocusNotice(focusedIdentifier)
+              scrollToElement(elementToFocus)
+            }
+            event.scroll()
+          },
+          focusReset:
+            event.navigationType === "traverse" ? "manual" : "after-transition",
+          scroll:
+            event.navigationType === "traverse" ||
+            event.navigationType === "reload"
+              ? "manual"
+              : "after-transition",
+        })
+      })
+
+      window.navigation.addEventListener("navigatesuccess", () => {
+        if (
+          window.navigation.transition.navigationType === "traverse" ||
+          window.navigation.transition.navigationType === "reload"
+        ) {
+          const focusedIdentifier =
+            window.navigation.currentEntry.state.focusedIdentifier
+          const elementToFocus = document.getElementById(focusedIdentifier)
+          if (elementToFocus) {
+            elementToFocus.focus()
+            elementToFocus.classList.add("focused")
+            updateFocusNotice(focusedIdentifier)
+            scrollToElement(elementToFocus)
+          }
+          window.navigation.transition.scroll()
+        }
+      })
+
+      navigateSpecial.forEach((button) => {
+        button.addEventListener("click", () => {
+          const focusedIdentifier = "specialHeader"
+          window.navigation.updateCurrentEntry({
+            state: {
+              focusedIdentifier,
+            },
+          })
+          window.navigation.navigate("/special")
+        })
+      })
+      navigateBoring.forEach((button) => {
+        button.addEventListener("click", () => {
+          const focusedIdentifier = "boringHeader"
+          window.navigation.updateCurrentEntry({
+            state: {
+              focusedIdentifier,
+            },
+          })
+          window.navigation.navigate("/boring")
+        })
+      })
+
+      Router(location.pathname)
+    </script>
+  </body>
+</html>
