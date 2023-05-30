@@ -3,6 +3,7 @@
   command = "astro build"
   functions = "netlify/functions"
   publish = "dist"
+  framework = "astro"
 
   #[functions]
   #  external_node_modules = ["astro"]
