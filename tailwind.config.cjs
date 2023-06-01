@@ -218,9 +218,9 @@ module.exports = {
           css: {
             color: theme("colors.yellow.900"),
             a: {
-              color: theme("colors.blue.700"),
+              color: theme("inherit"),
               "&:hover": {
-                color: theme("colors.purple.800"),
+                color: theme("colors.green.400"),
               },
             },
             h1: {

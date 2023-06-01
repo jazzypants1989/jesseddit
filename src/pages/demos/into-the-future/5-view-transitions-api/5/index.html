@@ -2,18 +2,10 @@
 <html lang="en">
   <head>
     <style>
-      /* html {
-        view-transition-name: none;
-      } */
-
       .main-content {
         view-transition-name: main-content;
       }
-
-      /* footer {
-        view-transition-name: footer;
-      } */
-
+      
       ::view-transition-new(main-content) {
         animation-name: slide-content;
         animation-duration: 1s;
@@ -23,6 +15,18 @@
         from {
           transform: translateY(100%);
         }
+      } 
+
+      footer {
+        view-transition-name: footer;
+      }
+
+      :root {
+        view-transition-name: none;
+      }
+
+      ::view-transition {
+        pointer-events: none;
       }
     </style>
   </head>
