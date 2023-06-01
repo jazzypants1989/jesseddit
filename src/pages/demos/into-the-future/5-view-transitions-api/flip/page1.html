@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Page 1</title>
+    <style>
+      #myElement {
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        width: 100px;
+        height: 100px;
+        background: red;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="myElement"></div>
+
+    <script>
+      let el = document.querySelector("#myElement")
+      let firstRect = el.getBoundingClientRect()
+
+      let lastRect = JSON.parse(localStorage.getItem("flipAnimation"))
+
+      let deltaX = lastRect.left - firstRect.left
+      let deltaY = lastRect.top - firstRect.top
+      let scaleX = lastRect.width / firstRect.width
+      let scaleY = lastRect.height / firstRect.height
+
+      el.animate(
+        [
+          {
+            transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`,
+          },
+          { transform: "none" },
+        ],
+        {
+          duration: 1000,
+          easing: "ease-in-out",
+        }
+      )
+
+      el.addEventListener("click", function () {
+        // Save the initial state to localStorage
+        let firstRect = el.getBoundingClientRect()
+        localStorage.setItem(
+          "flipAnimation",
+          JSON.stringify({
+            top: firstRect.top,
+            left: firstRect.left,
+            width: firstRect.width,
+            height: firstRect.height,
+          })
+        )
+
+        // Navigate to the second page
+        location.href = "page2.html"
+      })
+    </script>
+  </body>
+</html>

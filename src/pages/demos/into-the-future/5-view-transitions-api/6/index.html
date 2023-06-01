@@ -7,6 +7,10 @@
       html {
         view-transition-name: none;
       }
+      
+      ::view-transition {
+        pointer-events: none;
+      }
 
       .main-content {
         height: 200px;
@@ -61,11 +65,11 @@
         }
       }
 
-      .scabbadoobie {
-        animation: scabbadoobie 1s ease-in-out infinite;
+      .bodyClass {
+        animation: bodyClass 1s ease-in-out infinite;
       }
 
-      @keyframes scabbadoobie {
+      @keyframes bodyClass {
         0% {
           background-color: #333;
         }
@@ -108,7 +112,7 @@
 
       button.addEventListener("click", () => {
         const transition = transitionHelper({
-          classNames: ["scabbadoobie"],
+          classNames: ["bodyClass"],
           updateDOM: () => {
             content.innerHTML = content.innerHTML === view1 ? view2 : view1
           },
