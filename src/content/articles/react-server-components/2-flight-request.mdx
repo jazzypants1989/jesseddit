@@ -1,0 +1,267 @@
+---
+title: "Flight Request"
+nextLink: "./3-flight-response"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+## Introduction
+
+Since the dawn of the web, every single interaction has been dictated by a central [_request-response cycle_](https://backend.turing.edu/module2/lessons/how_the_web_works_http). In order to view something on the internet, a client uses a browser to make a _request_. In return, a server processes that _request_ in order to produce the desired _response_ and send it back. The client then consumes that _response_ which can even contain specially encoded methods for the client to _reply_ to the server with a more granular _request_. While the nature of these _requests_ and the size and format of the _responses_ have varied greatly over time, nothing on the internet can be achieved outside of this cycle.
+
+In this chapter, we will begin to explore the way that React uses these concepts to shape the API for React Server Components. To begin, we will demonstrate how to progressively stream a server component to the client with as little code as possible. While the demo will only contain around 50 lines of code between two files, you may be surprised at the complexity hiding beneath as we leverage the libraries that React has provided. 
+
+## `react-server-dom-webpack` and `react-server`
+
+As of the time of this writing, there is currently only one implementation of React Server Components in wide use. This is `react-server-dom-webpack`. To clarify, there is no aspect of RSC's that actually requires webpack. In fact, there is at least one other implementation, `react-server-dom-esm`, that you can use if you build the current experimental versions of React yourself.
+
+The main way in which these libraries differ is in how they resolve and load modules for client components and server actions. All of the important functionality is actually located in two entirely separate libraries-- `react-server` and `react-client`. These two core libraries are not entirely functional by themselves as they expect to be given configuration files that adapt them to different environments. This is what the implementation libraries like `react-server-dom-webpack` provide.
+
+This theme of customizing the code for the specific runtime environment goes even deeper than this. One of the first things you will notice when looking at [the files in the repository](https://github.com/facebook/react/tree/main/packages/react-server-dom-webpack/src) is that we have multiple versions of each of the major exports designed for the browser, the edge, and Node. We'll take a closer look at the differences in these later, but first let's get a better idea about how `react-server` and `react-server-dom-webpack` intersect.
+
+The easiest way to see this division of responsibilities is to compare the pre-compiled code for one of the files to what it looks like afterwards. First, take a quick look at [ReactFlightDOMServerBrowser.js](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightDOMServerBrowser.js)-- only around 100 lines. But, notice all those imports at the top from files in the `react-server` package? Now, behold the [2000 line behemoth that file compiles into](https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-0fb5b61ac-20230814/cjs/react-server-dom-webpack-client.browser.development.js). 
+
+The vast majority of that code came from `react-server`. Like I said, `react-server` and `react-client` contain the core functionality. `react-server-dom-webpack` just provides the configuration files [like this one](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightWebpackReferences.js) that tell React how to do things like resolve and import modules, but the fundamental concepts like streaming will be the same regardless so they are simply imported. Speaking of streaming, let's take a closer look at how that works so we can better understand the code later.
+
+## Web Streams
+
+[Streaming](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API#concepts_and_usage) has been a part of the web since the very beginning. You can see this when an image loads in slowly as the browser renders it bit by bit. The idea is basically just processing something as you receive it instead of loading the entire thing into memory.
+
+While it is fundamentally a pretty simple concept, there is a bit of nuance and history when it comes to working with streams in JavaScript. There are technically two distinct methods of streaming content with JS. [Node Streams](https://nodejs.org/api/stream.html) came first all the way back in [2009](https://medium.com/the-node-js-collection/a-brief-history-of-node-streams-pt-2-bcb6b1fd7468). This was the only way to stream data with JavaScript until WHATWG announced [Web Streams](https://streams.spec.whatwg.org/) in 2014.
+
+While Node streams were revolutionary, they are also fundamentally limited in that they rely on a Node environment. So, you can't use them anywhere else (like in the browser). But, because Web Streams are a web standard, you can use them everywhere that you can use JavaScript-- [including Node](https://nodejs.org/api/webstreams.html). However, they were not standardized and integrated into browsers until recently, so a lot of the web has been built on Node Streams.
+
+This is part of the reason for the separate files in `react-server-dom-webpack`. For instance, the Web and Edge versions of react-server-dom-webpack-server export a function called `renderToReadableStream` whereas the Node version exports a function called `renderToPipeableStream`. As you might have guessed, the previous two leverage Web Streams whereas the latter uses Node Streams. We will cover these in greater depth later, but I wanted to get this distinction out of the way.
+
+## Promises
+
+While this may seem like a random detour, a solid grasp of [how promises work in JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises) is necessary for us to fully understand how React Server Components work. To quote MDN, "A Promise is an object representing the eventual completion or failure of an asynchronous operation... [it's] a proxy for a value not necessarily known when the promise is created." A promise is always in one of three states: _pending_, _fulfilled_, or _rejected_. 
+
+Whether a promise is _fulfilled_ or _rejected_, it becomes _settled_ or _resolved_ once it is no longer _pending_. This can only happen once. Until then, the promise is _unresolved_. The most important thing to understand about promises is that they always possess a `.then` method. This method takes two arguments-- one for the fulfilled case and one for the rejected case-- and it returns an entirely new, unresolved promise. Because of this, they can be chained one after the other.
+
+While promises have been in JavaScript since [around 2013](https://web.dev/promises/), several libraries implemented similar functionality beforehand. Thus, there are many objects that exist with a `.then` method that are not technically promises. Generally, while these may have many similarities to actual promises, they may not have all of the same properties. So, they are often called [_thenables_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#thenables) to mark the distinction. Promises were designed to work natively with most _thenables_.
+
+## Chunks and Thenables
+
+_Chunk_ and _Thenable_-- both of these words are used by the React team to define core aspects of the Server Components API. Let's start with _Chunk_. To quote [Thomas Steiner on web.dev](https://web.dev/streams/#chunks), "A chunk is a single piece of data that is written to or read from a stream. It can be of any type; streams can even contain chunks of different types. Most of the time, a chunk will not be the most atomic unit of data for a given stream. For example, a byte stream might contain chunks consisting of 16 KiB Uint8Array units, instead of single bytes."
+
+So, this definition is quite literal when we are talking about RSC's. When we talk about _Chunks_, you should think about small, individual units of work. Later, we will talk about webpack chunks. To distinguish these, note that streaming RSC _Chunks_ have a capital 'C'. To help understand what's happening here, let's take a look at [the part of the code for the file that we looked at earlier](https://github.com/vercel/next.js/blob/236075362a1ea368a625e887ef269e8af750fe1c/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.browser.development.js#L2703) where they define the Chunk class.
+
+<CodeBlock>
+```js
+function Chunk(status, value, reason, response) {
+  this.status = status;
+  this.value = value;
+  this.reason = reason;
+  this._response = response;
+}
+
+Chunk.prototype = Object.create(Promise.prototype);
+
+Chunk.prototype.then = function (resolve, reject) {
+...
+}
+
+```
+
+</CodeBlock>
+
+Don't worry if you don't fully get this just yet. The important thing to understand here is that they sub-class the promise prototype and create their own custom `.then` method. So, every single _Chunk_ is a _Thenable_. We're about to go deeper into the code, but this is very important to keep in mind as we go through this.
+
+## `renderToReadableStream`
+
+So, let's go back to `react-server-dom-webpack` and begin our journey through the code. We'll take a look at each function in detail. We'll stick with the browser version for now since we've already taken a couple looks at that code. 
+
+As I said at the beginning of the chapter, every interaction on the internet starts with a request. To process these requests and respond with a streaming RSC payload in the browser, React provides a function called `renderToReadableStream`. Here it is in full:
+
+<CodeBlock>
+```js
+function renderToReadableStream(
+  model: ReactClientValue,
+  webpackMap: ClientManifest,
+  options?: Options,
+): ReadableStream {
+  const request = createRequest(
+    model,
+    webpackMap,
+    options ? options.onError : undefined,
+    options ? options.context : undefined,
+    options ? options.identifierPrefix : undefined,
+  );
+  if (options && options.signal) {
+    const signal = options.signal;
+    if (signal.aborted) {
+      abort(request, (signal: any).reason);
+    } else {
+      const listener = () => {
+        abort(request, (signal: any).reason);
+        signal.removeEventListener('abort', listener);
+      };
+      signal.addEventListener('abort', listener);
+    }
+  }
+  const stream = new ReadableStream(
+    {
+      type: 'bytes',
+      start: (controller): ?Promise<void> => {
+        startWork(request);
+      },
+      pull: (controller): ?Promise<void> => {
+        startFlowing(request, controller);
+      },
+      cancel: (reason): ?Promise<void> => {},
+    },
+    {highWaterMark: 0},
+  );
+  return stream;
+}
+```
+</CodeBlock>
+
+So, let's start with the two main arguments. We have a model and a webpack map. The model will typically be the React Element that serves as the root of the application. The webpack map contains the references necessary to import client components and server actions. Along with some options, React uses these together to produce a readable stream representation of the application.
+
+First, we use the `createRequest` function to transform those arguments into a _Flight Request_ object. Next, we can pass in an [AbortController's](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) so that we can gracefully cancel the readableStream. Finally, we set up the actual stream as a byte stream with [the necessary methods](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams#creating_your_own_custom_readable_stream) provided by `react-server`.
+
+The `start` method is only called once at the beginning of the stream, and the `pull` method is called every time the stream reader requests more data. For these methods, React provides the `startWork` and `startFlowing` functions respectively. The `cancel` method appears to be a no-op, but that doesn't seem to matter. 
+
+The `highWatermark` determines when the pull method is called, and I honestly don't know why it is set at 0. I would appreciate any insight in [the comments](https://jessedit.tech/blog/react-server-components#comments). For now, let's take a closer look at the `createRequest` function to see what React is doing to prepare the content to be streamed.
+
+
+## createRequest
+<CodeBlock>
+```js
+export function createRequest(
+  model: ReactClientValue,
+  bundlerConfig: ClientManifest,
+  onError: void | ((error: mixed) => ?string),
+  context?: Array<[string, ServerContextJSONValue]>,
+  identifierPrefix?: string,
+): Request {
+  if (
+    ReactCurrentCache.current !== null &&
+    ReactCurrentCache.current !== DefaultCacheDispatcher
+  ) {
+    throw new Error(
+      'Currently React only supports one RSC renderer at a time.',
+    );
+  }
+  prepareHostDispatcher();
+  ReactCurrentCache.current = DefaultCacheDispatcher;
+
+  const abortSet: Set<Task> = new Set();
+  const pingedTasks: Array<Task> = [];
+  const hints = createHints();
+  const request: Request = {
+    status: OPEN,
+    flushScheduled: false,
+    fatalError: null,
+    destination: null,
+    bundlerConfig,
+    cache: new Map(),
+    nextChunkId: 0,
+    pendingChunks: 0,
+    hints,
+    abortableTasks: abortSet,
+    pingedTasks: pingedTasks,
+    completedImportChunks: ([]: Array<Chunk>),
+    completedHintChunks: ([]: Array<Chunk>),
+    completedRegularChunks: ([]: Array<Chunk | BinaryChunk>),
+    completedErrorChunks: ([]: Array<Chunk>),
+    writtenSymbols: new Map(),
+    writtenClientReferences: new Map(),
+    writtenServerReferences: new Map(),
+    writtenProviders: new Map(),
+    identifierPrefix: identifierPrefix || '',
+    identifierCount: 1,
+    onError: onError === undefined ? defaultErrorHandler : onError,
+    // $FlowFixMe[missing-this-annot]
+    toJSON: function (key: string, value: ReactClientValue): ReactJSONValue {
+      return resolveModelToJSON(request, this, key, value);
+    },
+  };
+  request.pendingChunks++;
+  const rootContext = createRootContext(context);
+  const rootTask = createTask(request, model, rootContext, abortSet);
+  pingedTasks.push(rootTask);
+  return request;
+}
+```
+</CodeBlock>
+
+As you can see, every single argument passed into `renderToReadableStream` gets used here. So, this is where all of the important processing happens. The other functions used in `renderToReadableStream` work exactly the same on every single request. `createRequest` is responsible for transforming the _model_ and _bundlerConfig_ (the root React element and a manifest of the modules needed) into a _Flight Request_ that is serialized and ready to be streamed. So, let's take a look at how it does that.
+
+As you can see, the primary purpose of the `createRequest` function is the production of a monolithic object that keeps track of all the important details of the stream throughout the course of the network request. If you look closely at the code from earlier, you'll see that this request object will be attached to every single _Chunk_ on their `_request` property. In this way, React can gradually update the object and not only track the chunks that it has already serialized, but also which ones it still needs to process by simply checking this property on each chunk.
+
+Although there are quite a few properties on the _Flight Request_ object, they each serve distinct roles in helping React process the stream. We will cover almost all of them in due course. For now, let's focus on the `toJSON` property on which the `resolveModelToJSON` function is attached.
+
+## resolveModelToJSON
+
+Okay, this is a big one! This is a [JSON Replacer Function](https://dillionmegida.com/p/second-argument-in-json-stringify/) which is responsible for serializing the _model_ that is full of functions and rich data structures into something that can be streamed across the network boundary. This is so large that pasting the entire thing at once wouldn't be very useful. We'll just take a look at a few of the most important pieces.
+
+<CodeBlock>
+```js
+function resolveModelToJSON(request, parent, key, value) {
+    ...
+
+  switch (value) {
+    case REACT_ELEMENT_TYPE:
+      return '$';
+  }
+```
+</CodeBlock>
+
+After doing some quick checks for unserializable client component props, the first thing in the actual work-loop checks if the current value being serialized is a React Element. These all-capital signifiers are just a more conspicuous way of checking for the special symbols that React encodes into each element. Here's a list of each one to clarify.
+
+<CodeBlock>
+```js
+var REACT_ELEMENT_TYPE = Symbol.for('react.element');
+var REACT_FRAGMENT_TYPE = Symbol.for('react.fragment');
+var REACT_PROVIDER_TYPE = Symbol.for('react.provider');
+var REACT_SERVER_CONTEXT_TYPE = Symbol.for('react.server_context');
+var REACT_FORWARD_REF_TYPE = Symbol.for('react.forward_ref');
+var REACT_SUSPENSE_TYPE = Symbol.for('react.suspense');
+var REACT_SUSPENSE_LIST_TYPE = Symbol.for('react.suspense_list');
+var REACT_MEMO_TYPE = Symbol.for('react.memo');
+var REACT_LAZY_TYPE = Symbol.for('react.lazy');
+var REACT_SERVER_CONTEXT_DEFAULT_VALUE_NOT_LOADED = Symbol.for('react.default_value');
+var REACT_MEMO_CACHE_SENTINEL = Symbol.for('react.memo_cache_sentinel');
+var MAYBE_ITERATOR_SYMBOL = Symbol.iterator;
+var FAUX_ITERATOR_SYMBOL = '@@iterator';
+var CLIENT_REFERENCE_TAG = Symbol.for('react.client.reference');
+var SERVER_REFERENCE_TAG = Symbol.for('react.server.reference');
+function isClientReference(reference) {
+  return reference.$$typeof === CLIENT_REFERENCE_TAG;
+}
+function isServerReference(reference) {
+  return reference.$$typeof === SERVER_REFERENCE_TAG;
+}
+```
+</CodeBlock>
+
+So, when the value is an object$$typeof
+
+## createTask and pingTask
+
+Hey
+
+## startWork and performWork
+
+Hey
+
+## retryTask 
+
+Hey
+
+## attemptResolveElement
+
+Hey
+
+## processModelChunk
+
+Hey
+
+
+
+## Conclusion
+
+Hey

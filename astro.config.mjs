@@ -15,4 +15,5 @@ export default defineConfig({
   ],
   output: "server",
   adapter: netlify(),
+  site: 'https://www.jessedit.tech'
 })

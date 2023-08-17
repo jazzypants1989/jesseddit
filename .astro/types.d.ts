@@ -280,6 +280,76 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"react-server-components/1-background.mdx": {
+  id: "react-server-components/1-background.mdx",
+  slug: "react-server-components/1-background",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/10-conclusion.mdx": {
+  id: "react-server-components/10-conclusion.mdx",
+  slug: "react-server-components/10-conclusion",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/2-flight-request.mdx": {
+  id: "react-server-components/2-flight-request.mdx",
+  slug: "react-server-components/2-flight-request",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/3-flight-response.mdx": {
+  id: "react-server-components/3-flight-response.mdx",
+  slug: "react-server-components/3-flight-response",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/4-client-components.mdx": {
+  id: "react-server-components/4-client-components.mdx",
+  slug: "react-server-components/4-client-components",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/5-server-actions.mdx": {
+  id: "react-server-components/5-server-actions.mdx",
+  slug: "react-server-components/5-server-actions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/6-simple-demos.mdx": {
+  id: "react-server-components/6-simple-demos.mdx",
+  slug: "react-server-components/6-simple-demos",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/7-waku-and-vite-rsc.mdx": {
+  id: "react-server-components/7-waku-and-vite-rsc.mdx",
+  slug: "react-server-components/7-waku-and-vite-rsc",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/8-nextjs.mdx": {
+  id: "react-server-components/8-nextjs.mdx",
+  slug: "react-server-components/8-nextjs",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/9-our-framework.mdx": {
+  id: "react-server-components/9-our-framework.mdx",
+  slug: "react-server-components/9-our-framework",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "react/1-introduction.mdx": {
   id: "react/1-introduction.mdx",
   slug: "react/1-introduction",
