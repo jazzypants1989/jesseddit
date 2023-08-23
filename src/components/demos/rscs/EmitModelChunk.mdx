@@ -1,0 +1,12 @@
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+<CodeBlock noButtons>
+```js
+function emitModelChunk(request, id, model) {
+  var json = stringify(model, request.toJSON);
+  var row = id.toString(16) + ':' + json + '\n';
+  var processedChunk = stringToChunk(row);
+  request.completedRegularChunks.push(processedChunk);
+}
+```
+</CodeBlock>

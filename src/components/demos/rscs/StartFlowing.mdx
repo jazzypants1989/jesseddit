@@ -1,0 +1,31 @@
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+<CodeBlock>
+```js
+function startFlowing(request, destination) {
+  if (request.status === CLOSING) {
+    request.status = CLOSED;
+    closeWithError(destination, request.fatalError);
+    return;
+  }
+
+  if (request.status === CLOSED) {
+    return;
+  }
+
+  if (request.destination !== null) {
+    // We're already flowing.
+    return;
+  }
+
+  request.destination = destination;
+
+  try {
+    flushCompletedChunks(request, destination);
+  } catch (error) {
+    logRecoverableError(request, error);
+    fatalError(request, error);
+  }
+} // This is called to early terminate a request. It creates an error at all pending tasks.
+```
+</CodeBlock>

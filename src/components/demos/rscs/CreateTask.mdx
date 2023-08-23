@@ -1,0 +1,21 @@
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+<CodeBlock>
+```js
+function createTask(request, model, context, abortSet) {
+  var id = request.nextChunkId++;
+  var task = {
+    id: id,
+    status: PENDING$1,
+    model: model,
+    context: context,
+    ping: function () {
+      return pingTask(request, task);
+    },
+    thenableState: null
+  };
+  abortSet.add(task);
+  return task;
+}
+```
+</CodeBlock>

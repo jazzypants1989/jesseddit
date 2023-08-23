@@ -280,6 +280,62 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"react-rally/frontend-family-tree.mdx": {
+  id: "react-rally/frontend-family-tree.mdx",
+  slug: "react-rally/frontend-family-tree",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/graphql-and-suspense.mdx": {
+  id: "react-rally/graphql-and-suspense.mdx",
+  slug: "react-rally/graphql-and-suspense",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/opt-in-design.mdx": {
+  id: "react-rally/opt-in-design.mdx",
+  slug: "react-rally/opt-in-design",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/p5js.mdx": {
+  id: "react-rally/p5js.mdx",
+  slug: "react-rally/p5js",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/server-side-rendering.mdx": {
+  id: "react-rally/server-side-rendering.mdx",
+  slug: "react-rally/server-side-rendering",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/shirley-wu.mdx": {
+  id: "react-rally/shirley-wu.mdx",
+  slug: "react-rally/shirley-wu",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/webs-next-transition.mdx": {
+  id: "react-rally/webs-next-transition.mdx",
+  slug: "react-rally/webs-next-transition",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-rally/why-everyone-needs-a-framework.mdx": {
+  id: "react-rally/why-everyone-needs-a-framework.mdx",
+  slug: "react-rally/why-everyone-needs-a-framework",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "react-server-components/1-background.mdx": {
   id: "react-server-components/1-background.mdx",
   slug: "react-server-components/1-background",
@@ -287,9 +343,16 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/10-conclusion.mdx": {
-  id: "react-server-components/10-conclusion.mdx",
-  slug: "react-server-components/10-conclusion",
+"react-server-components/10-our-framework.mdx": {
+  id: "react-server-components/10-our-framework.mdx",
+  slug: "react-server-components/10-our-framework",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/11-conclusion.mdx": {
+  id: "react-server-components/11-conclusion.mdx",
+  slug: "react-server-components/11-conclusion",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
@@ -308,44 +371,51 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/4-client-components.mdx": {
-  id: "react-server-components/4-client-components.mdx",
-  slug: "react-server-components/4-client-components",
+"react-server-components/4-suspense-and-use.mdx": {
+  id: "react-server-components/4-suspense-and-use.mdx",
+  slug: "react-server-components/4-suspense-and-use",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/5-server-actions.mdx": {
-  id: "react-server-components/5-server-actions.mdx",
-  slug: "react-server-components/5-server-actions",
+"react-server-components/5-client-components.mdx": {
+  id: "react-server-components/5-client-components.mdx",
+  slug: "react-server-components/5-client-components",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/6-simple-demos.mdx": {
-  id: "react-server-components/6-simple-demos.mdx",
-  slug: "react-server-components/6-simple-demos",
+"react-server-components/6-server-actions.mdx": {
+  id: "react-server-components/6-server-actions.mdx",
+  slug: "react-server-components/6-server-actions",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/7-waku-and-vite-rsc.mdx": {
-  id: "react-server-components/7-waku-and-vite-rsc.mdx",
-  slug: "react-server-components/7-waku-and-vite-rsc",
+"react-server-components/7-simple-demos.mdx": {
+  id: "react-server-components/7-simple-demos.mdx",
+  slug: "react-server-components/7-simple-demos",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/8-nextjs.mdx": {
-  id: "react-server-components/8-nextjs.mdx",
-  slug: "react-server-components/8-nextjs",
+"react-server-components/8-waku-and-vite-rsc.mdx": {
+  id: "react-server-components/8-waku-and-vite-rsc.mdx",
+  slug: "react-server-components/8-waku-and-vite-rsc",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"react-server-components/9-our-framework.mdx": {
-  id: "react-server-components/9-our-framework.mdx",
-  slug: "react-server-components/9-our-framework",
+"react-server-components/9-nextjs.mdx": {
+  id: "react-server-components/9-nextjs.mdx",
+  slug: "react-server-components/9-nextjs",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"react-server-components/99-rejects.mdx": {
+  id: "react-server-components/99-rejects.mdx",
+  slug: "react-server-components/99-rejects",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">

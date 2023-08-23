@@ -15,7 +15,17 @@ module.exports = {
         "monospace",
         "ui-monospace",
       ],
-      serif: ["ui-serif", "Georgia"],
+      serif: [
+        "sans-serif",
+        "ui-sans-serif",
+        "system-ui",
+        "monospace",
+        "ui-monospace",
+        "Menlo",
+      ],
+      mono: [
+        'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;',
+      ],
     },
     extend: {
       animation: {
@@ -32,7 +42,6 @@ module.exports = {
         "float": "float 2s ease-in-out infinite",
         "float-fast": "float-fast 1s ease-in-out infinite",
         "float-slow": "float-slow 3s ease-in-out infinite",
-        "dance": "dance 2s ease-in-out infinite",
         "rhythm": "rhythm 3s ease-in-out infinite",
       },
       keyframes: {
@@ -156,48 +165,6 @@ module.exports = {
             transform: "translateX(10px)",
           },
         },
-        "dance": {
-          "0%, 100%": {
-            transform:
-              "translateY(0) rotate(0deg) scale(1) skew(0deg) translateX(0)",
-          },
-          "10%": {
-            transform:
-              "translateY(-10px) rotate(8deg) scale(1.1) skew(2deg) translateX(10px)",
-          },
-          "20%": {
-            transform:
-              "translateY(0) rotate(-6deg) scale(0.9) skew(-1deg) translateX(-5px)",
-          },
-          "30%": {
-            transform:
-              "translateY(-5px) rotate(7deg) scale(1.05) skew(1deg) translateX(5px)",
-          },
-          "40%": {
-            transform:
-              "translateY(0) rotate(-3deg) scale(0.95) skew(-1deg) translateX(-2.5px)",
-          },
-          "50%": {
-            transform:
-              "translateY(-2.5px) rotate(3deg) scale(1.025) skew(0.5deg) translateX(2.5px)",
-          },
-          "60%": {
-            transform:
-              "translateY(0) rotate(0deg) scale(1) skew(0deg) translateX(0)",
-          },
-          "70%": {
-            transform:
-              "translateY(-2.5px) rotate(-3deg) scale(0.975) skew(-0.5deg) translateX(-2.5px)",
-          },
-          "80%": {
-            transform:
-              "translateY(0) rotate(3deg) scale(1.05) skew(1deg) translateX(5px)",
-          },
-          "90%": {
-            transform:
-              "translateY(-5px) rotate(-7deg) scale(0.95) skew(-1deg) translateX(-5px)",
-          },
-        },
         "rhythm": {
           "0%, 100%": {
             transform:
@@ -216,11 +183,11 @@ module.exports = {
       typography: (theme) => ({
         DEFAULT: {
           css: {
-            color: theme("colors.yellow.900"),
+            color: theme("colors.green.700"),
             a: {
-              color: theme("inherit"),
+              color: theme("colors.green.700"),
               "&:hover": {
-                color: theme("colors.green.400"),
+                color: theme("colors.green.500"),
               },
             },
             h1: {
@@ -254,9 +221,6 @@ module.exports = {
               "&:after": {
                 content: "none !important",
               },
-              fontWeight: "400",
-              fontSize: "0.875rem",
-              lineHeight: "1.375rem",
               padding: "0.125rem 0.25rem",
               borderRadius: "0.25rem",
             },

@@ -1,0 +1,63 @@
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+<CodeBlock>
+```js
+export function createRequest(
+  model: ReactClientValue,
+  bundlerConfig: ClientManifest,
+  onError: void | ((error: mixed) => ?string),
+  context?: Array<[string, ServerContextJSONValue]>,
+  identifierPrefix?: string,
+  onPostpone: void | ((reason: string) => void),
+): Request {
+  if (
+    ReactCurrentCache.current !== null &&
+    ReactCurrentCache.current !== DefaultCacheDispatcher
+  ) {
+    throw new Error(
+      'Currently React only supports one RSC renderer at a time.',
+    );
+  }
+  prepareHostDispatcher();
+  ReactCurrentCache.current = DefaultCacheDispatcher;
+
+  const abortSet: Set<Task> = new Set();
+  const pingedTasks: Array<Task> = [];
+  const hints = createHints();
+  const request: Request = {
+    status: OPEN,
+    flushScheduled: false,
+    fatalError: null,
+    destination: null,
+    bundlerConfig,
+    cache: new Map(),
+    nextChunkId: 0,
+    pendingChunks: 0,
+    hints,
+    abortableTasks: abortSet,
+    pingedTasks: pingedTasks,
+    completedImportChunks: ([]: Array<Chunk>),
+    completedHintChunks: ([]: Array<Chunk>),
+    completedRegularChunks: ([]: Array<Chunk | BinaryChunk>),
+    completedErrorChunks: ([]: Array<Chunk>),
+    writtenSymbols: new Map(),
+    writtenClientReferences: new Map(),
+    writtenServerReferences: new Map(),
+    writtenProviders: new Map(),
+    identifierPrefix: identifierPrefix || '',
+    identifierCount: 1,
+    onError: onError === undefined ? defaultErrorHandler : onError,
+    onPostpone: onPostpone === undefined ? defaultPostponeHandler : onPostpone,
+    // $FlowFixMe[missing-this-annot]
+    toJSON: function (key: string, value: ReactClientValue): ReactJSONValue {
+      return resolveModelToJSON(request, this, key, value);
+    },
+  };
+  request.pendingChunks++;
+  const rootContext = createRootContext(context);
+  const rootTask = createTask(request, model, rootContext, abortSet);
+  pingedTasks.push(rootTask);
+  return request;
+}
+```
+</CodeBlock>

@@ -1,0 +1,19 @@
+import CodeBlock from "../../../components/CodeBlock.astro"
+
+<CodeBlock noButtons>
+```js
+function Chunk(status, value, reason, response) {
+  this.status = status;
+  this.value = value;
+  this.reason = reason;
+  this._response = response;
+}
+
+Chunk.prototype = Object.create(Promise.prototype);
+
+Chunk.prototype.then = function (resolve, reject) {
+...
+}
+
+```
+</CodeBlock>

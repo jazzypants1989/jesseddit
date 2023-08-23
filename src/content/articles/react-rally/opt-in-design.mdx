@@ -1,0 +1,36 @@
+---
+title: "opt-in design"
+nextLink: "./dingdong"
+---
+CRA - opt-out pains. good luck ejecting.
+-opt-out ethos: 
+-- assume a goal, lower developer friction
+-- bundle the best toolbox up-front
+
+-opt-in design principles
+-- find the lowest-common-denominator
+--- what's the simplest use case for your tool?
+--- just enough to work
+-- make complexity easy to add, when intended
+--- Don't start with kitchen sink
+--- Simply make additional functionality accessible
+-- stay user-first, not developer-first
+--- low complexity baseline often means better UX
+
+-Examples
+-- Deno: opt-in permissions. Don't just do -A, you lazy fuck.
+--- LCD: Simple CLI tool without i/o
+--- Additive Complexity: easy-to-set human-readable flags
+--- User-First: minimizes security vulnerabilities
+-- Server Components: opt-in client-side JS
+--- LCD: Static web pages
+--- Additive Complexity: client directives
+--- User-First: maximize core web vitals
+-- RSC's
+--- LCD: Whole page streamed at once
+--- Additive Complexity: Suspense boundaries
+--- User-First: minimizes layout shift
+-- SolidJS
+--- LCD: Granular reactivity
+--- Additive Complexity: Signals
+--- User-First: Maximizes performances, minimizes renders.
