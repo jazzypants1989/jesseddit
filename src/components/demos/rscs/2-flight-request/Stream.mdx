@@ -1,7 +1,27 @@
-import CodeBlock from "../../../components/CodeBlock.astro"
+import CodeBlock from "../../../CodeBlock.astro"
+import MPADemo from "../../../MPADemo.astro"
 
-<CodeBlock>
-```js
+export const filenames = {
+  one: "Variables",
+  two: "flushCompletedChunks",
+  three: "beginWriting",
+  four: "writeChunkAndReturn",
+  five: "writeChunk",
+  six: "completeWriting",
+  seven: "close$1"
+}
+
+<MPADemo title="Streaming Functions (Browser Versions)" filenames={filenames}>
+<CodeBlock noButtons slot="one" id="one">
+```ts
+var VIEW_SIZE = 512;
+var currentView = null;
+var writtenBytes = 0;
+```
+</CodeBlock>
+
+<CodeBlock slot="two" id="two">
+```ts
 function flushCompletedChunks(request, destination) {
   beginWriting();
 
@@ -89,22 +109,30 @@ function flushCompletedChunks(request, destination) {
     close$1(destination);
   }
 }
+```
+</CodeBlock>
 
-var VIEW_SIZE = 512;
-var currentView = null;
-var writtenBytes = 0;
-
+<CodeBlock noButtons slot="three" id="three">
+```ts
 function beginWriting(destination) {
   currentView = new Uint8Array(VIEW_SIZE);
   writtenBytes = 0;
 }
+```
+</CodeBlock>
 
+<CodeBlock noButtons slot="four" id="four">
+```ts
 function writeChunkAndReturn(destination, chunk) {
   writeChunk(destination, chunk); // in web streams there is no backpressure so we can alwas write more
 
   return true;
 }
+```
+</CodeBlock>
 
+<CodeBlock slot="five" id="five">
+```ts
 function writeChunk(destination, chunk) {
   if (chunk.byteLength === 0) {
     return;
@@ -155,7 +183,11 @@ function writeChunk(destination, chunk) {
   currentView.set(bytesToWrite, writtenBytes);
   writtenBytes += bytesToWrite.byteLength;
 }
+```
+</CodeBlock>
 
+<CodeBlock noButtons slot="six" id="six">
+```ts
 function completeWriting(destination) {
   if (currentView && writtenBytes > 0) {
     destination.enqueue(new Uint8Array(currentView.buffer, 0, writtenBytes));
@@ -163,10 +195,15 @@ function completeWriting(destination) {
     writtenBytes = 0;
   }
 }
+```
+</CodeBlock>
 
+<CodeBlock noButtons slot="seven" id="seven">
+```ts
 function close$1(destination) {
   destination.close();
 }
 
 ```
 </CodeBlock>
+</MPADemo>

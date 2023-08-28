@@ -11,9 +11,11 @@ export default defineConfig({
       config: { applyBaseStyles: false },
     }),
     solidJs(),
-    mdx(),
+    mdx({
+      shikiConfig: { theme: "rose-pine-moon" },
+    }),
   ],
   output: "server",
   adapter: netlify(),
-  site: 'https://www.jessedit.tech'
+  site: "https://www.jessedit.tech",
 })
