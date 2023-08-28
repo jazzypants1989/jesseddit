@@ -1,0 +1,20 @@
+---
+title: "p5.js"
+nextLink: "./3-flight-response"
+---
+- architectures: MPA, SPA, PEMPA
+- MPA: browser UI on client, all code on server
+-- Pros - simple mental model, only one way to do it.
+-- Cons - full page refresh, no control over UI feedback
+- PEMPA: enhanced client code, same server code.
+-- Pros - no refreshes, better UI feedback control
+-- Cons - preventDefault, amount of custom code / duplication / organization
+- SPA: almost all client code, server code is only for data fetching and mutations
+-- Pros - No code duplication, 
+-- Cons - Most of PEMPA Cons, larger bundle size, waterfalls, runtime performance, client-side state
+- PESPA: Best of all worlds all the time. Basically cures cancer.
+-- Pros - Simple mental model, no refresh, UI feedback control, browser emulation, no code duplication or waterfalls, shared state
+-- Cons - NONE EVER... requires servers? server cost? universal code? other secrets?
+
+- Remix!!!
+--

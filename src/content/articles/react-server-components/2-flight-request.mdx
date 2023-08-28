@@ -1,0 +1,328 @@
+---
+title: "Flight Request"
+nextLink: "./3-flight-response"
+---
+
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+import Chunk from "../../../components/demos/rscs/2-flight-request/Chunk.mdx"
+import RenderToReadableStream from "../../../components/demos/rscs/2-flight-request/RenderToReadableStream.mdx"
+import CreateRequest from "../../../components/demos/rscs/2-flight-request/CreateRequest.mdx"
+import CreateTask from "../../../components/demos/rscs/2-flight-request/CreateTask.mdx"
+import PingTask from "../../../components/demos/rscs/2-flight-request/PingTask.mdx"
+import StartAndScheduleWork from "../../../components/demos/rscs/2-flight-request/StartAndScheduleWork.mdx"
+import PerformWork from "../../../components/demos/rscs/2-flight-request/PerformWork.mdx"
+import RetryTaskTry from "../../../components/demos/rscs/2-flight-request/RetryTaskTry.mdx"
+import RetryTaskCatch from "../../../components/demos/rscs/2-flight-request/RetryTaskCatch.mdx"
+import AttemptResolveElement from "../../../components/demos/rscs/2-flight-request/AttemptResolveElement.mdx"
+import EmitModelChunk from "../../../components/demos/rscs/2-flight-request/EmitModelChunk.mdx"
+import ResolveModelToJSON from "../../../components/demos/rscs/2-flight-request/ResolveModelToJSON.mdx"
+import StartFlowing from "../../../components/demos/rscs/2-flight-request/StartFlowing.mdx"
+import Stream from "../../../components/demos/rscs/2-flight-request/Stream.mdx"
+
+
+## Introduction
+
+Since the dawn of the web, every single interaction has been dictated by a central [_request-response cycle_](https://backend.turing.edu/module2/lessons/how_the_web_works_http). In order to view something on the internet, a client uses a browser to make a _request_. In return, a server processes that _request_ in order to produce the desired _response_ and send it back. The client then consumes that _response_ which can even contain specially encoded methods for the client to _reply_ to the server with a more granular _request_. While the nature of these _requests_ and the size and format of the _responses_ have varied greatly over time, nothing on the internet can be achieved outside of this cycle. 
+
+In the early days of the internet, everything was progressively streamed to the client. Static HTML markup and images gradually loaded onto the screen as they downloaded. However, client-side technologies often disrupted this flow by requiring long load times to display any real content to the user. [As time went on](../client-side-routing/2-a-brief-history-of-client-side-routing), this evolved into full JavaScript frameworks-- most popular of which is React. 
+
+While React was created to provide rich client-side interaction, many use it for their entire web experience by building _Single Page Applications_. While one could pre-render this on the server since the very beginning, [this process required sending the entirety of the code](https://github.com/reactwg/react-18/discussions/37) used in the rendering process to the client so it could happen all over again there. And, code-splitting with tools like webpack was never exactly intuitive. This changed recently with the introduction of _React Server Components_
+
+In this chapter, we start to explore the way that React uses fundamental concepts such as the _request-response cycle_ to shape the API for _React Server Components_. To begin, we will demonstrate how to stream an extremely simple server component to the client with as little code as possible. But, before we even get to that point, we will play with several demos that explain some core web API's that the React team have leveraged in this new technology. While the final demo for this chapter will only contain around 50 lines of code scattered between a few files, you may be surprised at the complexity hiding beneath as we dig into these new libraries that React has provided. 
+
+## `react-server-dom-webpack` and `react-server`
+
+As of the time of this writing, there is currently only one implementation of React Server Components in wide use. This is `react-server-dom-webpack`. To clarify, there is no aspect of RSC's that actually requires webpack. In fact, there is at least one other implementation, `react-server-dom-esm`, that you can use if you build the current experimental versions of React yourself.
+
+The main way in which these two libraries differ is in how they resolve and load modules for client components and server actions. All of the important functionality is actually located in two entirely separate core libraries-- `react-server` and `react-client`. These two core libraries are not actually functional by themselves as they expect to be given configuration files that adapt them to different module-loading environments. This is what the implementation libraries like `react-server-dom-webpack` provide.
+
+This theme of customizing the code for the specific runtime environment goes even deeper than this. One of the first things you will notice when looking at [the files in the repository](https://github.com/facebook/react/tree/main/packages/react-server-dom-webpack/src) is that we have multiple versions of each of the major exports designed for the browser, the edge, and Node respectively. We'll take a closer look at the differences in these later, but first let's get a better idea about how `react-server` and `react-server-dom-webpack` intersect.
+
+The easiest way to see this division of responsibilities is to compare the pre-compiled code for one of the files in `react-server-dom-webpack` to what it looks like afterwards. First, take a quick look at [ReactFlightDOMServerBrowser.js](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightDOMServerBrowser.js)-- only around 100 lines. But, notice all those imports at the top from files in the `react-server` package? Now, behold the [3,400 line behemoth that file compiles into](https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-dd480ef92-20230822/cjs/react-server-dom-webpack-server.browser.development.js). 
+
+The vast majority of that code came from `react-server`. Like I said, `react-server` and `react-client` contain the core functionality. `react-server-dom-webpack` just provides the configuration files [like this one](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightWebpackReferences.js) that tell React how to do things like resolve and import modules, but the fundamental concepts like streaming will be the same regardless so they are simply imported. Speaking of streaming, let's take a closer look at how that works so we can better understand the code later.
+
+## Web Streams
+
+[Streaming](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API#concepts_and_usage) has been a part of the web since the very beginning. You can see this when an image loads in slowly as the browser renders it bit by bit. The idea behind it is basically just processing something as you receive it instead of loading the entire thing into memory.
+
+While it is fundamentally a pretty simple concept, there is a bit of nuance and history when it comes to working with streams in JavaScript. There are technically two distinct methods of streaming content with JS. [Node Streams](https://nodejs.org/api/stream.html) came first all the way back in [2009](https://medium.com/the-node-js-collection/a-brief-history-of-node-streams-pt-2-bcb6b1fd7468). This was the only way to stream data with JavaScript until WHATWG announced [Web Streams](https://streams.spec.whatwg.org/) in 2014.
+
+While Node streams were revolutionary, they are fundamentally limited in that they cannot run outside of a Node environment (with a few exceptions). So, you can't use them in some other places where you might need JavaScript-- in the browser, for instance. But, because Web Streams are a web standard, you can use them everywhere that you can use JavaScript-- [even in Node](https://nodejs.org/api/webstreams.html). However, they were not fully integrated into browsers until recently, and [Node streams have a few features that Web Streams don't](https://github.com/reactwg/react-18/discussions/91). So, a lot of the web has been built on Node Streams.
+
+This is part of the reason for the separate files in `react-server-dom-webpack`. For instance, the Web and Edge versions of  react-server-dom-webpack/server export a function called `renderToReadableStream` whereas the Node version exports a function called `renderToPipeableStream`. As you might have guessed, the previous two leverage Web Streams whereas the latter uses Node Streams. We will cover these in greater depth later, but I wanted to get this distinction out of the way.
+
+## Streaming Demos
+
+## Promises
+
+While this may seem like a random detour, a solid grasp of [how promises work in JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises) is necessary for us to fully understand how React Server Components work as well. To quote MDN, "A Promise is an object representing the eventual completion or failure of an asynchronous operation... [it's] a proxy for a value not necessarily known when the promise is created." A promise is always in one of three states: _pending_, _fulfilled_, or _rejected_. 
+
+Whether a promise is _fulfilled_ or _rejected_, it becomes _settled_ or _resolved_ once it is no longer _pending_. This can only happen once. Until then, the promise is _unresolved_. The most important thing to understand about promises is that they always possess a `.then` method. This method takes two arguments-- one for the fulfilled case and one for the rejected case. Either way, it returns an entirely new, unresolved promise. Because of this, they can be chained one after the other.
+
+While promises have been in JavaScript since [around 2013](https://web.dev/promises/), several libraries implemented similar functionality beforehand. Thus, there are many objects that exist with a `.then` method that are not technically promises. Generally, while these may have many similarities to actual promises, they may not have all of the same properties. So, they are often called [_thenables_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#thenables) to mark the distinction. Promises were designed to work natively with most _thenables_.
+
+## Thenables Demos
+
+<IFrame 
+src="https://stackblitz.com/edit/thenables?ctl=1&embed=1&file=1-simple.js&view=preview" />
+
+There are five demos in total here. All of the modules are loaded into the browser as you click each button, so make sure you check out the browser console to see the logs that will get placed there. You can also click over to the editor to run the scripts there too if you want to play around with stuff.
+
+In the first demo, we have a very simple `Thenable` class. Hopefully, this should make the basic concepts pretty easy to understand. However, this doesn't handle asynchronous tasks or chaining. So, I included another implementation which I worked on for _far too long_. I am fairly certain it is [complaint with the A+ spec](https://promisesaplus.com/)-- although it's hard to tell with all the _x_'s (tasks in my class).
+
+The other three demos demonstrate the benefits of using native JavaScript Promises-- with the third demo going into the most detail. The fourth demo is meant to demonstrate the native interoperability with other `thenables` as it shows that our custom class works flawlessly when interwoven in a chain with real promises. The final demo further elucidates the limits of our custom class and the benefits of native promises.
+
+## Chunks and Thenables
+
+_Chunk_ and _Thenable_-- both of these words are used by the React team to define core aspects of the Server Components API. We just talked all about _Thenables_, so let's define _Chunk_. To quote [Thomas Steiner on web.dev](https://web.dev/streams/#chunks), "A chunk is a single piece of data that is written to or read from a stream. It can be of any type; streams can even contain chunks of different types. Most of the time, a chunk will not be the most atomic unit of data for a given stream. For example, a byte stream might contain chunks consisting of 16 KiB Uint8Array units, instead of single bytes."
+
+So, this definition is quite literal when we are talking about RSC's. When we talk about _Chunks_, you should think about small, individual units of work. Later, we will talk about webpack chunks. To distinguish these, note that streaming _RSC Chunks_ have a capital 'C'. To help understand what's happening here, let's take a look at [the code in the `react-server-dom-webpack/server.browser` file that we looked at earlier](https://github.com/vercel/next.js/blob/236075362a1ea368a625e887ef269e8af750fe1c/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.browser.development.js#L2703) where they define the Chunk class.
+
+<Chunk />
+
+Don't worry if you don't fully get this just yet. We actually won't use this function in this chapter (this is used to encode the [_Flight Response_](./3-flight-response)). The important thing to understand here is that they sub-class the promise prototype and create their own custom `.then` method. So, every single _Chunk_ is a _Thenable_. We're about to go deeper into the code, but this is very important to keep in mind as we go through this.
+
+## `renderToReadableStream`
+
+So, let's go back into `react-server-dom-webpack/server` and begin our journey through the code. We'll explore each function in detail. For now, we'll stick with the browser version since we've already taken a couple looks at that code. 
+
+As I said at the beginning of the chapter, every interaction on the internet starts with a request. To process these requests and respond with a streaming RSC payload in a browser environment, React provides a function called `renderToReadableStream`. Here it is in full:
+
+<RenderToReadableStream />
+
+So, let's start with the two main arguments. We have a `model` and a `webpackMap`. The `model` will typically be the React Element that serves as the root of the application. The `webpackMap` contains the references necessary to import the modules required for the client components and server actions used in the `model`. Along with some options, React uses these arguments to produce a readable stream representation of the application.
+
+The first step is to use the `createRequest` function to build a _Flight Request_ object. Next, we can pass in an [AbortController's](https://developer.mozilla.org/en-US/docs/Web/API/AbortController) [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) so that we can gracefully cancel the readableStream. Finally, we set up the actual stream as a byte stream with [the necessary methods](https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams#creating_your_own_custom_readable_stream) provided by `react-server`.
+
+The `start` method is only called once at the beginning of the stream, and the `pull` method is called every time the stream reader requests more data. For these methods, React provides the `startWork` and `startFlowing` functions respectively. The `cancel` method appears to be a no-op, but that doesn't seem to matter. Assumedly, this is covered by the `AbortController` mentioned previously.
+
+The `highWatermark` determines when the pull method is called, and I honestly don't know why it is set at 0. I would appreciate any insight in [the comments](https://jessedit.tech/blog/react-server-components#comments). For now, let's take a closer look at the `createRequest` function to see what React is doing to prepare the content to be streamed.
+
+## createRequest
+
+<CreateRequest />
+
+As you can see, every single argument passed into `renderToReadableStream` gets used here. So, this is where all of the important processing happens. The other functions used in `renderToReadableStream` work exactly the same on every single request. `createRequest` is responsible for transforming the `model` and `bundlerConfig` (the root React element and a manifest of the modules needed) into a _Flight Request_ that is serialized and ready to be streamed. So, let's take a look at how it does that.
+
+As you can see, the primary purpose of the `createRequest` function is the production of a monolithic object that keeps track of all the important details of the stream throughout the course of the network request. If you look closely at the code in the next chapter, you'll see that this request object will be attached to [every single _Task_ as the first argument on their `ping` method](#createtask-and-pingtask). In this way, React can gradually update the object and not only track the chunks that it has already serialized, but also which ones it still needs to process by simply checking the properties on this object.
+
+Although there are quite a few properties on the _Flight Request_ object, they each serve distinct roles in helping React process the stream. We will cover almost all of them in due course. First, let's take a look at what happens after the object is created.
+
+To start things off, the `pendingChunks` property of the request object is iterated from 0 to 1. This is to indicate that the root chunk is being built. Next, we establish the root context and create the root task which is then pushed into the `pingedTasks` queue. To understand the purpose of this and the very nature of a _Task_, let's take a closer look at the `createTask` function and the `pingedTasks` queue.
+
+## createTask and pingTask
+
+<CreateTask />
+
+First, we create an id from the `nextChunkId` property on the request which is a number that started at 0. After this, that number is incremented by one. So, in the case of the `rootTask`, this moves the `nextChunkId` on the _Flight Request_ object from 0 to 1 while assigning the `rootTask` an `id` of 0. That object is also given a status of _PENDING_, the `model` waiting to be resolved, any `context` necessary, a `thenableState` of null, and a `ping` method. This function is important, and we'll see what it does soon. Finally, each task is added to the `abortSet` and returned.
+
+So, it seems that each _Task_ is attempting to resolve a `model` into a `Chunk`. Because the `rootTask` is the first _Task_ created, it is the only thing in the `pingedTasks` queue. Let's take a look at the `pingTask` function itself which takes the whole request as its first argument, and a single task as the second.
+
+<PingTask />
+
+So, it just pushes the task onto the queue. Then, it runs the `performWork` function as soon as possible if there is only one task in the queue. Also, it checks to see if the `destination` property has changed from `null` to see if it should set a property called `flushScheduled` to `true`.
+
+This seems to be what the `createRequest` function is ultimately attempting to do after setting up the _Flight Request_. It prepares a `rootTask` with a `ping` method so that it can run the `performWork` function. So, let's move into the next part of `renderToReadableStream` to see how the `ping` method is used.
+
+## scheduleWork, startWork, and performWork
+
+Okay, these functions are simple, so we should move through them quickly. First, we have `startWork`. We saw this used earlier as the [`start` method inside `renderToReadableStream`](#renderToreadablestream), and we established that it would only be called once to begin the stream. This is how it works in the browser version.
+
+<StartAndScheduleWork />
+
+<PerformWork />
+
+The code starts and ends by preparing something called a `HooksDispatcher`. Despite common belief otherwise, there are actually [quite a few hooks that you can use in React Server Components](https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-dd480ef92-20230822/cjs/react-server-dom-webpack-server.browser.development.js#L906). In fact, it seems like they are building `useId` and `use` to have very important purposes that we will explore in later articles. For now, just know that this is where they get set up on each request.
+
+The important bit that we'll explore closer is what's happening inside of the `try` block. As you can see, this is where it loops through the `pingedTasks` queue. For each task, it runs the `retryTask` function and passes in the whole `request` as the first argument and the `task` as the second argument. 
+
+Finally, it checks that `destination` property again to see if it is not `null`. If so, it should run a function called `flushCompletedChunks`. We haven't actually seen any functions that manipulate that property yet though, so it should still be `null`. In fact, our `rootTask` should still be _PENDING_ as well. Let's take a closer look at `retryTask` to see how that will change.
+
+## retryTask 
+
+This is our first complex function, so I'm going to break it up into two pieces. It's all based around a `try`/`catch` sequence, but this is a little different from normal error handling. So, let's start with the set-up and the `try` block first.
+
+<RetryTaskTry />
+
+Our `rootTask` is still _PENDING_ so it passes the early return. The `context` gets set, and then we move straight into the `try` block. [We already established that the `model` is usually a React Element](#rendertoreadablestream). If so, it must have a [$$typeof property](https://overreacted.io/why-do-react-elements-have-typeof-property/) that React uses to make sure that it can be processed properly. Any time we see these _REACT_ALL_CAPITAL_ variables, [it's usually a reference to a symbol like this](https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-dd480ef92-20230822/cjs/react-server-dom-webpack-server.browser.development.js#L590).
+
+<CodeBlock noButtons>
+```js
+var REACT_ELEMENT_TYPE = Symbol.for('react.element');
+```
+</CodeBlock>
+
+If the `model` in the `rootTask` of the _Flight Request_ has this property, this means that this will be a _React Server Component_, and we enter the next section of code. Here, we see them attempt to store the `thenableState` property from the task, but it hasn't been set yet in the case of the `rootTask`. We'll see that happen later. 
+
+First, the `attemptResolveElement` function is run in order to process the component. If it succeeds, the `thenableState` is reset to `null` and the `while` loop is entered. This loop will continue to run recursively as long as the `value` it returns is a React Element-- meaning it also needs to be processed with `attemptResolveElement`.
+
+Note that the `try` block ends with the `emitModelChunk` function. This is where the `model` is actually serialized into a _Chunk_, and it then gets pushed into the `completedRegularChunks` property of the _Flight Request_. As that _Chunk_ is completed, there is no longer any reason to keep it in the `abortableTasks` set so it is removed. 
+
+We'll come back to `emitModelChunk` and `attemptResolveElement` soon. For now, let's take a look at the `catch` block to see what happens when a _Task_ fails to resolve immediately. 
+
+<RetryTaskCatch />
+
+So, if the `model` cannot immediately be resolved into a React Element, we enter the `catch` block. First, we check to see if the `thrownValue` is a `SuspenseException` which is just [a special type of error that React uses to indicate that a component has suspended](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-reconciler/src/ReactFiberThenable.js#L26). Either way, what we're looking for is a `then` method on the `thrownValue`. If it has one, we know that it is a _Thenable_ and we can use it to retry the task later.
+
+So, this is where the `ping` method on the task comes into play. If the `thrownValue` is a _Thenable_, we can use its `then` method to retry the task after it has resolved. Notice how `ping` is passed into the `then` method twice. This is because the `then` method takes two arguments-- one for the fulfilled case and one for the rejected case. However, we want to run the same function either way. So, we pass the `ping` method into both arguments. 
+
+Next, we enter a series of code related to the new [postpone API](https://github.com/facebook/react/commit/ac1a16c67e268fcb2c52e91717cbc918c7c24446) from the most recent commit by the React team. This is related to the rendering of infinite promises. This was released less than a week ago, and I plan on devoting [the entire fourth chapter](./4-suspense-and-use) to the `use` hook, `Suspense`, and the lifecycle of a _Task_. So, we'll come back to this.
+
+Finally, if the object being thrown doesn't contain a `then` method or the correct `$$typeof` property for the new _Postpone API_, then this must be some kind of error. First, we remove the task from the `abortableTasks` set and set its status to _ERRORED_. Then, we log the error while rendering an error _Chunk_ with the `emitErrorChunk` function.
+
+It may seem a bit hard to put together everything that's happening up to this point, but that's because we skipped over the most important functions. Most of the serious work begins in `attemptResolveElement`. This initiates the serialization process leading up to `emitModelChunk` as we actually encode the data to prepare the stream.
+
+## attemptResolveElement
+
+Because this function is so large, I decided to break it up into individual sections. All of the code will be here. It will simply separated by purpose. For instance, if you were to copy and paste each section sequentially into another document, you would get the whole function. However, if you would like to simply view it in full, you can just [click here to go straight to the source code.](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-server/src/ReactFlightServer.js#L443)
+
+<AttemptResolveElement />
+
+1. ### Beginning, Ref Check, and Prop/Children Storage -- [back to code](#attemptResolveElement_-_code)
+This first part is rather simple, but I split it into its own portion for the sake of screen space. Let's start by talking about the arguments. Most of them are pretty similar to [the ones that React normally uses when creating an element](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react/src/ReactElement.js#L148). However, we also pass through the `thenableState`, and as usual, the whole `request`.
+
+It begins with a quick indication of how this function can only be used to process _Server Components_. We start by making sure that there are no [`ref` objects](https://react.dev/reference/react/useRef) included in the element. These are usually used to [track some information](https://react.dev/learn/referencing-values-with-refs) or [manipulate the DOM](https://react.dev/learn/manipulating-the-dom-with-refs). However, these cannot be included anywhere within _RSC's_, so there is an early warning. 
+
+Apparently, _React Elements_ will be changing in shape soon. I know I read about this somewhere, but I can't find any sources for this. I would love some help in [the comments](https://jessedit.tech/blog/react-server-components#comments).
+
+Next, the `props` and `children` objects are logged to `weakMap` data structures. This is just [to help with some error handling](https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-b4cdd3e89-20230823/cjs/react-server-dom-webpack-server.browser.development.js#L1235) later if there are any issues during this entire process. After this, and for the remainder of the function, we will be checking the crucial `type` property to see how we should attempt to serialize the element.
+
+2. ### Functional Components -- [back to code](#attemptResolveElement_-_code)
+To start this long investigation of the `type` property, we check to see if we are working with a [`Client Component`](https://nextjs.org/docs/getting-started/react-essentials#client-components). I will be covering this in much more detail in [chapter five](./5-client-components). For now, all you need to know is this is just [checking the $$typeof property](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-server-dom-webpack/src/ReactFlightWebpackReferences.js#L28) as usual.
+
+From there, we see the most common initial serialization pattern employed by React in a _Flight Request_ for a React element. It's an array that starts with the _REACT_ELEMENT_TYPE_ symbol, followed by the `type`, `key`, and `props` respectively. This prepares the element for further processing. We'll see it a few more times in this function.
+
+However, the vast majority of this section is devoted to resolving functional _Server Components_. First, [the `thenableState` is set.](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-server/src/ReactFlightHooks.js#L35) Since we're on the `rootTask`, this is still null. Next, we get a `result` by running the functional component with its `props`.
+
+Finally, we attempt to return a value any way that we can. We start by checking to see if the function returns a _Thenable_, and then we check if what that function returns can be resolved immediately. If we can return a value synchronously, we will. Otherwise, we are forced to use the [`createLazyWrapperAroundWakeable` function](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-server/src/ReactFlightServer.js#L399). We'll explore this more in [chapter four](./4-suspense-and-use).
+
+3. ### Pure HTML, Symbols, and Fragments -- [back to code](#attemptResolveElement_-_code)
+
+Another relatively simple section, but this could actually represent a good bulk of well-written code. First, we check to see if the component's `type` is a string. That should mean that it's just a [normal HTML Element tag](https://developer.mozilla.org/en-US/docs/Web/HTML/Element).
+
+When writing server components, there is really no limit to the amount of bare HTML you can use to build your app. As HTML is already an extremely lightweight representation of data, it can simply be sent over without further processing. Again, we use the same preferred serialization data structure for React elements which is an array composed of the _REACT_ELEMENT_TYPE_ symbol and the `type`, `key`, and `props` properties.
+
+Next, we check if the `type` is a symbol. The only thing we treat specially in this case are [React Fragments](https://react.dev/reference/react/Fragment). As they are only necessary for functional grouping of elements (especially in JSX), it is generally safe to disregard them entirely in favor of simply passing through their `children`. This is what React does here.
+
+Every other `type` that is a symbol is then just passed into the normal array data structure as they could be a "built-in component". I assume this means [these four listed here](https://react.dev/reference/react/components), but I find this mildly surprising since there are so few. And, most of these are covered by parts of the process. I mean, we just covered fragments. But, I guess there's no harm in just sending the component over and letting the client figure it out.
+
+4. ### Other React Objects and Error Handling -- [back to code](#attemptResolveElement_-_code)
+
+From here, we do one last check of the `type` property. The only thing we will accept after this point will be objects that are not null. We begin with another check for [Client Components](https://react.dev/reference/react/use-client). The first check in section two was for functions that resolved in client components. This time, we're checking for client components that have already been processed into objects. If they are found here, they are converted into the now familiar array format.
+
+After that, we enter the final gauntlet which is a switch statement based around the `$$typeof` property on this `type` object. Here, we check for four [special symbols](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/shared/ReactSymbols.js). Although they kind of speak for themselves, we'll define them and briefly describe how they are handled.
+
+    * #### REACT_LAZY_TYPE - Symbol.for('react.lazy');
+        This is a [react.lazy](https://react.dev/reference/react/lazy) object. As defined on the website, "lazy lets you defer loading component's code until it is rendered for the first time." Traditionally, this has been a manual process intended to help with [code-splitting](https://developer.mozilla.org/en-US/docs/Glossary/Code_splitting). When using it, one would you have to wrap each module on a case-by-case basis, and most bundlers did not make this very easy.
+        
+        However, the new streaming server rendering strategies _Fizz_ and _Flight_ have made this a first-class citizen, and most async components will become `lazy` by default. This makes the process automatic and much easier for developers. The implications of this will be fully explored in [chapter four](./4-suspense-and-use). 
+        
+        For now, just know that [createLazyWrapperAroundWakeable](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-server/src/ReactFlightServer.js#L399) automatically produces these objects, and this is one place where React attempts to resolve them. It does this by running the `init` function with the `payload`, which-- spoiler alert-- is a `thenable`. This will create a new object which is passed back into this same function.
+
+    * #### REACT_FORWARD_REF_TYPE - Symbol.for('react.forward_ref');
+        This is a [react.forwardRef](https://react.dev/reference/react/forwardRef) object which the website says "lets your component expose a DOM node to parent component with a [ref](https://react.dev/learn/manipulating-the-dom-with-refs).". While you cannot pass a "ref" through a server component, you can apparently still use `forwardRef` to receive one. 
+        
+        All it does here is simply set up the `thenableState` and then run the component in a manner very similar to other server components in section two. However, it does not seem to check for a `thenable`, so I suppose these have to be synchronous? And, perhaps the components must already be resolved, and that's why the result is not passed back into this function? I'm not entirely sure. As always, help is appreciated in [the comments](https://jessedit.tech/blog/react-server-components#comments).
+
+    * #### REACT_MEMO_TYPE - Symbol.for('react.memo');
+        This is a [react.memo](https://react.dev/reference/react/memo) object. Per the docs, "memo lets you skip re-rendering a component when its props are unchanged." This is intended to help with performance by limiting the amount of times React will run each each functional component. So, what we actually need to process is the React Element inside of it which we can simply send back into this function. Notice how `attemptResolveElement` is run with `type.type` instead of the whole `type` object here.
+
+    * #### REACT_PROVIDER_TYPE - Symbol.for('react.provider');
+        To fully clarify, I am almost certain this is exclusively for the currently undocumented new [Server Context API](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react/src/ReactServerContext.js#L26). Client-side context through [createContext](https://react.dev/reference/react/createContext) is unavailable in React Server Components. However, one can use a new function called `createServerContext` to create a _React Context Provider_ on the server. 
+        
+        The React team have stressed that this must be [simple, serializable data](https://twitter.com/dan_abramov/status/1659542938173558784). It can be used with the new `use` hook as [seen here](https://github.com/facebook/react/blob/0ae348018d5b3a3f1ccdd92de85d9cc581b2b98d/packages/react-reconciler/src/__tests__/ReactUse-test.js#L443), and we will play with it in [chapter four](./4-suspense-and-use) as well. All we do for these in `attemptResolveElement` is [push the `provider` into the stack of server contexts](https://github.com/facebook/react/blob/b4cdd3e8922713f8c9817b004a0dc51be47bc5df/packages/react-server/src/ReactFlightNewContext.js#L183), do a quick check for the values included to make sure there are no extra props, and then it is serialized into the normal array.
+
+The most important thing to take from this formidable function is that it is attempting to turn any kind of _React Element_ it finds into a special array. It was shown multiple times, but it's worth showing on it's own. I'll also show one example of what this would look like for an `h1` tag that says "hi" in a comment below.
+
+<CodeBlock noButtons>
+```ts
+return [REACT_ELEMENT_TYPE, type, key, props];
+// ["Symbol.for('react.element')","h1",null,{"children":"hi"}]
+```
+</CodeBlock>
+
+After this long, exhaustive check of the `type` property, anything else passed into `attemptResolveElement` must be an error. So, an exception is thrown. However, if it succeeds, the object that is returned from this function is then passed into `emitModelChunk` to finish the serialization process.
+
+## emitModelChunk
+
+<EmitModelChunk />
+
+At long last, here we are at this seemingly simple yet vital function. It takes three arguments. The gigantic `request` which we have been passing through this whole way, the `id` given to each _Task_ at the beginning of this process in `createTask`, and the `model` which actually holds the content.
+
+
+## JSON Replacer and Reviver Functions
+
+To understand what's actually happening here, we must briefly discuss the concept of a [JSON Replacer Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). This is the term used for the second argument in the `JSON.stringify` method. `JSON.stringify` is one of the most common ways to prepare a complex JavaScript value to be sent somewhere across the internet. This process is known as serialization. It transforms the value into a string that can be understood by the `JSON.parse` method on the other side and turned back into the original value.
+
+`JSON.stringify` provides a very sensible default serialization algorithm which works for most cases. So, often people only provide one argument to the `JSON.stringify` method, or they skip to the third (which is for spacing) while ignoring the second. However, this second argument can be an extremely powerful function called the `replacer` that allows you to customize the serialization process.
+
+This `replacer` function is called for every single property on the object being serialized. It is passed two arguments. The first is the key of the property, and the second is the value. The `replacer` function can then conditionally return new values in place of the original ones. If it returns `undefined`, that property will be omitted from the serialization process entirely. 
+
+## Replacer and Reviver Demos
+
+Here's a simple demo where we look for a key of `thisThing` so we can change that value into something more exciting. Otherwise, we just return the original value.
+
+<IFrame 
+extraStyle="shadow-lg shadow-purple-400"
+src="https://stackblitz.com/edit/json-replacer-and-reviver-functions?ctl=1&embed=1&file=1-replacer.js" />
+
+Like I said, the `stringify` method has a default serialization that works for most cases. However, there are some values that cannot be serialized-- like `Symbol` or a `BigInt`. Additionally, `Date` objects are automatically serialized into strings. Even if you attempt to override this behavior with a `replacer` function, it won't work. I show this in the demo below. 
+
+<IFrame src="https://stackblitz.com/edit/json-replacer-and-reviver-functions?ctl=1&embed=1&file=3-dates.js&startScript=dates&view=editor" />
+
+The only ways I could find to change this were pretty hacky-- like [overriding the `.toJSON` method on the `Date` object itself](https://stackoverflow.com/questions/31096130/how-to-json-stringify-a-javascript-date-and-preserve-timezone). Instead, React pulls a few other tricks. Let's start diving into `resolveModelToJSON` and take a look.
+
+## resolveModelToJSON
+
+Okay, this is another big one! So, let's break this one up bit by bit again. This is the _JSON Replacer Function_ which is responsible for serializing the _model_ that is full of functions and rich data structures into something that can be streamed across the network boundary.
+
+<ResolveModelToJSON />
+
+1. ### Beginning and Initial Data Check -- [back to code](#resolveModelToJSON_-_code)
+* hi
+2. ### REACT_ELEMENT_TYPE -- [back to code](#resolveModelToJSON_-_code)
+* hi
+3. ### Other Important Objects -- [back to code](#resolveModelToJSON_-_code)
+* hi
+4. ### Exotic Data Structures -- [back to code](#resolveModelToJSON_-_code)
+* hi
+5. ### Functions -- [back to code](#resolveModelToJSON_-_code)
+* hi
+6. ### Symbol, BigInt, etc. -- [back to code](#resolveModelToJSON_-_code)
+* hi
+
+After doing some quick checks for unserializable client component props, the first thing in the actual work-loop is a check to see if the current value being serialized is a React Element. These all-capital signifiers are just a more conspicuous way of checking for the special symbols that React encodes into every element.
+
+So, any time this replacer function encounters that specific Symbol, it replaces it with a single $ character. This is how React knows that it is a React Element that needs to be serialized. We'll be using the [RSC DevTools created by Alver Lagerlof](https://www.alvar.dev/blog/creating-devtools-for-react-server-components) to show you what this looks like in practice for our first demo. Here's what the React Element for our `App` component looks like in the DevTools after it has been serialized.
+
+[![React Element](/rsc/RSC.png)](/rsc/RSC.png)
+
+Next, we'll skip over some code related to server context so we can talk about this part.
+
+So, to summarize by quoting Sebastian Markbage in [Handling Root Errors in SSR Streaming Rendering](https://github.com/reactwg/react-18/discussions/122), "The streaming SSR model is split into two stages. First, we render the _shell_. The _shell_ is all the content outside of Suspense boundaries. This represents the first paint you want to see after the browser switches from displaying the previous page. Then, we fill in those boundaries by streaming the content inside..."
+
+Finally, let's take a look at the one function in `renderToReadableStream` that we haven't covered yet.
+
+## startFlowing
+
+So, up to this point, we have covered what happens in the `createRequest` and `startWork` functions. As we saw in the [renderToReadableStream](#rendertoreadablestream) function, `createRequest` will be called directly before the stream begins. Then, `startWork` is called once with the `start` method on the stream. However, there is one more function that is called every time the stream reader requests more data. This is the `pull` method in which the `startFlowing` function is used. Let's take a look at it.
+
+<StartFlowing />
+
+So now, hopefully all of the checks on the `destination` property up to this point make sense. When the request is first created, the `destination` property is `null`. So, the first time the `pull` method is called, the `destination` property is finally set. Then, the `flushCompletedChunks` function is actually run.
+
+We're not going to get fully into how the stream is written as it is beyond the scope of this article. However, I do want to quickly step through the call stack as it has implications for how the _RSC Payload_ should be read. This block of code will be very long, so feel free to minimize it immediately if you want to skip to my summary.
+
+<Stream />
+
+So, this is how the _RSC Payload_ is actually written to the stream. At the very beginning of the `flushCompletedChunks` function, the `beginWriting` function is called. This function creates a new `Uint8Array` and sets its `VIEW_SIZE` to 512 bytes. Back in the [Chunks and Thenables](#chunks-and-thenables) section, I included 
+
+There is a priority system in place to make sure that the most important chunks are written first. The `importsChunks` are written first. Because the modules are loaded asynchronously, we don't know how long this may take. And, most components rely on external modules. So, this comes first. Next, the `hintChunks` are written. These can 
+
+
+## Conclusion
+
+Hey

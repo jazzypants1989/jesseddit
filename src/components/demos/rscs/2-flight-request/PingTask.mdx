@@ -1,0 +1,16 @@
+import CodeBlock from "../../../CodeBlock.astro"
+
+<CodeBlock noButtons>
+```js
+function pingTask(request, task) {
+  var pingedTasks = request.pingedTasks;
+  pingedTasks.push(task);
+
+  if (pingedTasks.length === 1) {
+    request.flushScheduled = request.destination !== null;
+    scheduleWork(function () {
+      return performWork(request);
+    });
+  }
+```
+</CodeBlock>

@@ -1,0 +1,209 @@
+import CodeBlock from "../../../CodeBlock.astro"
+import MPADemo from "../../../MPADemo.astro"
+
+export const filenames = {
+  one: "Variables",
+  two: "flushCompletedChunks",
+  three: "beginWriting",
+  four: "writeChunkAndReturn",
+  five: "writeChunk",
+  six: "completeWriting",
+  seven: "close$1"
+}
+
+<MPADemo title="Streaming Functions (Browser Versions)" filenames={filenames}>
+<CodeBlock noButtons slot="one" id="one">
+```ts
+var VIEW_SIZE = 512;
+var currentView = null;
+var writtenBytes = 0;
+```
+</CodeBlock>
+
+<CodeBlock slot="two" id="two">
+```ts
+function flushCompletedChunks(request, destination) {
+  beginWriting();
+
+  try {
+    // We emit module chunks first in the stream so that
+    // they can be preloaded as early as possible.
+    var importsChunks = request.completedImportChunks;
+    var i = 0;
+
+    for (; i < importsChunks.length; i++) {
+      request.pendingChunks--;
+      var chunk = importsChunks[i];
+      var keepWriting = writeChunkAndReturn(destination, chunk);
+
+      if (!keepWriting) {
+        request.destination = null;
+        i++;
+        break;
+      }
+    }
+
+    importsChunks.splice(0, i); // Next comes hints.
+
+    var hintChunks = request.completedHintChunks;
+    i = 0;
+
+    for (; i < hintChunks.length; i++) {
+      var _chunk = hintChunks[i];
+
+      var _keepWriting = writeChunkAndReturn(destination, _chunk);
+
+      if (!_keepWriting) {
+        request.destination = null;
+        i++;
+        break;
+      }
+    }
+
+    hintChunks.splice(0, i); // Next comes model data.
+
+    var regularChunks = request.completedRegularChunks;
+    i = 0;
+
+    for (; i < regularChunks.length; i++) {
+      request.pendingChunks--;
+      var _chunk2 = regularChunks[i];
+
+      var _keepWriting2 = writeChunkAndReturn(destination, _chunk2);
+
+      if (!_keepWriting2) {
+        request.destination = null;
+        i++;
+        break;
+      }
+    }
+
+    regularChunks.splice(0, i); // Finally, errors are sent. The idea is that it's ok to delay
+    // any error messages and prioritize display of other parts of
+    // the page.
+
+    var errorChunks = request.completedErrorChunks;
+    i = 0;
+
+    for (; i < errorChunks.length; i++) {
+      request.pendingChunks--;
+      var _chunk3 = errorChunks[i];
+
+      var _keepWriting3 = writeChunkAndReturn(destination, _chunk3);
+
+      if (!_keepWriting3) {
+        request.destination = null;
+        i++;
+        break;
+      }
+    }
+
+    errorChunks.splice(0, i);
+  } finally {
+    request.flushScheduled = false;
+    completeWriting(destination);
+  }
+
+  if (request.pendingChunks === 0) {
+    // We're done.
+    close$1(destination);
+  }
+}
+```
+</CodeBlock>
+
+<CodeBlock noButtons slot="three" id="three">
+```ts
+function beginWriting(destination) {
+  currentView = new Uint8Array(VIEW_SIZE);
+  writtenBytes = 0;
+}
+```
+</CodeBlock>
+
+<CodeBlock noButtons slot="four" id="four">
+```ts
+function writeChunkAndReturn(destination, chunk) {
+  writeChunk(destination, chunk); // in web streams there is no backpressure so we can alwas write more
+
+  return true;
+}
+```
+</CodeBlock>
+
+<CodeBlock slot="five" id="five">
+```ts
+function writeChunk(destination, chunk) {
+  if (chunk.byteLength === 0) {
+    return;
+  }
+
+  if (chunk.byteLength > VIEW_SIZE) {
+    {
+      if (precomputedChunkSet.has(chunk)) {
+        error('A large precomputed chunk was passed to writeChunk without being copied.' + ' Large chunks get enqueued directly and are not copied. This is incompatible with precomputed chunks because you cannot enqueue the same precomputed chunk twice.' + ' Use "cloneChunk" to make a copy of this large precomputed chunk before writing it. This is a bug in React.');
+      }
+    } // this chunk may overflow a single view which implies it was not
+    // one that is cached by the streaming renderer. We will enqueu
+    // it directly and expect it is not re-used
+
+
+    if (writtenBytes > 0) {
+      destination.enqueue(new Uint8Array(currentView.buffer, 0, writtenBytes));
+      currentView = new Uint8Array(VIEW_SIZE);
+      writtenBytes = 0;
+    }
+
+    destination.enqueue(chunk);
+    return;
+  }
+
+  var bytesToWrite = chunk;
+  var allowableBytes = currentView.length - writtenBytes;
+
+  if (allowableBytes < bytesToWrite.byteLength) {
+    // this chunk would overflow the current view. We enqueue a full view
+    // and start a new view with the remaining chunk
+    if (allowableBytes === 0) {
+      // the current view is already full, send it
+      destination.enqueue(currentView);
+    } else {
+      // fill up the current view and apply the remaining chunk bytes
+      // to a new view.
+      currentView.set(bytesToWrite.subarray(0, allowableBytes), writtenBytes); // writtenBytes += allowableBytes; // this can be skipped because we are going to immediately reset the view
+
+      destination.enqueue(currentView);
+      bytesToWrite = bytesToWrite.subarray(allowableBytes);
+    }
+
+    currentView = new Uint8Array(VIEW_SIZE);
+    writtenBytes = 0;
+  }
+
+  currentView.set(bytesToWrite, writtenBytes);
+  writtenBytes += bytesToWrite.byteLength;
+}
+```
+</CodeBlock>
+
+<CodeBlock noButtons slot="six" id="six">
+```ts
+function completeWriting(destination) {
+  if (currentView && writtenBytes > 0) {
+    destination.enqueue(new Uint8Array(currentView.buffer, 0, writtenBytes));
+    currentView = null;
+    writtenBytes = 0;
+  }
+}
+```
+</CodeBlock>
+
+<CodeBlock noButtons slot="seven" id="seven">
+```ts
+function close$1(destination) {
+  destination.close();
+}
+
+```
+</CodeBlock>
+</MPADemo>

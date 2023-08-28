@@ -1,0 +1,34 @@
+import CodeBlock from "../../../CodeBlock.astro"
+
+<CodeBlock>
+```js
+function performWork(request) {
+  var prevDispatcher = ReactCurrentDispatcher.current;
+  ReactCurrentDispatcher.current = HooksDispatcher;
+  var prevRequest = currentRequest;
+  currentRequest = request;
+  prepareToUseHooksForRequest(request);
+
+  try {
+    var pingedTasks = request.pingedTasks;
+    request.pingedTasks = [];
+
+    for (var i = 0; i < pingedTasks.length; i++) {
+      var task = pingedTasks[i];
+      retryTask(request, task);
+    }
+
+    if (request.destination !== null) {
+      flushCompletedChunks(request, request.destination);
+    }
+  } catch (error) {
+    logRecoverableError(request, error);
+    fatalError(request, error);
+  } finally {
+    ReactCurrentDispatcher.current = prevDispatcher;
+    resetHooksForRequest();
+    currentRequest = prevRequest;
+  }
+}
+```
+</CodeBlock>
