@@ -1,3 +1,16 @@
+---
+title: "Intercepting Routes with the Navigation API and View Transitions"
+nextLink: "/"
+---
+import CodeBlock from "../../../components/CodeBlock.astro"
+import IFrame from "../../../components/IFrame.astro"
+import Demo from "../../../components/Demo.astro"
+import CodePen from "../../../components/CodePen.astro"
+export const demoURL = "/demos/silly-demos/"
+
+<Demo id="Kitten Gallery">
+<CodeBlock>
+```js
 <!DOCTYPE html>
 <html>
   <head>
@@ -183,3 +196,8 @@
     </script>
   </body>
 </html>
+```
+</CodeBlock>
+<IFrame src={demoURL + "intercept-routes"} slot="demo" />
+<CodePen slug="xxyZaEX" slot="codePen" />
+</Demo>

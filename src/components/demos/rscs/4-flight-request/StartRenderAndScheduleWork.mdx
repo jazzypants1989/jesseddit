@@ -1,0 +1,32 @@
+import CodeBlock from "../../../CodeBlock.astro"
+import InfoBox from "../../../InfoBox.astro"
+
+<InfoBox>
+Just like how react-server-dom-webpack is mostly composed of config files that help `react-server` and `react-client` import and preload modules, there are also config files that adapt these libraries to different runtime environments. All of our examples in this chapter will come from `ReactServerStreamConfigBrowser` because I think it's the easiest to teach. These functions will vary a little in [edge](https://github.com/facebook/react/blob/main/packages/react-server/src/ReactServerStreamConfigEdge.js#L16) and [node](https://github.com/facebook/react/blob/b798223a620dad77077d27e53cc99cbd54312d99/packages/react-server/src/ReactServerStreamConfigNode.js#L24) runtimes.
+</InfoBox>
+
+<CodeBlock noButtons>
+```js
+function startRender(request) {
+  request.flushScheduled = request.destination !== null;
+
+  {
+    scheduleWork(function () {
+      return performWork(request);
+    });
+  }
+}
+```
+</CodeBlock>
+
+We start with the first check to see if the `destination` property on the _Flight Request_ has changed from `null` yet to see if `flushScheduled` should change to `true`. Then, we simply use the `scheduleWork` function with a callback of `performWork`. So, let's check out `scheduleWork` next.
+
+<CodeBlock noButtons>
+```js
+function scheduleWork(callback) {
+  callback();
+}
+```
+</CodeBlock>
+
+In the browser, this function literally just attempts to run the callback function as soon as possible. [Click here and scroll down to the section titled "setImmediate (or postTask)" if you want to understand this step better.](https://github.com/reactwg/react-18/discussions/91) In this case, the callback function argument is `performWork`. This is where things get interesting.

@@ -228,7 +228,6 @@
 
     let imageIndex =
       params.get("image") ||
-      // @ts-ignore
       navigation.currentEntry.getState()?.imageIndex ||
       null
 
@@ -260,15 +259,12 @@
       linkButton.style.display = "none"
       const span = document.querySelector(".imgcontainer span.active")
       if (span) span.classList.remove("active")
-      // @ts-ignore
       navigation.updateCurrentEntry({
-        // @ts-ignore
         state: { ...navigation.currentEntry.getState(), imageIndex: null },
       })
     }
 
     function linkImage() {
-      // @ts-ignore
       imageIndex = navigation.currentEntry.getState().imageIndex
       console.log(imageIndex, "imageIndex")
       if (imageIndex === -1) return
@@ -283,9 +279,7 @@
       const index = Array.from(images).indexOf(image)
       openImage(index.toString())
 
-      // @ts-ignore
       navigation.navigate(window.location.pathname, {
-        // @ts-ignore
         state: { ...navigation.currentEntry.getState(), imageIndex: index },
       })
     }
@@ -301,7 +295,6 @@
       favorite.textContent = `Your favorite kitty is ${target.value}`
       window.navigation.updateCurrentEntry({
         state: {
-          // @ts-ignore
           ...navigation.currentEntry.getState(),
           favorite: target.value,
         },

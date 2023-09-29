@@ -215,14 +215,20 @@ module.exports = {
             code: {
               color: theme("colors.purple.200"),
               backgroundColor: theme("colors.purple.900"),
+              // boxShadow: "2px 3px 4px #981162",
               "&:before": {
                 content: "none !important",
               },
               "&:after": {
                 content: "none !important",
               },
-              padding: "0.125rem 0.25rem",
+              padding: "0.25rem",
+              margin: "0 0.2rem",
               borderRadius: "0.25rem",
+              fontWeight: "400",
+              textShadow: "none",
+              fontFamily:
+                "Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace",
             },
             figcaption: {
               color: theme("colors.purple.500"),

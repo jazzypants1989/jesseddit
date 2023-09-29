@@ -1,0 +1,38 @@
+import CodeBlock from "../../CodeBlock.astro"
+
+<CodeBlock>
+```js
+function renderToPipeableStream(
+  model: ReactClientValue,
+  webpackMap: ClientManifest,
+  options?: Options,
+): PipeableStream {
+  const request = createRequest(
+    model,
+    webpackMap,
+    options ? options.onError : undefined,
+    options ? options.context : undefined,
+    options ? options.identifierPrefix : undefined,
+    options ? options.onPostpone : undefined,
+  );
+  let hasStartedFlowing = false;
+  startRender(request);
+  return {
+    pipe<T: Writable>(destination: T): T {
+      if (hasStartedFlowing) {
+        throw new Error(
+          'React currently only supports piping to one writable stream.',
+        );
+      }
+      hasStartedFlowing = true;
+      startFlowing(request, destination);
+      destination.on('drain', createDrainHandler(destination, request));
+      return destination;
+    },
+    abort(reason: mixed) {
+      abort(request, reason);
+    },
+  };
+}
+```
+</CodeBlock>

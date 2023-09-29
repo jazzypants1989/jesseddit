@@ -1,0 +1,18 @@
+import CodeBlock from "../../../CodeBlock.astro"
+// CURRENT FILE
+// https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-9b4f847d9-20230901/cjs/react-server-dom-webpack-server.browser.development.js#L1744
+
+<CodeBlock noButtons>
+```js
+function pingTask(request, task) {
+  var pingedTasks = request.pingedTasks;
+  pingedTasks.push(task);
+
+  if (pingedTasks.length === 1) {
+    request.flushScheduled = request.destination !== null;
+    scheduleWork(function () {
+      return performWork(request);
+    });
+  }
+```
+</CodeBlock>

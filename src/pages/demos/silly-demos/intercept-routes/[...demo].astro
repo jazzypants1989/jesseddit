@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -170,7 +169,7 @@
       }
 
       let activeIndex = navigation.currentEntry.getState()?.index
-      if (activeIndex !== null) {
+      if (activeIndex !== null && activeIndex !== undefined) {
         const { index } = navigation.currentEntry.getState()
         const galleryItems = document.querySelectorAll(".gallery-item")
         galleryItems[index].classList.add("active")

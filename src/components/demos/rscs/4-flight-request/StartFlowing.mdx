@@ -1,0 +1,34 @@
+import CodeBlock from "../../../CodeBlock.astro"
+
+// CURRENT FILE
+// https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-9b4f847d9-20230901/cjs/react-server-dom-webpack-server.browser.development.js#L2398
+
+<CodeBlock>
+```js
+function startFlowing(request, destination) {
+  if (request.status === CLOSING) {
+    request.status = CLOSED;
+    closeWithError(destination, request.fatalError);
+    return;
+  }
+
+  if (request.status === CLOSED) {
+    return;
+  }
+
+  if (request.destination !== null) {
+    // We're already flowing.
+    return;
+  }
+
+  request.destination = destination;
+
+  try {
+    flushCompletedChunks(request, destination);
+  } catch (error) {
+    logRecoverableError(request, error);
+    fatalError(request, error);
+  }
+} // This is called to early terminate a request. It creates an error at all pending tasks.
+```
+</CodeBlock>

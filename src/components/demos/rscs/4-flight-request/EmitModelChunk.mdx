@@ -1,0 +1,14 @@
+import CodeBlock from "../../../CodeBlock.astro"
+// CURRENT VERSION OF FILE: 
+// https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-9b4f847d9-20230901/cjs/react-server-dom-webpack-server.browser.development.js#L2390
+
+<CodeBlock noButtons>
+```js
+function emitModelChunk(request, id, model) {
+  var json = stringify(model, request.toJSON);
+  var row = id.toString(16) + ':' + json + '\n';
+  var processedChunk = stringToChunk(row);
+  request.completedRegularChunks.push(processedChunk);
+}
+```
+</CodeBlock>

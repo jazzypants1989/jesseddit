@@ -1,0 +1,23 @@
+import CodeBlock from "../../../CodeBlock.astro"
+// CURRENT VERSION OF FILE: 
+// https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-9b4f847d9-20230901/cjs/react-server-dom-webpack-server.browser.development.js#L1756
+
+<CodeBlock>
+```js
+function createTask(request, model, context, abortSet) {
+  var id = request.nextChunkId++;
+  var task = {
+    id: id,
+    status: PENDING$1,
+    model: model,
+    context: context,
+    ping: function () {
+      return pingTask(request, task);
+    },
+    thenableState: null
+  };
+  abortSet.add(task);
+  return task;
+}
+```
+</CodeBlock>

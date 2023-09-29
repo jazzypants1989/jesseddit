@@ -1,0 +1,299 @@
+---
+title: "Reviving Thenables"
+nextLink: "./4-flight-request"
+---
+import CodeBlock from "../../../components/CodeBlock.astro"
+import InfoBox from "../../../components/InfoBox.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+import Chunk from "../../../components/demos/rscs/2-chunks/Chunk.mdx"
+
+## Introduction
+
+One more chapter before we get into the heart of the _React Server Component_ codebase. Don't worry. This one won't be nearly as long as [the last chapter on streaming](./2-chunks). There's just a few more web platform essentials that we need to cover first.
+
+In this chapter, we're going to be discussing asynchronous code. I mean, have you ever thought about what that really means? We hear words like single-threaded and event loop thrown around a lot, but it seems like relatively few developers take the time to understand what's really happening under the hood.
+
+To answer this question, we'll start with another quick history lesson on the web platform. We'll discuss the journey from primitive events to server components. The majority of this chapter will focus on [_promises_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises), how they work, and how React uses them.
+
+However, to fully understand the React internals, there are a few more things we need to cover. So, we will also explore _JSON [Replacer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#the_replacer_parameter) and [Reviver](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#the_reviver_parameter)_ functions. These are used to customize the serialization of JavaScript objects. React uses them to pull a few cool tricks in their streaming process. We'll discuss how they work and why they're used.
+
+Finally, we'll briefly examine how the fetch method encapsulates the evolution of many of these concepts. All of these disparate but intertwined concepts are crucial for easily and efficiently streaming dynamic, asynchronous data with JavaScript over the internet. So, let's explore these internal mechanisms of JavaScript runtimes to see how React deftly conducts an orchestra of modern web APIs to make server components work. It all starts with events.
+
+## Asynchronous JavaScript
+
+For the first five years or so, every web page was completely static. You could include a form where the user could submit some information, but this required an entire round-trip to the server. This didn't just take a lot of time in the era of the dial-up modem, but it required loading in an entirely new document while discarding everything on the current page. 
+
+Still, the World Wide Web showed massive potential, and this potential was partially revealed with [the release of Mosaic](https://en.wikipedia.org/wiki/Mosaic_(web_browser)) in 1993. Created by two developers named Marc Andreesen and Eric Bina while working at the NCSA, Mosaic distinguished itself by being able to do little things like [show images in the same window](https://thehistoryoftheweb.com/the-origin-of-the-img-tag/) as the rest of the document. This might sound obvious today, but you have to remember that this was completely revolutionary at the time.
+
+Andreesen and Bina soon left the NCSA to found their own company with a man named James H. Clark. They quickly released a new browser called Netscape which was [even more revolutionary](https://www.popularmechanics.com/culture/web/a27033147/netscape-navigator-history/). The first version became [extremely popular](https://webdevelopmenthistory.com/1996-netscape-lays-the-groundwork-for-web-applications/) as it introduced things like tables and background images. 
+
+At that point, it seemed obvious that presentational aspects such as those would emerge. What was not so obvious was how to add dynamicism to a web page. So, the [release of version 2.0](http://sunsite.uakom.sk/sunworldonline/swol-10-1995/swol-10-netscape.html) truly changed the web forever when it introduced the world to JavaScript.
+
+### Events
+
+Asynchronous code has [always been a part of JavaScript](https://webdevelopmenthistory.com/1995-the-birth-of-javascript/). The most basic form of this can be seen when adding an event listener to a DOM element. You're saying that you want some code to run eventually, but only after the user initiates it by doing something in the browser.
+
+In fact, if you look at the initial [release notes](https://web.archive.org/web/19970614001401/http://home.netscape.com/eng/mozilla/2.0/relnotes/mac-2.0b2.html) for the beta version in which JavaScript was released to the world, this is how it was described:
+
+> A programmable API that allows cross-platform scripting of events, objects, and actions. It allows the page designer to access events such as startups, exits, and user mouse clicks.
+
+Despite the [original JavaScript guide released with Netscape 2.0](https://web.archive.org/web/19970613234917/http://home.netscape.com/eng/mozilla/2.0/handbook/javascript/index.html) having [a whole section](https://web.archive.org/web/19970617232705fw_/http://home.netscape.com/eng/mozilla/2.0/handbook/javascript/ref_m-q.html#onBlur_event) dedicated to event handlers, events were not a part of any actual spec until [DOM level 2](https://www.w3.org/TR/DOM-Level-2-HTML/). This was in the year 2000-- around five years after the first version of JavaScript was released. The spec codified familiar API's like `addEventListener`, but it was a bit of an uphill battle. 
+
+Internet Explorer used [a different event system](https://docstore.mik.ua/orelly/webprog/jscript/ch19_03.htm), and it was the most popular browser by far. If you've ever been confused by the concepts of event [bubbling and capturing](https://javascript.info/bubbling-and-capturing), you have this period of relative chaos to blame. Thankfully, _IE_ eventually jumped on board with the _DOM Level 2_ event model, but developers were still doing checks for `window.event` for years afterwards to ensure backwards compatibility.
+
+### `setTimeout` and `setInterval`
+
+So, that covers the introduction of scripted, programmatic responses to user interaction in the browser. But, you don't always want to rely on the behavior of the user to get things going. What about something that happens over a span of time independent of outside stimulus-- like [a cool text ticker](https://web.archive.org/web/19990203103422fw_/http://planetx.bloomu.edu/~mpscho/jsarchive/ticker.html)!
+
+In my research for this article, I was really struggling to find any definitive information about the introduction of `setTimeout`. These objects that have been included since Netscape 2.0 are sometimes referred to as [DOM level 0](https://www.quirksmode.org/js/dom0.html). Shortly before I found that Netscape 2.0 JavaScript guide, I got frustrated and decided to just ask the man himself. [According to Brendan Eich](https://x.com/BrendanEich/status/1705273184109596726), setTimeout was created in 1995.
+
+Considering that JavaScript was released in December of that year, it's pretty safe to safe that it's been there since the very beginning. `setInterval` joined it soon afterwards in 1996. `setTimeout` and `setInterval` both take two arguments: a function and an amount of time.
+
+`setTimeout` will run the function once after that amount of time whereas `setInterval` runs it repeatedly at whatever rate is specified by that second argument. This is only possible because JavaScript has ["First-Class Functions"](https://en.wikipedia.org/wiki/First-class_function). This means that you can pass them as arguments to other functions and assign them to variables so they can be called at a later point. Thus, these functions are appropriately termed _callbacks_.
+
+### Callbacks
+
+The idea is simple. You construct a function that takes some parameters and uses them to do stuff. Then, you pass it as an argument to another function or an HTML event attribute to define what happens when a certain condition is met. Instead of running the function immediately, the browser holds it in memory and waits to _call it back_ when the event fires, the timeout runs out, the download completes, etc.
+
+This pattern dominated the JavaScript scene for around twenty years. It's a natural fit for browser code, and it still works well for many situations. Before [the birth of AJAX](../client-side-routing/2-a-brief-history-of-client-side-routing#the-birth-of-ajax), it was pretty rare for a website to do much complex interaction with JavaScript.
+
+So, this was enough for client-side JS for a long time. And, after Ryan Dahl and company created Node, it was only natural for them to build it with these concepts in mind. Remember, Node created the custom class `EventEmitter` for things like streams specifically so that they could be represented within an event-driven architecture. 
+
+While you could still easily end up in [callback hell](http://callbackhell.com/), using something like jQuery paved over many of the hurdles. The worst aspect was that you, if you wanted to deal with any exceptions that may occur, you needed to pass a special error-handling callback through as an additional argument to each level of this [pyramid of doom](https://en.wikipedia.org/wiki/Pyramid_of_doom_(programming)). But, this [continuation passing style](https://www.youtube.com/watch?v=V2Q13hzTGmA) was the only way to avoid blocking, synchronous code.
+
+### Synchronous Code
+
+From the very beginning, the way that browsers have interpreted documents has been in a traditional, top-down format. This is true for any scripts found within the document as well. This ["run-to-completion"](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop#run-to-completion) model is synchronous in nature because the browser processes each line of code sequentially one after the other. This makes JavaScript extremely predictable, but it can lead to a bad user experience if one line of code takes a long time.
+
+The problem is that the browser only uses [a single thread](https://developer.mozilla.org/en-US/docs/Glossary/Main_thread) to process [all the JavaScript](https://developer.mozilla.org/en-US/docs/Web/Performance/How_browsers_work#preload_scanner) on the page. When we're talking about computers, [a thread](https://en.wikipedia.org/wiki/Thread_(computing)) just represents the smallest thing that a computer can do at once. This thread is what is actually [running the code that you write](https://chromium.googlesource.com/chromium/src/+/main/docs/threading_and_tasks.md#overview).
+
+Although modern computers have access to [multiple cores](https://en.wikipedia.org/wiki/Multi-core_processor) and [multithreading](https://en.wikipedia.org/wiki/Simultaneous_multithreading) exists, the browser is doing much more than just running your JavaScript. And, your computer is doing much more than just running the browser. So, when one function takes a long time, it is said to be [blocking the main thread](https://developer.chrome.com/blog/inside-browser-part3/#javascript-can-block-the-parsing). As long as that function is running, the browser cannot do anything else.
+
+This is why _callbacks_ and elaborate `setTimeout` chains were so dominant in JavaScript. The internet is asynchronous in nature. It takes time to download requests. So, you had to bend over backwards to try to make all of this synchronous code work in an asynchronous world. An official solution was inevitable. We'll get to that soon, but in order to understand promises, it's essential to understand the event loop itself.
+
+## The Event loop
+
+This will just be an introduction. Before we can understand how promises fit into this structure, we need to understand why the event loop even exists. If all JavaScript code was synchronous, there would be no need for it.
+
+### Web API's
+
+Despite JavaScript's single-threaded nature, browsers need to be able to handle things like `setTimeout` or events that aren't processed immediately. This might surprise you, but _Web API_'s like `setTimeout` are not actually a part of the core JavaScript specification. Despite the fact that it is so essential to the language that it has been there since the very beginning, the earliest discussion I could find about [standardizing `setTimeout` was in 2005](https://brendaneich.com/2005/06/javascript-1-2-and-in-between/#comment-289). 
+
+Eventually, [it was added to the HTML standard in 2011](https://www.w3.org/TR/2011/WD-html5-20110525/timers.html). It's still rather barebones however, and the timers are an implementation detail left up to the individual browsers. Although [it was discussed in 2010](https://esdiscuss.org/topic/bringing-settimeout-to-ecmascript), it is still not included in the EcmaScript Standard. 
+
+This is what it means when we say something is a [_Web API_](https://developer.mozilla.org/en-US/docs/Web/API). It's something extra that each runtime adds to the JavaScript engine individually. For instance, if you download just the v8 engine and you try to run a function with a `setTimeout`, [you will get a `ReferenceError`](https://stackoverflow.com/questions/12335222/settimeout-and-v8).
+
+Sometimes, these _Web APIs_ are referred to as the [Browser Object Model](https://javascript.info/browser-environment#bom-browser-object-model). This was because it was originally just a few objects like `navigator` that provided information about the execution environment. But, with the spread of these standards to server-side JavaScript, this term is slightly outdated.
+
+The important thing to understand is that [this is what separates a JavaScript engine like v8 from a JavaScript runtime like Node](https://www.youtube.com/watch?v=8aGhZQkoFbQ). The engine only implements the core JavaScript specification which is mostly logic and syntax. The runtime gives it an environment where that code can be executed and ways to interact with the outside world.
+
+Generally, these _Web APIs_ will operate on separate threads. This is what gives JavaScript the ability to operate concurrently, but it's important to note that everything still needs to be processed on the main thread-- at least until Web Workers emerge. So, the runtime needs a way to keep track of all of these asynchronous tasks and schedule them to be processed in the correct order. This is where the event loop comes in.
+
+### Memory: Stack and Heap
+
+As it is parsing the document, the JavaScript runtime will keep track of each variable and function that it finds so it can use them later. [It stores everything in a memory heap](https://v8.dev/blog/pointer-compression#value-tagging-in-v8) which is [a flexible data structure](https://deepu.tech/memory-management-in-v8/) that can grow and shrink as needed.
+
+However, it also needs a way to keep track of the order in which these functions are invoked. Each runtime keeps a fixed amount of memory where it stores a data structure known as the [call stack](https://developer.mozilla.org/en-US/docs/Glossary/Call_stack). Together, these facilitate a scheduling mechanism called [the _event loop_](https://felixgerschau.com/javascript-event-loop-call-stack/).
+
+### The Call Stack
+
+As it parses each script, the JavaScript runtime builds [a _call stack_](https://en.wikipedia.org/wiki/Call_stack) of all the functions that it finds. This is what allows it to keep track of where it is in the code. When it encounters a function invocation, it pushes that function onto the stack and starts executing it. 
+
+The _call stack_ is _LIFO (Last In, First Out)_. Moving from top to bottom, each function is popped off the stack as it finishes executing. But, if a function calls a bunch more synchronous functions, all of those need to run before the engine can move on to the next line of code. Each function that gets invoked gets turned into something called [a _stack frame_](http://rabbit.eng.miami.edu/class/519/frames.html) which contains everything necessary for the function to run such as the arguments, local variables, and the current line number.
+
+As the JavaScript engine is working its way through the _call stack_, it is also building a _task queue_ for anything asynchronous. Anything that doesn't resolve immediately like network requests, `setTimeout` callbacks, or any other call to a _Web API_ will be placed into this queue. The runtime executes these on separate threads so that they don't interfere with the single-threaded _call stack_.
+
+### The Task Queue
+
+As each frame is processed and the _call stack_ unwinds, the _task queue_ is growing. Generally, this is done by giving the _Web API_ a callback that describes what you need to happen later. So, the _task queue_ is also sometimes known as the _callback queue_.
+
+As each _Web API_ finishes whatever it was doing, it places the callback it was given into the _task queue_. When we reach the end of the script, the runtime will check the _task queue_ to see if anything's there. If there is, each callback is moved onto the _call stack_ in sequential order starting with the oldest one.
+
+In contrast to the _call stack_, the _task queue_ is _FIFO (First In, First Out)_. So, everything placed in the queue will progressively run in the order it is added. If there are multiple items in the queue, and the first task adds more tasks to the queue, those have to wait for everything else in the queue to finish before they can be processed. 
+
+None of that can happen until the _call stack_ created by the first task is fully unwound. So, if its callback invokes several more synchronous functions, each of those must be processed and the _call stack_ must be drained again before the runtime can move on to the next item in the _task queue_. This is why it's so important to avoid blocking the main thread.
+
+So, the _event loop_ is what allows JavaScript code to be non-blocking when the engine itself is synchronous and single-threaded. It gives JavaSript runtimes a stable, predictable way to process asynchronous code, and this is part of what made it attractive as a server-side language. The event loop ensures that each request can be processed in a predictable, efficient manner-- just like clicking a button on a web page. However, this is not to say that Node didn't have any growing pains while adapting JavaScript to the server.
+
+## Server-Side JavaScript
+
+Node may have been what made the world take JavaScript seriously as a server-side language, but it wasn't even close to the first use of JavaScript on the server. In fact, the very first time Netscape even hinted at JavaScript was in their press release for [a server framework called LiveWire](https://web.archive.org/web/19981202062552/http://home.netscape.com/newsref/pr/newsrelease41.html). It briefly described a "Java-based scripting language to enable developers to create and execute Live Objects, or interactive multimedia content, within their applications." 
+
+Internally, this was codenamed Mocha. Later, it was [briefly named LiveScript](https://www.oreilly.com/library/view/node-up-and/9781449332235/pr03.html) to match the server framework, but this was all [changing very fast](https://groups.google.com/g/comp.lang.javascript/c/CqDXNTWNZPA/m/eTo7NCWHNyAJ). The [very first press release](https://web.archive.org/web/20070916144913/https://wp.netscape.com/newsref/pr/newsrelease67.html) for the scripting language was to mention that it had been renamed.
+
+> JavaScript is an easy-to-use object scripting language designed for creating live online applications that link together objects and resources on **both clients and servers**. While Java is used by programmers to create new objects and applets, JavaScript is designed for use by HTML page authors and enterprise application developers to dynamically script the behavior of objects running on **either the client or the server**.
+
+Java was brand new and extremely popular at the time, and Netscape had acquired the copyright because they wanted to incorporate it into their browser. In the end, the connection between JS and Java has always been tenuous at best. Java is a compiled language, and it did not have first-class functions at the time.
+
+So, NetScape knew they needed a light-weight scripting language for handling events directly in HTML documents. Marc Andreessen [later said this about why he wanted to create JavaScript](https://web.archive.org/web/20051113013615/https://wp.netscape.com/comprod/columns/techvision/innovators_be.html):
+
+> What people wanted back then (and still want) is the ability to go one step beyond HTML and add a little bit of code that makes a web page dynamic... things that HTML cannot express. That's really where you need a programming language, but something simpler than Java or C++.
+
+This was why Netscape hired Brendan Eich to create what eventually became JavaScript. He later said that Andreessen told him the language needed to be ["right there in the page"](https://www.youtube.com/watch?v=krB0enBeSiE&start=2220). This idea to write the code directly in the middle of the mark-up was somewhat revolutionary at the time. Netscape Livewire exploited this by using a special `<SERVER>` tag within which one could do any server-side processing necessary like queries to databases.
+
+However, it seems like Netscape Livewire was a bit of an afterthought. According to Brendan Eich, it was ["overwhelmed in the Java onslaught"](https://brendaneich.com/2011/01/harmony-of-my-dreams/#comment-826). It was basically [a fairly limited HTML pre-processor](https://dev.to/macargnelutti/server-side-javascript-a-decade-before-node-js-with-netscape-livewire-l72). 
+
+While some aspects of working with Livewire are reminiscent of modern server-side JavaScript, others are drastically different. It required compilation into a single propietary `.web` file for the entire server. This allowed it to have [a native multi-threaded execution model](https://stackoverflow.com/questions/18350910/netscape-enterprise-server-and-server-side-javascript-ssjs-vs-node-js), but it lacked asynchronous features so one had to be careful not to block any of these threads. 
+
+It had a stateful request caching system, but this was [met with mixed reviews](https://philip.greenspun.com/wtr/livewire.html). For the most part, the [options for passing state back and forth between client and server](https://docs.oracle.com/cd/E19957-01/816-6411-10/sessmgmt.htm#1036896) were pretty familiar to what we have today, though. 
+
+Later, the [LiveConnect feature](https://docs.oracle.com/cd/E19957-01/816-6411-10/lc.htm) actually enabled developers to share objects between JavaScript and Java-- although [this had some security issues and never really caught on](http://www.white-mountain.org/jamie/software/livewire-sucks.shtml). Netscape encapsulated this grand vision of an inter-connected, cross-platform development environment as [Netscape One](http://home.netscape.com/comprod/one/white_paper.html).
+
+By late 1996, Livewire had been [sold to Oracle](https://www.cnet.com/tech/tech-industry/netscape-oracle-band-together/), but many were still convinced that JavaScript had a place on the server. This cross-platform ability is mentioned explicitly in the overview of [the very first EcmaScript Standard](https://www.ecma-international.org/wp-content/uploads/ECMA-262_1st_edition_june_1997.pdf) in June 1997. This was even before the concept of an "event" was formalized in Dom Level 2. 
+
+> ECMAScript was originally designed to be a Web scripting language, providing a mechanism to enliven Web pages in browsers and **to perform server computation** as part of a Web-based client-server architecture. ECMAScript can provide core scripting capabilities for **a variety of host environments**, and therefore the core scripting language is specified in this document apart from any particular host environment.
+
+### Node
+
+JavaScript's naturally event-driven design was part of what drew Ryan Dahl to use it to build servers. After years of being frustrated by the blocking nature of Ruby servers, [he was blown away by the performance made possible by Google's v8 engine](https://www.youtube.com/watch?v=SAc0vQCC6UQ). The [initial, stated goal](https://www.youtube.com/watch?v=ztspvPYybIY) of the Node.js project was "to provide a purely evented, non-blocking infrastructure to script highly concurrent programs." JavaScript's origins in the browser make it perfect for this. 
+
+I have [already discussed](./2-chunks) the fact that Node has built many of its core internals around the `EventEmitter` API. Every stream is an `EventEmitter` and this powers all file & network I/O. Events and callbacks are at the very heart of Node. All the core API's are designed so that can just keep passing things through functions and avoid blocking the call stack as much as possible.
+
+Node's event loop needed to be [a bit more complex](https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick) than the browser's. Because there are even more asynchronous considerations in Node than in the browser, like writing files to the disk, there are six distinct phases in the Node event loop. Additionally, they introduced two new concepts: the _next tick queue_ and `setImmediate`.
+
+### Next Tick Queue
+
+The _next tick queue_ emerged as a way to ensure that certain callbacks are processed before the next pass through the event loop. Between each of the six phases, Node checks the _next tick queue_ to see if there is anything there. Everything in the queue is processed before moving on to the next phase. To place something there, all you need to do is call a function called `process.nextTick()` and pass it a callback.
+
+This feeds into Node's mantra of [non-blocking code](https://nodejs.org/en/docs/guides/blocking-vs-non-blocking). It allows developers to carefully orchestrate the order in which things happen. This is especially useful for things like error handling. If anything needs to be processed urgently, but it also needs to wait on things to be set up by the synchronous code, it can be placed in the _next tick queue_. For something that can wait until near the end of the event loop, there is `setImmediate`.
+
+### setImmediate
+
+`setImmediate` is extremely similar to `setTimeout` with a delay of `0`, but it's not exactly the same. Technically, they exist in two different phases of the event loop. `setTimeout` callbacks are processed in the _timers_ phase whereas `setImmediate` callbacks are processed in the _check_ phase. Depending on [a variety of factors](https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#setimmediate-vs-settimeout), this can make a difference in the order in which they are processed.
+
+`setImmediate` was [originally intended to be a web standard](https://jatindersmann.com/2012/08/07/ieblog-web-performance-apis-rapidly-become-w3c-candidate-recommendations/), but this never properly materialized. At this point, it is only supported by Node and Internet Explorer. But, it can be [really handy for certain situations](https://exploringjs.com/nodejs-shell-scripting/ch_nodejs-overview.html#next-tick-tasks-and-microtasks-vs.-normal-tasks).
+
+### Proto-Promises
+
+It might surprise you to know that Node contained [something called a _promise_](https://github.com/nodejs/node-v0.x-archive/blob/490cac0d7e9b455de74eb6038e555a60a2fafe13/src/node.js#L196) in some of its very first versions. They even [came up in Ryan Dahl's initial announcement](https://groups.google.com/g/commonjs/c/tFO0rDFYAmg/m/0kDHteaMRB8J) to the CommonJS group. At [the talk at JSConf EU 2009](https://www.youtube.com/watch?v=EeYvFl7li9E) where he announced Node to the rest of the world, Dahl spent some time to define them. He included a slide that declared that "A Promise is an `EventEmitter` which emits either a success or an error event (but not both)".
+
+Eventually, these proto-promises were [removed in early 2010](https://groups.google.com/g/nodejs/c/jaufClrXU9U/m/ov5WHIk7SAwJ) as there were some [flaws in the API](https://groups.google.com/g/nodejs/c/sWE0Oa80iNg/m/-n7xPyOdGd8J) and Ryan Dahl eventually decided to [defer to user libraries](https://groups.google.com/g/nodejs/c/RvNoQtoWyZA/m/a8Hu83Ewb0IJ) for any future promise implementations. He later listed this as [one of his greatest regrets when it came to Node](https://www.youtube.com/watch?v=M3BM9TB-8yA) and it [caused a bit of frustration at the time](https://www.sequoiacap.com/article/deno-spotlight/).
+
+## Promises and Thenables
+
+This goes to show how long people have been considering something like promises to be a useful tool when working with asynchronous code. In fact, the concept goes [back much further than that](https://samsaccone.com/posts/history-of-promises.html). You can trace it to the conception of a "thunk" in [ALGOL languages](https://en.wikipedia.org/wiki/ALGOL_60), or the idea of [a future](https://en.wikipedia.org/wiki/Futures_and_promises). Basically, it's just a way to represent a value that will be available at some point in the future-- but not right now.
+
+The first attempt at properly classifying promises in JavaScript was the [Promises/A specification](https://wiki.commonjs.org/wiki/Promises/A) from CommonJS, but there were many variations. I already mentioned jQuery which has included a [slightly-less-functional version of promises](https://api.jquery.com/Types/#Deferred) since [2011](https://blog.jquery.com/2011/01/31/jquery-15-released/). In fact, something similar to its concept of a `Deferred` object is finally making its way into JavaScript with the [Promise.withResolvers proposal](https://github.com/tc39/proposal-promise-with-resolvers) despite [some considering it an anti-pattern](https://github.com/petkaantonov/bluebird/wiki/Promise-anti-patterns#the-deferred-anti-pattern). 
+
+### Standardization
+
+By 2012, there was a proliferation of [libraries intended to help developers with asynchronous code](https://web.archive.org/web/20130724052629/https://github.com/joyent/node/wiki/modules#wiki-async-flow). This was a clear indication that there was a need for a standard. Many in the community advocated for something stricter than the _Promises/A_ standard. So, [the _Promises/A+_ specification](https://promisesaplus.com/) was created in October of that year.
+
+We didn't mention him by name in the last chapter, but a hidden hero of the last ten years of web standards is a man named [Domenic Denicola](https://blog.domenic.me/). He's currently the Staff Software Engineer at Google Tokyo, and he has been behind many of the most prominent features in modern JavaScript. You've probably used a feature that he helped create. 
+
+He helped usher in _Web Streams_ for instance. He's also done many other things, but we will obviously be focusing on promises in this chapter. He released his article ["You're Missing the Point of Promises"](https://blog.domenic.me/youre-missing-the-point-of-promises/) in late 2013 which helped clarify the idea that mutable implementations like jQuery's fell short of the ideal. 
+
+Domenic stressed that much of the power of promises came from their ability to be chained together, and that each promise needed to be able to return a new promise. He was [one of the driving forces](https://www.youtube.com/watch?v=V2Q13hzTGmA) behind the new specification, and he helped create a rigorous test suite to ensure that all implementations were compliant. As we'll see in the next section, the modern API conforms closely to his 2013 paper ["States and Fates"](https://github.com/domenic/promises-unwrapping/blob/master/docs/states-and-fates.md). 
+
+### Theory of Promises
+
+[To quote MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), "A Promise is an object representing the eventual completion or failure of an asynchronous operation... [it's] a proxy for a value not necessarily known when the promise is created." 
+
+A promise is always in one of three states: _pending_, _fulfilled_, or _rejected_. Whether a promise is _fulfilled_ or _rejected_, it becomes _settled_ once it is no longer _pending_. Critically, this can only happen once as you _resolve_ the promise. Until _then_, the promise is _unresolved_.
+
+### Theory of Friendship
+
+Let's bring it back home with another fun metaphor. Don't worry, I'm not very inventive. Just think about making a promise to a friend. You're basically saying, "I will definitely do that one thing-- just not right now." Outside the _context_ of that promise, everything else you're doing at that moment is irrelevant. 
+
+What matters is what happens next. Until **then**, that promise (and your friendship) is **pending**. _Then_, you will see if you can **fulfill** that commitment. This will show the **value** of that promise to you both. Otherwise, you will have to **reject** your friend. He will expect a good **reason**.
+
+You can **resolve** this promise and find the **value** right away, or you can **resolve** it with another promise and pass the value along. If you can't complete your commitment to your friend right away, this is like saying that you need to something else first. In this case, everything is still **pending**.
+
+But, you can't keep passing him the same promise forever. He's going to get tired of your excuses, so it will have to get **settled** eventually. At that point, the promise has been fully **resolved**. If he doesn't hear from you, then he will just assume that you **rejected** him with a generic **reason**.
+
+In the end, the promise must be either **fulfilled** or **rejected**. Anything else would have to be another, separate promise. You can't go back and change the past. You can only make new promises-- perhaps even several in a row.
+
+### `.then()`
+
+The most important thing to understand about promises is that they always possess a `.then()` method. This method takes two arguments which are both functions-- one for the fulfilled case and one for the rejected case. Either way, it returns an entirely new, unresolved promise. Because of this, they can be chained one after the other-- much like how I used the word 'then' to chain multiple clauses together in the previous section.
+
+Like I said earlier, [several libraries implemented similar functionality beforehand](https://web.dev/promises/#promises-arrive-in-javascript). Thus, there are many objects that exist with a `.then()` method that are not technically promises. Generally, while these may have many similarities to actual promises, they may not have all of the same properties. So, they are often called [_thenables_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#thenables) to mark the distinction. Native EcmaScript `Promise` objects were designed to work natively with most _thenables_.
+
+## EcmaScript Promises
+
+To be clear, the Promises/A+ standard was widely respected immediately, but this was not part of the formal EcmaScript standardization process. Much like CommonJS with Promises/A, this specification was simply the result of a group of developers getting together to decide on a formal set of best practices. However, 
+
+Web legend Alex Russell contributed [the first commit](https://github.com/slightlyoff/Promises/commit/2d8729233bdcbf784fdbfe6d796ff67ae5ce1030) to the repository that ended up becoming  called DOM Futures only four months after Domenic Denicola released "You're Missing The Point of Promises". Yes, it initially started out 
+
+ included in the EcmaScript standard until [June of 2015](https://www.ecma-international.org/ecma-262/6.0/#sec-promise-objects).
+
+### Mutation Observers
+
+### Microtasks
+
+### Generators and Async Iterators
+
+### Async / Await
+
+Soon after generators and promises arrived in ES6, people started discussing a way to make this syntax even nicer. Even though long chains of promises are much preferable to a gigantic pyramid of doom, they can still be a bit hard to read. People wanted to write asynchronous code that looked more like synchronous code. 
+
+Essentially, this was an attempt to [bring coroutines to JavaScript](https://en.wikipedia.org/wiki/Coroutine). The basic idea is that you can pause the execution of a function, go do other things while you wait for something asynchronous to complete, and then come right back into the context of the function where you were before. This makes it extremely convenient to write ergonomic, concurrent code even if you need to wait for multiple things to happen in the same function.
+
+In [early 2014](https://github.com/tc39/proposal-async-await/commit/2c499feb41df4c79a884d1520518cd00ab623e5b), the first proposal for `async` / `await` was created. In truth, this is just some [syntax sugar around generators](https://tc39.es/proposal-async-await/#desugaring), but the authoring experience cannot be denied. You just add the `async` keyword to the function declaration, and then every time you add the `await` keyword, the runtime will step out of the function until that promise resolves. 
+
+Async functions always return a promise even if you don't use the `await` keyword. Like `process.nextTick`, this can be a simple way to make sure that something important happens before the next pass through the event loop. However, it's also critical to note that each `await` is processed one at a time, so it can be easy to slow things down [a bit too much](https://web.dev/async-functions/#careful-avoid-going-too-sequential).
+
+### `queueMicrotask`
+
+## A Simple Thenable
+
+<IFrame 
+src="https://stackblitz.com/edit/thenables?ctl=1&embed=1&file=1-simple.js&view=preview" />
+
+Some people said this [couldn't be done with just an EventTarget](https://www.xanthir.com/b4PY0)
+
+There are five demos in total here. All of the modules are loaded into the browser as you click each button, so make sure you check out the browser console to see the logs that will get placed there. You can also click over to the editor to run the scripts there too if you want to play around with stuff.
+
+In the first demo, we have a very simple `Thenable` class. Hopefully, this should make the basic concepts pretty easy to understand. However, this doesn't handle asynchronous tasks or chaining. So, I included another implementation which I worked on for _far too long_. I am fairly certain it is [complaint with the A+ spec](https://promisesaplus.com/)-- although it's hard to tell with all the _x_'s (tasks in my class).
+
+The other three demos demonstrate the benefits of using native JavaScript Promises-- with the third demo going into the most detail. The fourth demo is meant to demonstrate the native interoperability with other `thenables` as it shows that our custom class works flawlessly when interwoven in a chain with real promises. The final demo further elucidates the limits of our custom class and the benefits of native promises.
+
+## How and Why React Uses - Promises
+
+### Chunks and Thenables
+
+_Chunk_ and _Thenable_-- both of these words are used by the React team to define core aspects of the Server Components API. We just talked all about _Thenables_, and we learned about chunks in the last chapter. 
+
+So, this definition is quite literal when we are talking about RSC's. When we talk about _Chunks_, you should think about small, individual units of work. Later, we will talk about webpack chunks. To distinguish these, note that streaming _RSC Chunks_ have a capital 'C'. To help understand what's happening here, let's take a look at [the code in the `react-server-dom-webpack/server.browser` file that we looked at earlier](https://github.com/vercel/next.js/blob/236075362a1ea368a625e887ef269e8af750fe1c/packages/next/src/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.browser.development.js#L2703) where they define the Chunk class.
+
+<Chunk />
+
+Don't worry if you don't fully get this just yet. We actually won't use this function in this chapter (this is used to encode the [_Flight Response_](./4-flight-response)). The important thing to understand here is that they sub-class the promise prototype and create their own custom `.then()` method. So, every single _Chunk_ is a _Thenable_. We're about to go deeper into the code, but this is very important to keep in mind as we go through this.
+
+## JSON Replacer and Reviver Functions
+
+To understand what's actually happening here, we must briefly discuss the concept of a [JSON Replacer Function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify). This is the term used for the second argument in the `JSON.stringify` method. `JSON.stringify` is one of the most common ways to prepare a complex JavaScript value to be sent somewhere across the internet. This process is known as serialization. It transforms the value into a string that can be understood by the `JSON.parse` method on the other side and turned back into the original value.
+
+`JSON.stringify` provides a very sensible default serialization algorithm which works for most cases. So, often people only provide one argument to the `JSON.stringify` method, or they skip to the third (which is for spacing) while ignoring the second. However, this second argument can be an extremely powerful function called the `replacer` that allows you to customize the serialization process.
+
+This `replacer` function is called for every single property on the object being serialized. It is passed two arguments. The first is the key of the property, and the second is the value. The `replacer` function can then conditionally return new values in place of the original ones. If it returns `undefined`, that property will be omitted from the serialization process entirely. 
+
+## How and Why React Uses - JSON methods
+
+## resolveModelToJSON
+
+Here's a simple demo where we look for a key of `thisThing` so we can change that value into something more exciting. Otherwise, we just return the original value.
+
+<IFrame 
+extraStyle="shadow-lg shadow-purple-400"
+src="https://stackblitz.com/edit/json-replacer-and-reviver-functions?ctl=1&embed=1&file=1-replacer.js" />
+
+Like I said, the `stringify` method has a default serialization that works for most cases. However, there are some values that cannot be serialized-- like `Symbol` or a `BigInt`. Additionally, `Date` objects are automatically serialized into strings. Even if you attempt to override this behavior with a `replacer` function, it won't work. I show this in the demo below. 
+
+<IFrame src="https://stackblitz.com/edit/json-replacer-and-reviver-functions?ctl=1&embed=1&file=3-dates.js&startScript=dates&view=editor" />
+
+The only ways I could find to change this were pretty hacky-- like [overriding the `.toJSON` method on the `Date` object itself](https://stackoverflow.com/questions/31096130/how-to-json-stringify-a-javascript-date-and-preserve-timezone). Instead, React pulls a few other tricks. Let's start diving into `resolveModelToJSON` and take a look.
+
+## Task Scheduling
+
+## Modern Standards
+
+### `fetch` and `AbortController`
+
+### `XMLHttpRequest`
+[IE](https://humanwhocodes.com/blog/2012/08/22/the-innovations-of-internet-explorer/)
+
+### `createFromFetch`
+
+## Conclusion

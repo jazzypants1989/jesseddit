@@ -1,0 +1,36 @@
+import CodeBlock from "../../../CodeBlock.astro"
+// CURRENT FILE
+// https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-9b4f847d9-20230901/cjs/react-server-dom-webpack-server.browser.development.js#L2470
+
+<CodeBlock>
+```js
+function performWork(request) {
+  var prevDispatcher = ReactCurrentDispatcher.current;
+  ReactCurrentDispatcher.current = HooksDispatcher;
+  var prevRequest = currentRequest;
+  currentRequest = request;
+  prepareToUseHooksForRequest(request);
+
+  try {
+    var pingedTasks = request.pingedTasks;
+    request.pingedTasks = [];
+
+    for (var i = 0; i < pingedTasks.length; i++) {
+      var task = pingedTasks[i];
+      retryTask(request, task);
+    }
+
+    if (request.destination !== null) {
+      flushCompletedChunks(request, request.destination);
+    }
+  } catch (error) {
+    logRecoverableError(request, error);
+    fatalError(request, error);
+  } finally {
+    ReactCurrentDispatcher.current = prevDispatcher;
+    resetHooksForRequest();
+    currentRequest = prevRequest;
+  }
+}
+```
+</CodeBlock>

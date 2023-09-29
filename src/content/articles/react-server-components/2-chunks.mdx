@@ -1,0 +1,474 @@
+---
+title: "Chunks"
+nextLink: "./3-reviving-thenables"
+---
+import CodeBlock from "../../../components/CodeBlock.astro"
+import InfoBox from "../../../components/InfoBox.astro"
+import IFrame from "../../../components/IFrame.astro"
+
+import RenderToReadableStream from "../../../components/demos/rscs/RenderToReadableStream.mdx"
+import RenderToPipeableStream from "../../../components/demos/rscs/RenderToPipeableStream.mdx"
+
+## Introduction
+
+As we delve deeper into the depths of React Server Components (_RSC_), I'm going do my best to give you all the background information you need to truly understand each part of the code. Hopefully, the last chapter cemented the basic concept of _React Server Components_ (RSC) in your mind and helped you see how it differs from _Server Side Rendering_ (_SSR_). It's important to fully grasp this distinction as we move forward.
+
+This is not the only background knowledge that you need, however. It's also essential to understand a wide breadth of JavaScript & Web Platform fundamentals in order to truly grok what's happening in the code. Even though the React team have done a fantastic job of leaving a trail of breadcrumbs in extensive comments throughout the codebase, it can be easy to overlook key details if you don't understand the tools that they are leveraging.
+
+While I cheekily kept the title a bit vague, the table of contents should have clued you into the topic of this article. We're going to explore a concept known as streaming in relation to JavaScript-- both in Node and other environments. Throughout, I'll try to keep it relatable by showing a few places in the React codebase where these concepts are used, but these will just be glancing previews of the deep dives coming in later chapters.
+
+In the next chapter, we will take another detour to explore promises in JavaScript. There are a few more chapters like this later, too. I know it might be frustrating to not dive headfirst into the React codebase, but a thorough knowledge of these concepts is key to understanding how _RSC_'s actually work. I've worked really hard to put together a bunch of demos that make it all very clear. I will also be establishing some basic _RSC_ knowledge throughout the chapter which I will refer to throughout the series. 
+
+If you truly think that you understand this stuff well enough already and you just want to get to the gritty details, you can [just click here to skip to the fourth chapter](./4-flight-request). I get it! Otherwise, we'll start with our first look at some React Server Component code!
+
+## `react-server-dom-webpack` and `react-server`
+
+As of the time of this writing, there is currently only one implementation of React Server Components in wide use. This is `react-server-dom-webpack`. To clarify, there is no core aspect of RSC's that actually requires webpack. In fact, there is at least one other implementation, `react-server-dom-esm`, that you can use if you build the current experimental versions of React yourself.
+
+The main way in which these two libraries(`-esm` and `-webpack`) differ is in how they resolve and load modules for client components and server actions. The majority of the critical code is actually located in two entirely separate libraries-- `react-server` and `react-client`. These two core libraries are not actually functional by themselves as they expect to be given configuration files that adapt them to different module-loading environments. This is what the implementation libraries like `react-server-dom-webpack` provide.
+
+This theme of customizing the code for the specific runtime environment goes even deeper than this. One of the first things you will notice when looking at [the files in the `RSD-webpack` repository](https://github.com/facebook/react/tree/main/packages/react-server-dom-webpack/src) is that there are multiple versions of each of the major exports. These are designed for the browser, [the edge](https://www.netlify.com/blog/edge-functions-explained/), and Node [runtimes](https://www.youtube.com/watch?v=CSc8QPQdN5I) respectively. We'll take a closer look at these differences later, but first let's take a closer look at how `react-server` and `react-server-dom-webpack` intersect.
+
+The easiest way to see this division of responsibilities is to compare the pre-compiled code for one of the files in `react-server-dom-webpack` to what it looks like afterwards. First, take a quick look at [ReactFlightDOMServerBrowser.js](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightDOMServerBrowser.js)-- only around 100 lines. But, notice all those imports at the top from files in the `react-server` package? Now, behold the [3,400 line behemoth that file compiles into](https://unpkg.com/browse/react-server-dom-webpack@0.0.0-experimental-dd480ef92-20230822/cjs/react-server-dom-webpack-server.browser.development.js). 
+
+The vast majority of that code came from `react-server`. Like I said, `react-server` and `react-client` contain the core functionality. `react-server-dom-webpack` just provides the configuration files [like this one](https://github.com/facebook/react/blob/main/packages/react-server-dom-webpack/src/ReactFlightWebpackReferences.js) that tell React how to do things like resolve and import modules, but the fundamental concepts like streaming will be the same regardless so they are simply imported. Speaking of streaming, let's take a closer look at how that works so we can better understand the code later.
+
+## What Are Streams?
+
+Imagine the Internet as a mighty river. When you break it down, this river isn't really a single thing. Rather, it's a collection of countless droplets-- each carrying its own piece of information. These droplets are [the packets](https://www.techtarget.com/searchnetworking/definition/TCP-IP) in the [TCP/IP protocol](https://en.wikipedia.org/wiki/Internet_protocol_suite). 
+
+Each droplet journeys independently, but the system of tributaries is so well defined that they almost always make their way together through the vast network to their ultimate destination. Eventually, [they all get collected together](https://www.youtube.com/watch?v=9hIQjrMHTv4) when they get to the consumer into a single glass of water to drink in something like a video as you binge-watch your favorite show. In this way, a collection of countless individual processes turns into a single experience that seems logical and consistent to the user.
+
+In many ways, **streaming** interfaces are just an abstraction on top of this central concept that powers the internet. Large collections of data are broken down into individual _chunks_ which are then assembled together and transformed if necessary on the other end. Streaming has been a part of the web since the very beginning. You can see this when an image loads in slowly as the browser renders it bit by bit. Basically, it's just a matter of processing something as you receive it instead of loading the entire thing into memory.
+
+### The Source and The Sink
+To fully integrate this into our river analogy, you can think of **readable streams** as the _source_ where the droplets begin their journey. Like mountain springs, they're constantly feeding new chunks of data into the system. On the other end, **writable streams** are the _sink_ where these droplets converge. Both sides are necessary to properly tame this endless torrent of information.
+
+To make all this water talk tangible, let's use a familiar example. When you click 'play' on a YouTube video, their server faraway is the _source_ as it starts sending chunks of video data down the river. These chunks traverse the network until they reach your device. Your device acts as the _sink_, collecting these droplets into a temporary buffer. 
+
+This buffer is kind of like a glass being filled drop-by-drop. Crucially, your _sink_ ensures your glass doesn't overflow, regulating the stream so it matches your device's ability to process and display the video. Once there's enough data in the buffer--or water in the glass--the video starts to play. 
+
+Then, you--the final consumer--get to 'drink in' the content. And, I suppose your brain is the ultimate sink where the video and audio streams converge into meaningful content. I digress, but understanding this flow from _source_ to _sink_ helps demystify what often seems like magic: a seamless stream of video appearing on your screen. 
+
+### Readable and Writable
+As I inferred, there are actually two fundamental kinds of streams. This just depends on whether something is being created or consumed. Readable streams are often referred to as _sources_. Common examples of readable streams are reading a file from disk or receiving a response from a server. A source _provides_ data that can be processed, transformed, or transmitted by other medium.
+
+A _source_ require a destination to be of any use, however. Thus, we have writable streams which are often called _sinks_. As you may have already guessed, some of the best examples of writable streams are writing a file to disk or sending a request to a server. A sink _consumes_ data and may either store it, discard it, or transform it in some way. As we'll see, sometimes the sink will keep flowing if you forget to turn the water off.
+
+## _Node Streams_
+
+While it is a simple concept in theory, there is a bit of nuance and history when it comes to working with streams in JavaScript. There are two different interfaces for streaming content with JS, _Node Streams_ and _Web Streams_, and their differences are subtle but important. [_Node Streams_](https://nodejs.org/api/stream.html) came first all the way back in 2009-- [the very earliest days of server-side JavaScript](https://en.wikipedia.org/wiki/Node.js) [^1].
+
+This is because key aspects of server code, like reading and writing files, require reliable streaming interfaces. One important thing to remember is that [streaming is truly just an abstract concept](https://medium.com/the-node-js-collection/a-brief-history-of-node-streams-pt-1-3401db451f21) that we use to deal with manipulating large amounts of information. It's just an idea that helps us manage really big things with computers. This goes all the way back to [the 50's](https://en.wikipedia.org/wiki/Standard_streams), growing more recognizable with the conception of [pipes and redirection](https://en.wikipedia.org/wiki/Pipeline_(Unix)) in [UNIX systems](https://en.wikipedia.org/wiki/Unix) in the 1970's.
+
+As streams are so essential to [the core I/O operations at the heart of Node](https://www.youtube.com/watch?v=rUFUTdQALrk), the _Stream_ interface has seen quite a bit of change. It has actually gone through at least [three distinct iterations](https://medium.com/the-node-js-collection/a-brief-history-of-node-streams-pt-2-bcb6b1fd7468) before we arrived at the stable API we know today. The core motivation for these changes was [a concept called backpressure](https://nodejs.org/en/docs/guides/backpressuring-in-streams).
+
+## Backpressure
+
+In a nutshell, backpressure is the mechanism that allows a slower consumer to send a signal to a faster producer that their buffer is full and they need to slow down. Otherwise, there could be an overflow of data. If that data can't be managed properly, it could disrupt the entire system. 
+
+In the world of streams, not all data consumers operate at the same speed as data producers. For instance, a file system may write data much more slowly than an incoming network request can provide it. Your buffer can only grow so large before it takes up all your memory and crashes the program. 
+
+To clarify, a buffer is a specially allocated, temporary space in memory with limited size. It essentially serves as a kind of "waiting room" for data. This helps ensure that differences in processing speeds do not result in data loss or inefficiency.
+
+https://thlorenz.com/stream-viz/?nums=100&powers=100&tarpit=400
+
+Just like in a real plumbing system, you've got to watch out for when there's too much pressure. When your buffer is full and the meter goes red, you need to "vent" and pause until the consumer is ready to handle more. Before Node introduced sophisticated backpressure handling, developers had to manually build their own workarounds to manage the flow of data. These were complex and usually error-prone. 
+
+While there have been things like the `drain` event on writable streams since the very beginning, one notable point was when the `pipe()` method was introduced in v0.4. This helps automate the process of pulling data from one stream to another while mitigating backpressure. This is much easier than listening to the `data` event and trying to do it yourself. 
+
+## Push and Pull
+Like most other things in Node.js, streams are based on _events_. As [native promises](./3-reviving-thenables) did not exist in JavaScript yet, there was no pre-defined method for dealing with the kind of asynchronous data that is fundamental to web servers. So, Node leveraged something known as [Event-Driven Architecture.](https://en.wikipedia.org/wiki/Event-driven_architecture)
+
+Because of this, [streams in Node](https://github.com/nodejs/node/blob/main/lib/internal/streams/legacy.js) are just [EventEmitters](https://nodejs.org/docs/latest/api/events.html#class-eventemitter). Basically, they're JavaScript objects with lots of methods which can be used to orchestrate their _listeners_-- [most notably, `on`, `once`, and `emit`](https://www.youtube.com/watch?v=qOHgQAV2ydo). These listeners are waiting for _events_ sent out by the emitter to tell anything listening about what's happening. 
+
+In many ways, this can be seen as [a basic example of a _push_-based system](https://stackoverflow.com/questions/39439653/events-vs-streams-vs-observables-vs-async-iterators). Think of a push notification on your phone. You don't have to ask each time. Once you're subscribed, it just comes to you. 
+
+The opposite of this is a _pull_-based system. The main distinction is that _pull_ APIs are controlled by the consumer. Instead of the data being distributed whenever it's ready, the source waits until someone asks for it. The classic example is reading a file from disk.
+
+To summarize the difference, _pull_ APIs deliver their data upon request. On the other hand, _push_ APIs broadcast their data regardless of demand. So, _push_ APIs are driven by the producer, and _pull_ APIs are driven by the consumer.
+
+Because this _push_-based, event-driven architecture lent itself naturally to writable streams, they have seen relatively little change over the years. It was not a perfect fit for most readable streams, however. This was particularly true for those with _pull_ APIs.
+
+## streams2
+We learned of the importance of readable streams as sources of data in the introduction. [In 2012, Node released _streams2_ with version 0.10](https://nodejs.org/en/blog/feature/streams2) which radically transformed the `Stream` interface. `Readable` became its own extensible sub-class with several new features-- most notably the addition of the `read()` method. 
+
+### old mode
+
+Critically, in the beginning, Node readable streams started emitting their `data` event as soon as they were created. They immediately began the process of exhausting their source, and there was no way to stop it. While `pause()` and `resume()` methods existed, they didn't work in the way developers expected. They were only advisory. This meant the developer had to manually create a buffer for each stream immediately, otherwise that data would be irreparably lost.
+
+So, _streams2_ was intended to amend all of this. Now, each readable stream waits to send out their data until a listener is added to the `data` event or the `resume()` method is called. This initialized what they were calling 'old mode'-- the _push_-based system where data is emitted as soon as it is available. The `pause()` and `resume()` methods actually started working at this point, but only when the stream was in this 'old mode'.
+
+### new mode
+
+As you may have guessed, there was a new mode that necessitated this naming. This is where the `read()` method comes into play. It enables a _pull_-based interface on top of the inherent _push_-based architecture in Node. It even takes a `size` argument which allows developers to easily specify how many bytes to read at a time. 
+
+The key behind this is the `readable` event. This event is emitted each time there is data available to be read from the stream. By placing a listener on the `readable` event, you can recursively call the `read()` method at your leisure to pull data out of the internal buffer. If the amount of bytes in the buffer is smaller than the `size` argument, `null` is returned. So, the stream just waits until the next `readable` event. 
+
+The `readable` event is also emitted when the stream is finished. If there's no data left at all, `null` is still returned from the `read()` method. However, this will also prompt the `end` event and close the stream.
+
+### Writable Streams
+
+While they haven't changed much over the years, we can't go much further without a brief overview of `Writable` _Node Streams_. As you may have guessed, in many ways, they are the opposite of readable streams. They are the _sink_ where data is collected.
+
+The most important thing to understand about writable streams is that they are an abstraction for a destination for data. It's just a way of reliably controlling the flow between mediums. As we [mentioned earlier](#backpressure), this is particularly important when the source is producing data faster than the sink can consume it. 
+
+To help with this, `Writable` streams depend on a `write()` method which is used to send data to the destination, but this also returns a boolean to indicate backpressure. If it returns `false`, it means that the buffer is full and the writable stream is not ready to accept more data. So, the stream is paused. If it returns `true`, it means that the data was successfully written to the buffer.
+
+If the buffer is full, the stream will not accept any more data until the `drain` event is emitted. This is the signal that the buffer is empty and ready to receive more data. This is the event that the `pipe()` method listens to in order to know when to resume the flow of data.
+
+Additionally, if more control is needed, there is also a pair of methods called `cork()` and `uncork()`. These allow you to temporarily stop writing data to the stream and purposefully hold it back in memory. In this way, you can quickly batch multiple chunks together instead of immediately sending them each individually. 
+
+The `end()` method is used to signal that the stream is finished. This will close the stream and emit the `finish` event. The `close` event is also emitted at this point, but this is not always the same as the `finish` event. For instance, if there is an error, the stream will be closed but not finished.
+
+### Transform and Duplex Streams
+As we learned earlier, the singular, monolithic `Stream` interface was split up into subclasses with _streams2_. We've already covered `Readable` and `Writable`, but there are actually four distinct sub-classes which each inherit from this parent class. They also created `Transform` and `Duplex` classes at the same time which can be seen as different kinds of combo packs. They each have both readable and writable sides. 
+
+The difference is in the relation between these two sides. In a `Duplex` stream, both streams have independent buffers. This means that the `_read()`'s don't depend on the `_write()`'s. A common example is [a TCP socket or an IPC endpoint](http://nodejs.org/api/net.html#net_class_net_socket). 
+
+However, `Transform` streams are a special kind of `Duplex` stream where both sides of the stream are affected by each `_transform()` call. File compression is an excellent example of this. In Node's [zlib](https://nodejs.org/api/zlib.html#zlib), when you use something like [gzip](https://www.gzip.org/) to compress a file, it is implemented through a transform stream. In this case, the _source_ is the file you want to compress, and the _sink_ is the new, compressed file.
+
+## Buffer, TypedArray, and Uint8Array
+
+Until _streams2_, streams were slightly limited in terms of what they could return. You could get a string, but only if you manually passed through a text encoding option like "UTF-8" using the `setEncoding()` method. Otherwise, all data passed through streams was defined as a custom Node class called `Buffer`. Take note of the capital 'B'. 
+
+Per [the docs](https://nodejs.org/api/buffer.html#buffer), a `Buffer` is "an object used to represent a fixed-length sequence of bytes". Originally, these were unique to Node, but it is now a subclass of [Uint8Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array). To dive even further, `Uint8Array` is itself a subclass of [TypedArray](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray). Making matters even more confusing, the `TypedArray` only "describes an array-like view of an underlying [binary data buffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)."
+
+### Binary Data
+To understand all of this, let's start by looking at the [v0.1 docs for `Buffer`](https://nodejs.org/docs/v0.1.100/api.html#buffers-3) which say that, "Pure Javascript is Unicode friendly but not nice to binary data. When dealing with TCP streams or the file system, it's necessary to handle octet streams." Octet just means "a group of eight people or things." However, in computing, this is usually talking about dealing with [bytes](https://en.wikipedia.org/wiki/Octet_(computing)). 
+
+[Octet streams](https://isotropic.co/what-is-octet-stream/) have been defined by the [IANA](https://www.iana.org/assignments/media-types/application/octet-stream) since 1996 as a [header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers) for a stream with "a body [that] contains arbitrary binary data". Binary is a type of data with only two possible states, and it is represented in computing with [bits](https://en.wikipedia.org/wiki/Bit). However, the smallest addressable unit of memory is (usually) one [byte](https://en.wikipedia.org/wiki/Byte) which is (usually) eight bits collected together. So, octet streams are just [clusters of unlabeled bits](https://en.wikipedia.org/wiki/Bitstream) sent over the network in groups of eight.
+### TypedArray: "A View Into Memory"
+Eventually, `TypedArray` was introduced as an official solution for dealing with this kind of data in JavaScript. To quote the [web.dev article about them](https://web.dev/webgl-typed-arrays/#history-of-typed-arrays), 
+
+>The design of Typed Arrays was driven by the need to efficiently pass binary data to native libraries. A Typed Array is a slab of memory with a typed view into it, much like how arrays work in C. Because a Typed Array is backed by raw memory, the JavaScript engine can pass the memory directly to native libraries without having to painstakingly convert the data to a native representation.
+
+Very briefly, I want to explain what they mean by a "typed view". When dealing with binary data, you need to know how to interpret it. It's all 0's and 1's, but you need to know how to group them together to make sense of it. This can vary widely depending on the context and the type of data being represented. 
+
+A 'typed view' offers a structured way to read or manipulate this binary data. Specifically, it defines [the format and size of the data](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#typedarray_objects). By specifying the types of values that can be stored at each memory address, you can easily interact with the data stored in the buffer. 
+
+### Uint8Array
+A `Uint8Array` is a version of a `TypedArray` which is "an array of 8-bit unsigned integers." To further break this down, it's literally a special JavaScript array that can only hold whole, non-negative numbers between 0 and 255. 255 is the maximum value that can be held in 8 bits. 
+
+So, to summarize, it's just [a way to interpret binary data in memory](https://book.mixu.net/node/ch9.html#9-4-buffers-working-with-binary-datas). Each value in the array acts as a single byte of data. It is more performant and memory-efficient because it is a direct representation of the underlying data without requiring any decoding. 
+
+Before the official release of `TypedArray` with [ES6 in 2015](https://262.ecma-international.org/6.0/), JavaScript did not offer a way to work on a [low enough level](https://en.wikipedia.org/wiki/Low-level_programming_language) to properly manipulate binary data. Node was released in 2009. However, they still needed an interface to work with binary data. So, this is what led the Node team to create the `Buffer` class.
+
+Node is actually [a mixture of JavaScript, C, and C++](https://www.smashingmagazine.com/2020/04/nodejs-internals/). It is primarily built on [the V8 engine from the Chrome team](https://v8.dev/) which makes up [the majority](https://codeburst.io/node-js-v8-internals-an-illustrative-primer-83766e983bf6) of the JavaScript runtime. It also uses a library written in C called [libuv](https://github.com/libuv/libuv) and a few others which allow it to work with binary data more effectively than browser JavaScript. 
+
+This is still true in most cases, but browsers are rapidly improving. This is clearly seen with examples like `TypedArray`. While the `Buffer` class was necessary at one time, the standards have caught up. So, the Node team decided to make it a subclass of `Uint8Array` to improve interoperability and enjoy the enhanced performance benefits that come with it.
+
+## Object Mode, Encoding, and highWaterMark
+
+So, all that `Buffer` talk was to prepare us to discuss this next topic. The `Readable` and `Writable` subclasses introduced with _streams2_ also have a few special properties for customizing the transfer of data. When building the custom stream, you must pass in an `options` object. 
+
+This has two main properties: `highWaterMark` and `objectMode`. I will also briefly cover `encoding` (readable) and `defaultEncoding` (writable). We won't cover the custom methods in depth in this text. If you want to learn more, make sure you check out [the demos below](#node-demos).
+
+### Object Mode
+As we discussed earlier, _Node Streams_ were only designed to return two things before _streams2_: a `Buffer` or a string. The addition of `objectMode` changed this, however. Now, the flow of data can be customized to return any kind of JavaScript object when this property is set to true. This is particularly useful when dealing with _JSON_.
+
+This made the entire abstraction much more natural for many developers who were used to working with _JSON_. However, it also introduced a few nuances. For instance, the `read()` method always returns a single object while in this mode-- no matter what `size` argument you pass in.
+
+### highWaterMark
+The `highWaterMark` property is the most important of these options. It represents the size of the internal buffer for the stream. If the buffer is full, the stream will stop reading data from the source or writing data to the sink until the buffer is emptied. It is a number, and it is measured in bytes unless you are using `objectMode` where it is measured in individual JavaScript objects. 
+
+The default `highWatermark` is 16kB or 16 objects. However, you can set it to any number you want. This gives you fine-grained control over [backpressure](#backpressure). 
+
+If you set it to 0, the stream will never buffer any data. This means that the `readable` event will be emitted as soon as there is data available for readable streams, and the `write` event will never return false for writable streams. This is useful for high-priority data that you want to process immediately.
+
+### Encoding
+The `encoding`/`defaultEncoding` properties are a bit more straightforward. It's just a string that tells the stream how to interpret the data as a string of text. The default is _UTF-8_ which is the standard for the web and accounts for [98% of all websites](https://en.wikipedia.org/wiki/UTF-8).
+
+While there are [a surprising amount of other options](https://en.wikipedia.org/wiki/Character_encoding#Common_character_encodings) available, Node only supports [the most important ones](https://nodejs.org/api/buffer.html#buffers-and-character-encodings). Interestingly, [strings in JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) are [UTF-16](https://en.wikipedia.org/wiki/UTF-16) by default for historical reasons (wanting to be like real Java). However, this is rarely an actual issue as Node takes care of this for you behind the scenes in many situations.
+
+## streams3 and beyond
+[Another revision came soon afterward with _streams3_ in 2013](https://github.com/nodejs/node-v0.x-archive/pull/5865/commits/0f8de5e1f96a07fa6de837378d29ac5f2719ec60). _streams2_ had formalized an "old mode" which was _push_-based and a "new mode" which was _pull_-based. However, one could not easily switch between them. For instance, once you put a listener on the `data` event, nothing would happen when you put a listener on the `readable` event-- even if you used the `pause()` method.
+
+This is no longer true, as the Node team have further refined these concepts with the introduction of _flowing_ and _paused_ modes in _streams3_. Essentially, the two systems were tied together. So now, every time `read()` returns a data chunk, it also emits a `data` event. 
+
+You opt in to _flowing_ mode by placing a `data` event listener or by calling the `resume()` method. Then, data will be emitted as soon as it's ready. Otherwise, the stream is in _paused_ mode and will not produce data until the `read()` method is called. You can use the `pause()` method to opt out of _flowing_ mode at any time. So, you can easily switch between the two modes without having to worry about not being able to switch back.
+
+### pipeline()
+
+In the past few years, _Node Streams_ have largely been stable. Now that they offer proper API's for both _push_ and _pull_ data sources, the focus has been on stability, performance, and interoperability. While some would say that they [made too many sacrifices](https://github.com/nodejs/readable-stream/issues/15) to achieve this universal interface, it seems that the work has stood the test of time. And, it's worth noting that adapting the prior art to JavaScript was no small feat.
+
+There have been a few advances since that point, however. There is one relatively newer method that I would be remiss if I didn't mention it now. This is the `pipeline()` method introduced in Node 10. 
+
+While the `pipe()` method has helped with automating the process of connecting streams since v0.4, it does not propogate errors through the chain and [it does not automatically close streams when they error](https://nodejs.org/api/stream.html#stream_readable_pipe_destination_options). This can cause some ugly memory leaks and sneaky problems. `pipeline()` was developed to help with this. It is more memory-safe, and any errors will always be passed down to the final error handler in the chain.
+
+## WHATWG Streams
+
+_Node Streams_ were revolutionary, and they have become quite stable. But, they have an obvious, fundamental limitation in that they cannot run outside of a Node environment. So, you can't use them anywhere else you might need JavaScript. Most importantly, you cannot use them in a web browser.
+
+So, streaming data with JavaScript was inherently restricted to server-side environments until the [WHATWG](https://whatwg.org/) announced [a standard for Streams](https://streams.spec.whatwg.org/) in 2014. The _WHATWG_, or Web Hypertext Application Technology Working Group, is a group who work together to create and update the rules for how HTML, the DOM, and [a few other things](https://spec.whatwg.org/) should work. Their job is to make sure the web stays modern and consistent for everyone.
+
+### What Who?
+
+As I discussed in [another article](../client-side-routing/2-a-brief-history-of-client-side-routing), the specifications for HTML and the DOM were initially formalized in 1994 by the [_W3C_](https://www.w3.org/), a consortium founded by Tim Berners-Lee. However, this group was quickly [stalled by corporate interests](https://www.reddit.com/r/javascript/comments/5swe9b/what_is_the_difference_between_the_w3c_and_the/) and derailed by things like an XHMTL2 spec which was incompatible with much of the internet. So, [the _WHATWG_ was formed by several browser vendors](https://html.spec.whatwg.org/dev/introduction.html#history-2) in the name of pragmatism in June 2004.
+
+While the _W3C_ issued competing (unused) specs for many years, they eventually accepted the _WHATWG_ and [started working together with them in 2019](https://www.w3.org/blog/2019/w3c-and-whatwg-to-work-together-to-advance-the-open-web-platform/). The _WHATWG_ maintains living standards, and the _W3C_ periodically publishes yearly versions. The _W3C_ also publish versioned standards for [countless other aspects of the web](https://www.w3.org/TR/).
+
+However, many of them are presentational. There are several exceptions like [service workers](https://www.w3.org/TR/service-workers/), and this is not meant to be dismissive. Groups like the [_CSSWG_](https://wiki.csswg.org/) and the [ARIA WG](https://www.w3.org/WAI/ARIA/) are very important for the web.
+
+In contrast, other than HTML, the _WHATWG_ maintain [living standards](https://spec.whatwg.org/) for primarily lower-level aspects of web browsers. Generally, these are related to interacting with JavaScript, processing data, or making network requests. The [_DOM_](https://dom.spec.whatwg.org/) is the best example, but other notable ones are the [_fetch_](https://fetch.spec.whatwg.org/) API and the topic of this article-- _Streams_. Since _WHATWG_ is a bit of a mouthful and these streams are intended for web browsers, they are [colloquially known as _Web Streams_ to differentiate them from _Node Streams_](https://css-tricks.com/web-streams-everywhere-and-fetch-for-node-js/).
+
+### Learning from Node
+
+Like I said, _Node Streams_ have been around since 2009 in some form or another. Their API was mostly set in stone by 2013. [The _WHATWG_ specification wasn't announced until 2014](https://blog.whatwg.org/streams). So, the team behind the _Web Streams_ API had plenty of time to learn from the successes and mistakes of their contemporaries. In fact, much of the API was inspired by [Isaac Schlueter](https://izs.me/), the inventor of NPM and one of the [core implementers of _streams2_](https://github.com/nodejs/node-v0.x-archive/commits/v0.12.7-release/lib/stream.js).
+
+As Isaac says in [one of his letters](https://lists.w3.org/Archives/Public/public-webapps/2013JulSep/0275.html) to the group as they were formulating the spec, 
+
+> Node's streams, as of 0.11.5, are pretty good. However, they've "evolved" rather than having been "intelligently designed", so in many areas, the API surface is not as elegant as it could be." In particular, I think that relying on an EventEmitter interface is an unfortunate choice that should not be repeated in this specification. The language has new features, and Promises are somewhat well-understood now (and weren't as much then).  But _Node Streams_ have definitely got a lot of play-testing that we can lean on when designing something better.
+
+The event-driven architecture of _Node Streams_ had proven its limitations over time. And, native Promises had been added to the language as a first-class solution for managing asynchronous events. So, it was logical to try to shape the _Web Streams_ API around these primitives [despite some reservations](https://lists.w3.org/Archives/Public/public-webapps/2013JulSep/0355.html).
+
+They were adamant on getting it as right as they could this time, so they created an [exhaustive list of requirements](https://github.com/whatwg/streams/blob/main/Requirements.md) in the github repo to serve as the guiding principles for the API. It's really a fantastic document. It's changed over the years as they found unaddressed issues, and it will serve as our main reference for this section.
+
+The API was designed around simplicity and flexibility. By allowing users to gradually opt-in to more granular options for data flow, _Web Streams_ can be as simple or as complex as you need them to be. I think that the best example of this is the fact that _Web Streams_ effectively start out in the equivalent of `objectMode` in _Node Streams_.
+
+### Chunks and Bytes
+
+To achieve this, the _WHATWG_ fully formalized the concept of a "chunk". To quote the spec,
+
+>A chunk is a single piece of data that is written to or read from a stream. It can be of any type; streams can even contain chunks of different types. A chunk will often not be the most atomic unit of data for a given stream; for example a byte stream might contain chunks consisting of 16 KiB Uint8Arrays, instead of single bytes.
+
+We'll learn more about byte streams in a bit. But, you should be able to see how _Web Streams_ are fundamentally different just from the fact that they are a separate type of stream. While _Node Streams_ always return a `Buffer` object unless you set the encoding or turn on `objectMode`, _Web Streams_ will only return binary data if that's what you request. 
+
+For instance, while the example demonstrates sending 16kB chunks of `Uint8Array`s, this can literally be any data that JavaScript can handle. Each one could be a single _JSON_ object or a whole array full of them. The _Web Streams_ API fully abstracts away the need to worry about any of this.
+
+However, you can also opt-in to a lower-level version of this API that allows you to further control memory usage if you manually set the `type` option to "bytes". You can still send binary data without setting this option, but the stream becomes more performant because you remove the need to decode each byte. Before we fully dive into what this means, let's take a closer look at how the API works.
+
+## The `ReadableStream` Interface
+
+As you might have guessed, one of the key requirements for readable streams was the ability to efficiently adapt both _pull_ and _push_ sources. The stated goal was to wrap both of these seamlessly into a single _pull_-based API. And, after much debate, they did finally coalesce around a solution based on promises after an initial design where the `read()` method was synchronous.
+
+### The `underlyingSource` and The Controller
+
+As we discussed, every readable stream is just an abstraction for a source of data. The _Web Streams_ API formalized this into the `underlyingSource` object that you pass in when you create a readable stream. The way you construct and consume a `ReadableStream` is quite different from a `Readable` in Node. 
+
+Because of Node's complex history and event-driven architecture, it's up to the consumer of a stream to properly understand things like backpressure and error propagation. Although things like `pipeline()` abstract many of the complications, it's impossible for the Node team to ever fully consolidate the `data` event and the `readable` event. So, it's up to the user to know how to properly consume a stream if they need to do it manually for some reason.
+
+Because the _WHATWG_ were working with a blank palette, they were able to make conscious decisions to create an API that can feasibly accomodate any kind of "underlying source". The key difficulty was making sure that both _push_ and _pull_ sources could be consumed in a predictable, simple manner. So, when constructing a `ReadableStream`, they added two main methods for transmitting the data from which to choose: `start()` and `pull()`. 
+
+By giving each of these methods a clear role in the transfer process, it makes the whole system much more declarative. Both `start()` and `pull()` take a single argument called `controller`. This is an object which lets you fine-tune every aspect of the stream-- pushing chunks into the queue with a method called `enqueue()`, alerting the consumer when things go wrong with a method appropriately called `error()`, or even defining when the whole thing is over with `close()`.
+
+### Data Flow in a `ReadableStream`
+
+Although you might assume the `pull()` method is not useful for _push_ APIs, this is not the case. This is because the _WHATWG_ consciously avoided imperative `pause()` and `resume()` methods. Instead, the developer can creatively combine `start()` and `pull()` to define any breaks in the data flow of a _push_ API. 
+
+#### start(controller)
+The `start()` method is called automatically as soon as the readable stream is created. This is where you initialize the data or even acquire additional resources that the stream needs to work correctly. The majority of the logic for _push_ sources will reside in `start()`, but any data that will be received after the stream has been initialized needs to be handled in `pull()`. 
+
+Additionally, pushing everything through in the `start()` method would not efficiently handle backpressure. If the source is composed of a large amount of data getting written to a slow sink, then this can quickly lead to trouble. So, usually both methods are necessary to some degree.
+
+#### pull(controller)
+In contrast, The `pull()` method is used to gradually feed data into the stream over time. It gets called every time the consumer requests more data if the internal queue isn't full. So, this will naturally contain the bulk of the logic for _pull_ APIs, but it also defines the mechanism for any additional backpressure management.
+
+#### cancel(reason)
+There is one more method included in the `ReadableStream` constructor included for occasions when a consumer needs the stream to stop for any reason. The `cancel()` method takes a `reason` argument, and it allows you to personally customize the logic for this scenario. It returns a promise which fulfills if everything goes as planned.
+
+#### pipeTo() and pipeThrough()
+The `ReadableStream` interface also provides a pair of methods on each instance that alleviate the majority of backpressure concerns. `pipeTo()` automatically controls the flow of data into a `WritableStream` and `pipeThrough()` helps with instituting a `TransformStream` in the middle of your pipeline. These gradually push the data through the chain of streams while managing any differences in processing speed.
+
+`pipeTo` take a second argument which allows you to set a couple of options. The most important two are `signal` and `preventClose`. `signal` allows you to pass through an `AbortSignal` so that you can cancel the process at any time. `preventClose` allows you to leave the final destination in the pipeline open for future writes.
+
+`pipeTo` and `pipeThrough` are extremely handy, and they will cover the vast majority of your needs. However, these consume the entire stream when you call them. In addition, most worries about backpressure go out the window due to the fact that _Web Streams_ are fundamentally built on promises. This is hugely beneficial in terms of managing backpressure automatically, but [it also leads to a few complications which we will explore later.](#the-benefits-and-limitations-of-promises)
+
+### The Reader
+
+_Web Streams_ also introduced the concept of a _reader_. In order to consume a `ReadableStream` instance without piping the whole thing at once, the user must acquire that stream's _reader_ with the `getReader()` method. This is the only way to do things chunk by chunk.
+
+The main thing to remember with this is that the _reader_ can only be used by one process at a time. Once its _reader_ has been acquired, the stream is said to be _locked_. This is due to the architecture of promises, which we will further investigate in [the next chapter.](./3-reviving-thenables) 
+
+The _reader_ itself only has one method: `read()`. In a regular `ReadableStream`, this takes no arguments. It returns a promise with the next chunk of the stream. If there are no errors, this promise will resolve to an object with two properties: `value` and `done`.
+
+As long as the `done` property is false, the `value` property will contain the requested data. Then, you can call the `read()` method again and await the next chunk. Once there is no more data to be consumed, `done` returns true. This is how the stream signals that it has finished successfully.
+
+<InfoBox hint>
+If you think this sounds like an async iterator, you're correct! They're closely related. Just wait! [We'll explore them in detail later](#async-iterators).
+</InfoBox>
+
+### `releaseLock()` and `tee()`
+
+Because _Node Streams_ are based on emitting events to lists of subscribers, it's trivial for multiple things to consume the same stream in different ways simultaneously. All you have to do is simply add another event listener that does something else. However, because WHATWG are based on promises which can only be resolved or rejected once, things are a bit more complicated.
+
+This is why the `releaseLock()` and `tee()` methods were included. As I said, once you acquire the _reader_ for a _Web Stream_, it becomes _locked_ and nothing else can read from that stream. The `releaseLock()` method simply allows you to remove that _reader_ completely. This effectively freezes the stream in place until another _reader_ is added or it is piped elsewhere. 
+
+However, the data that was read before that point has been exhausted and cannot be used again. Because each promise can only be resolved once, the _Web Stream_ will simply pick up where the last reader left off. So, if you need to do multiple things simultaneously, you need to use the `tee()` method.
+
+The `tee()` method effectively splits the stream in two (like the letter 'T'). It returns a tuple filled with two identical streams cloned from the `underlyingSource`, but the origin stream is forever locked. If you want to cancel the flow of data, you need to do it on each of the new streams you have created.
+
+This allows both streams to get their own copies of each chunk of data. This can be done as many times as necessary with the initial source of data, so there's really no limit to it. It's just an additional hoop that you have to jump through to get the benefits of working with promises.
+
+## Byte Streams
+
+While having the ability to define your chunks any way you want is nice, some developers need more fine-grained control over how the data represented by their streams is written and read. Because _Web Streams_ are composed of individual promises that each resolve independently, it makes it a bit difficult to re-use memory effectively.
+
+[This is why _Byte Streams_ exist](https://github.com/whatwg/streams/blob/main/byte-streams-explainer.md), and the only real reason to use them is for [enhanced performance](https://github.com/whatwg/streams/blob/main/FAQ.md). So, in the `ReadableStream` constructor, you can pass through a `type` option. Currently, there is only one accepted parameter, and that is the string, "bytes". Once you pass this option, you get a few extra benefits. 
+
+Primarily, the stream will simply be more performant without the extra weight of decoding each chunk of data. You can even take this a step further with _BYOB_ mode. As I mentioned, the promise-based architecture of _Web Streams_ is not conducive to efficient memory use. For each chunk, a new `ArrayBuffer` is allocated and eventually garbage collected. This is why _BYOB_ readers exist: "Bring Your Own Buffer". 
+
+When reading an appropriately constructed _Byte Stream_, the developer can add the `{ mode: "byob" }` option as an argument to the `getReader()` method call. Then, they can supply their own external `ArrayBuffer` by passing it in to the `read()` method as an argument. This representation of memory can be re-used between chunks. When writing the stream, you can work with this view by accessing a `byobRequest` property available on the controller of _BYOB_ streams. 
+
+However, like most features of _Web Streams_, the stream will still function even if the consumer does not use this feature. And, if the consumer does not supply their own, you can still granularly control the size of each `ArrayBuffer` passed through byte streams. The `autoAllocateChunkSize` option allows you to determine this regardless of whether the stream is being read by a _BYOB_ reader.
+
+## The `WritableStream` interface
+
+_WHATWG_ writable streams are very similar to their Node cousins and their `ReadableStream` counterparts. The `WritableStream` constructor is built around an `underlyingSink` object which is an abstraction for a destination of data. While there is a `controller` supplied in the `start()` and `write()` methods here, it is only used for error indication. Let's look at each method one-by-one again.
+
+### `start(controller)`
+
+This is used for preparing the stream in any way necessary. If you don't already have access to the resource to which you are trying to write, you can do that here. This just makes sure that the writing process is set up for success, and the `controller` argument that is provided only has one method: `error(reason)`.
+
+### `write(chunk, controller)`
+
+This is where the bulk of the custom logic should reside. This function is called every time the _writer_ is _ready_ to push some more data to the destination. This can be either synchronous or not. If it's asynchronous, you can return a promise which allows for users to check if each write succeeds. You can use this as a backpressure signal or to ensure sequential writes because the stream will not continue until these promises resolve. 
+
+### `close()`
+
+This is used to indicate successful completion of the data transfer. This is the place to do any clean-up logic necessary after you're finished with the resource. This can also return a promise if you need to do something asynchronous.
+
+### `abort(reason)`
+
+Finally, this is a method for when the producer needs to stop the stream in the middle. Basically, it's similar to `close()` in that it's specifically intended for tearing down any resources used to build the stream, but this is specifically for a failure scenario. You can think of it as the `WriteableStream` version of `cancel()`. It also can return a promise if necessary, although the stream will be halted either way.
+
+## The `TransformStream` interface
+
+We glanced over the concept of a transform stream in the _Node Streams_ section, but _Web Streams_ embrace them to an even greater degree. Again, it's a combination of a readable and a writable stream where each side depends on the other. In fact, the spec recognizes a `TransformStream` where every single chunk is passed through to the writable side as an "identity transform stream" and [gives several examples](https://streams.spec.whatwg.org/#ts-model).
+
+Let's take a closer look at the transformer object. It's fairly simple and well-designed, so we should move through this quickly. It takes in a `controller` argument to all three of its methods. This `controller` object delegates the flow of data between the two sides. 
+
+### The `TransformStreamDefaultController`
+The `controller` has three methods. Like `ReadableStream`, it has an `enqueue()` method to send data through the transformer. Once again, It has the `error()` method for when things go wrong. 
+
+There is also a unique `terminate()` method. This is for when you want the transformation to close at a certain point before all the chunks have been processed without proceeding any further. It's hard to explain succinctly, but this is for very specific scenarios where continuing to read the data doesn't make sense. You can read [the discussion about it here](https://github.com/whatwg/streams/issues/774). One example they give is when the source is infinite.
+
+### start(controller)
+Just like the other two, this is where you do any set-up required for the rest of the stream. Usually, this will just be a matter of enqueueing whatever chunks you want to go first. While you can't do any transformations here, it's nice to know that you can call this method on any kind of _Web Stream_ and expect the behavior to be reliable.
+
+### transform(chunk, controller)
+This is the method where the actual transformation will take place. It's called each time a chunk moves through from the readable side to the writable stream. The `chunk` argument will represent each piece of data waiting for you to do whatever you would like with it. Then, the `controller` argument gives you access to the `enqueue()` method to pass it along.
+
+As usual, you can return a promise from this function if you want to handle the success or failure of each chunk individually. If you don't supply this method, each chunk will pass through unchanged. Again, this is a "transform identity stream".
+
+### flush(controller)
+This is called after all the data has passed through the `TransformStream`. This is where you can do any clean-up necessary or stitch anything extra on to the end of the stream. As always, if you do something asynchronous here, it will return a promise signifying the success of this action.
+
+## Queuing Strategies
+
+Just like _Node Streams_, _WHATWG_ streams maintain an internal queue to mitigate differences in processing speed to ensure smooth performance. This is shaped by something called a _queueing strategy_, but this is simply determined by a `highWaterMark` which works in a familiar fashion to what we've seen before. The internal mechanics are a bit different with _Web Streams_, however.
+
+So, whether you're creating a `ReadableStream`, a `WritableStream`, you can pass in a second argument after the first object with all the methods that determine that stream's behavior. This is the _queuing strategy_. When creating a `TransformStream`, the constructor takes three arguments-- the transformer and a strategy for each side. 
+
+### highWaterMark and size()
+The _queuing strategy_ should be an object with up to two properties, `highWaterMark` and `size()`. Together, these can be used to signal [backpressure](#backpressure) by helping to determine the `desiredSize` property of the stream. The `desiredSize` is a number that indicates how much room is left in the queue, but it's just a diagnostic. It can go into the negative, but the idea is that you can check this number to slow down the stream if needed.
+
+So, `highWaterMark` is a number and `size()` is a function. Remember, unless the source was specifically designated as a _Byte Stream_, a chunk can be literally anything. So, the size of each of these chunks can be slightly arbitrary. This is why the `size()` argument exists. 
+
+Whatever you return from this `size()` function is multiplied by how many actual chunks you have in the queue. This determines the _Total Size_ of chunks in the queue which is then subtracted from the `highWaterMark` to find the `desiredSize`. The `desiredSize` can then be checked to see how many more chunks should be inserted into this queue before implementing any potential backpressure mechanisms.
+
+If it's a _Byte Stream_, the `size()` function is disregarded completely. This is because _Byte Streams_ are already measured in, well, bytes. So, the `highWaterMark` will simply signify how many bytes this internal queue is supposed to hold.
+
+### `CountQueuingStrategy` and `ByteLengthQueuingStrategy`
+There are a few helper classes for common strategies. Often, you'll just want to count how many chunks are in the queue until it reaches the number you've passed in for `highWaterMark`. This is equivalent to giving a `size()` function that always returns 1. Instead, you can pass in a new `CountQueuingStrategy` with an object that has a `highWaterMark` property as a shortcut for this.
+
+The other pre-made queuing strategy is for when you want to measure the `highWaterMark` in bytes, but you aren't actually using a _Byte Stream_ (a `ReadableStream` with a `type` property of bytes). Because a chunk can be of any type, it's possible to send binary data like a series of `Uint8Array`s without using a _Byte Stream_. You may still want to limit the amount of data to be sent at a time by a fixed number of bytes in these situations.
+
+This is why the `ByteLengthQueuingStrategy` exists. It changes the `size` function to measure the size of each chunk by returning that chunk's `byteLength` property. So, you can simply set the `highWaterMark` property to the number of bytes that you want to allow in the internal buffer before signalling for backpressure.
+
+Counter-intuitively, the `ByteLengthQueuingStrategy` strategy **cannot** be used for _Byte Streams_. This will throw an error, but these streams are already measured in bytes. So, you don't need this class-- you can just pass in an object with a `highWaterMark` property.
+
+## Never Cross the Streams?
+
+So, now _Web Streams_ are a standardized, fundamental part of the web. You can use them everywhere that you can use JS. In fact, as of v16, you can even use them [in Node](https://nodejs.org/dist/latest-v16.x/docs/api/webstreams.html). However, they were not fully integrated everywhere until relatively recently. 
+
+While alternative runtimes like [Cloudflare Workers](https://developers.cloudflare.com/workers/) & [Deno](https://deno.land/) are gaining popularity, Node is still the most popular server-side JavaScript runtime by far. Additionally, [_Node Streams_ are generally more performant](https://www.thisdot.co/blog/deep-dive-into-node-js-with-james-snell/#web-streams), and [they have a few features that Web Streams may never have](https://github.com/reactwg/react-18/discussions/91). So, a lot of the web has been built on _Node Streams_.
+
+### The Benefits and Limitations of Promises
+
+One reason that _Node Streams_ are generally more performant is because of their raw, event-driven nature. Instead of wrapping each chunk in a promise for asynchronous APIs, _Node Streams_ simply send out an event each time something happens. The main way one can see this manifest is in [how errors are handled](https://changelog.com/jsparty/103).
+
+With an EventEmitter, the `data` event and the `error` event are two entirely different things. However, as we'll learn more [in the next chapter](./3-reviving-thenables), a promise naturally contains both of these values in it's onFulfilled and onRejected handlers. The `pipeTo()` and `pipeThrough()` rely on the successful resolution of these promises to automatically handle backpressure. So, the differences in the implementations go all the way down to the very basic details.
+
+The problem with this is that there is a bit of overhead in wrapping every single aspect of a stream in an extra layer. And, I don't just mean more _CPU_ processing. While promises give us easy error-handling with _try-catch_ blocks and `catch()` calls at the end of pipe chains, it also requires extra infrastructure to make the whole thing work. This can be seen in the need to acquire a reader for each stream, or the fact that each stream is _locked_ after this point.
+
+Because each promise can only be resolved or rejected once, and each chunk progressively exhausts the stream's source of data, you also need the `tee()` and `releaseLock()` methods to easily do more than one thing with each stream instance. Many would argue that this is all worth it to ensure that no data is ever lost. In the end, the gradual adoption of enhanced language features like _async/await_ in 2017 and _async iterators_ in 2018 have made it much easier to use both kinds of streams.
+
+### Async Iterators
+
+Earlier, I mentioned how every time you call the `read()` function on a chunk, you get back an object with the properties `value` and `done`. While you still can't use them this way in the browser, a `ReadableStream` can be seen as a perfect use-case for the `asyncIterator` protocol. Basically, this gives you the ability to use the "_for-await-of_" statement.
+
+So now, instead of setting up a big, clunky _while_ loop, you can simply wrap the entire thing in a simple syntax that allows you to naturally work on each chunk individually as if it were synchronous code. Both _Node_ and _Web Streams_ have adopted this language feature. Hopefully, browsers get on this soon, but [there's an extremely simple poly-fill that you can include](https://bugs.chromium.org/p/chromium/issues/detail?id=929585). Thankfully, it all works together naturally in recent versions of Node.
+
+### `.from()` and `.toWeb()`
+
+Since Node v18, if you use an `asyncIterator`, you often don't have to worry about what kind of stream you've been given. But, if need to convert one stream to another for whatever reason, you can use the helper methods on the `stream` sub-classes. `from()` will convert anything into a _Node Stream_, and `toWeb()` will do the opposite. 
+
+This will give you the appropriate type of stream for everything except converting from `Duplex` since [there is no _Web Stream_ equivalent](https://stackoverflow.com/questions/74136196/why-does-web-streams-api-lack-duplex-stream). Instead, they just do the obvious thing and give you an object with `readable` and `writable` properties. You don't often need to worry about converting between _Node Streams_ and _Web Streams_ outside of a Node context, but these methods also seem to work in every runtime that has interoperability that I've found.
+
+## How and Why React Uses: Streams
+
+So, I promise we're near the end of this chapter. All of this was meant to fully explain the reason for the separate files in `react-server-dom-webpack`. For instance, the Web and [Edge](https://edge-runtime.vercel.app/) versions of `react-server-dom-webpack/server` export a function called `renderToReadableStream` whereas the Node version exports a function called `renderToPipeableStream`. 
+
+As you might have guessed, the previous two leverage _Web Streams_ whereas the latter uses _Node Streams_. I hope you can see why both of these are needed at this point. We will cover these in greater depth in chapter four, but it makes sense to take a closer look now while all this knowledge is fresh in your brain.
+
+### renderToPipeableStream
+
+We'll start off with the Node version of the ultimate render function. Don't worry. You shouldn't be expected to understand any of this. Just take a quick glance at the code, and I'll meet you on the other side to talk about what we see. Alternatively, you can just click "Show less" to skip to my commentary.
+
+<RenderToPipeableStream />
+
+So, there's only a few things that you should really be expected to recognize here at this point. Most importantly, we have the `pipe()` method. As you can see by the function name and expected return type of `PipeableStream`, this isn't quite the same as the normal `pipe()` method in Node. 
+
+#### `pipe(destination)`
+As we learned, the `pipe()` method is used to connect a _source_ of data to a _sink_. In _RSC_ parlance, this _sink_ is referred to as the `destination`. Generally, the _source_ is a `Readable` stream in Node. 
+
+However, [the React team lean heavily on the `flush()` method](https://github.com/reactwg/react-18/discussions/66) which is only found on `Transform` _Node Streams_ as far as I can tell. So, instead of creating a `Readable` and then allowing you to pipe that to the HTTP response writable stream yourself, React gives you this custom method. This gives them the ability to lean on an underlying `flush()` method being present while still giving the developer a simple API.
+
+#### The `drain` event
+
+Because the stream is being piped into a `Writable` _Node Stream_ and the React team can't rely on the natural backpressure control of the real `pipe()` method, they need to have a system in place for handling backpressure. In Node, a writable stream signals backpressure when `stream.write(chunk)` returns false. 
+
+When this happens, you need to be listening for the `drain` event to know when it's okay to start sending out data again. This is what `createDrainHandler()` is for. I won't show it here, but it simply runs the `startFlowing()` function that you see above again.
+
+#### `abort(request, reason)`
+
+We learned earlier that you can pass an _AbortController_'s _AbortSignal_ to a _Web Stream_ if you need to stop writing to a `WritableStream` mid-way through the process. Well, in their recent efforts for increased interoperability, you can now pass an `AbortSignal` to a `Writable` _Node Stream_ as well. So, I bet you won't be surprised that we're about to see this same method again.
+
+### renderToReadableStream
+
+This version of the render function is obviously intended for _WHATWG Web Streams_. It's unsurprisingly similar to the function you just saw, but there are lots of subtle differences to help the _RSC_ stream adapt to the browser/edge environment. Again, feel free to hit "show less", and I'll see you on the other side.
+
+<RenderToReadableStream />
+
+It's the exact same functions. It's just a matter of when each thing is called. As you can see from the `type` option, this is a _Byte Stream_ which is the most performant way to use a _WHATWG_ `ReadableStream`. 
+
+The `highWaterMark` is set to 0, so there is absolutely no internal queue. All the data is sent as soon as it is ready. This makes sense when you consider the fact that this a website that we're streaming, and we want the user to see __something__ as soon as possible.
+
+This is all just the tip of the iceberg. Like I showed you at the beginning of this article, even though each of these files are only around a hundred lines long, they compile to over around 3,000 lines of code when you include the imports. This stuff is complex.
+
+### But, why?
+
+Well, let's break it down. [As we discussed at the beginning](#what-is-streaming), the fundamental concept of streaming is processing something gradually instead of doing it all at once. One of the fundamental issues with classic React Single Page Application(_SPA_'s) is that you have to wait for _all_ of the JavaScript to load before you can interact with the page. We established in [the last chapter](./1-background.mdx) that you can use _SSR_ to show a visual representation sooner, but this can lead to even more issues like the _Uncanny Valley_.
+
+So, streaming provides a much better alternative. Instead of waiting for the entire request to complete before you start doing things like applying styles, you can send the stylesheets and JavaScript files as ["early hints"](https://developer.chrome.com/blog/early-hints/) so that the browser can get to work. This is especially important if any of these require external resources because you need to resolve those "waterfalls" as soon as possible. Even just figuring out the [domain name](https://developer.mozilla.org/en-US/docs/Web/Performance/dns-prefetch) is better than nothing.
+
+You also generally don't want to wait until your data gets to the client before you can start rendering the mark-up. This is why _SSR_ and _RSC_ often go hand-in-hand. You can use _RSC_ to lighten the bundle-size and enhance the your app's composability, and you can use _SSR_ to pre-render just the skeleton of your app. Then, you can progressively stream the rest after all of this has been established in the browser.
+
+In this way, the user doesn't ever have to see a non-working app. Depending on the app's architecture, the skeleton can actually contain quite a bit of data before the first _Suspense_ boundary. But, I'm getting a bit ahead of myself. The general idea is that streaming improves your "Core Web Vitals". And more importantly, it improves the user's experience.
+
+## Conclusion
+
+While it has been a bit of a journey as we've learned how to properly implement the abstraction of streaming in JavaScript, it seems like the majority of the bumps in the road are behind us. _Node Streams_ will probably be a part of JavaScript for a long time due to their ubiquity and current performance advantage. 
+
+This advantage may become irrelevant with advances in computing and networking, and alternative runtimes grow more popular by the day. [Bun](https://bun.sh) just hit 1.0 to wide acclaim. In terms of streaming interfaces, the [WebTransport](https://developer.mozilla.org/en-US/docs/Web/API/WebTransport) API might make all of this irrelevant. It takes advantage of [HTTP/3 servers and their increased capabilities](https://www.smashingmagazine.com/2021/08/http3-core-concepts-part1/). Hopefully, server-side JavaScript catches up with these exciting new developments.
+
+I know, that was a lot of information, but it's hard to understand the code unless you know how and why we got here. From this point on, I will simply link to the relevant sections of this article for any part of the code that uses these concepts. There's only three more chapters like this from this point onward. 
+
+Everything else is _RSC_ code and analysis. While it has taken React a long time to fully embrace this streaming architecture, the benefits speak for themselves. And, the way that they leverage these technologies is really incredible. We're almost to the point where we can start digging into the code, but we need to establish a few more JavaScript fundamentals first.
+
+[^1]: No, I'm not counting [Netscape Enterprise Server...](https://docs.oracle.com/cd/E19957-01/816-6411-10/getstart.htm)
+
+
+<IFrame 
+src="https://stackblitz.com/edit/readablestreams?ctl=1&embed=1&file=1-simple.js&view=preview" />

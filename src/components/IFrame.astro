@@ -13,6 +13,11 @@ extraStyle = small
 let randomID = Math.random().toString(36).substring(2, 15)
 
 id = id || randomID
+
+function removeAllParamsFromLink(link: string | undefined) {
+  if (!link) return link
+  return link.split("?")[0]
+}
 ---
 
 <div data-slot="demo" class="w-full flex flex-col items-center justify-center">
@@ -27,8 +32,14 @@ id = id || randomID
   </iframe>
   {
     !src?.startsWith("https://www.youtube.com") && (
-      <a class="text-sm" href={src} target="_blank" rel="noopener noreferrer">
-        Click here to open in a new tab
+      <a
+        href={removeAllParamsFromLink(src)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <button class="bg-purple-500 hover:bg-purple-700 text-white text-sm font-bold py-2 px-4 rounded-2xl hover:translate-y-1 transform transition duration-500 ease-in-out">
+          Click here to open in a new tab
+        </button>
       </a>
     )
   }

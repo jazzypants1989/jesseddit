@@ -2,8 +2,13 @@
 title: "REJECTZ"
 nextLink: "./2-flight-request"
 ---
-
 import CodeBlock from "../../../components/CodeBlock.astro"
+
+Many people are sick of having to craft their code for working in different runtimes. You can see this in the growing popularity of tools like [Nitro](https://nitro.unjs.io/) and [Hono](https://hono.dev) which pride themselves on allowing you to write your code in one way and have it run anywhere. People don't want to have to worry about changing something as fundamental as how their server sends and receives requests based on where they are hosting their app.
+
+While [_TC39_](https://tc39.es/) has been rapidly improving JavaScript itself, and _WHATWG_ has been fully established as the authority for the browser, server-side code has been a bit of a wild west until recently. Although Node was the only game in town originally, there are now [a wide variety of options](https://en.wikipedia.org/wiki/List_of_server-side_JavaScript_implementations).
+
+Thankfully, a new group named [_WinterCG_] has recently emerged. The Web-interoperable Runtimes Community Group seeks to establish a set of core specifications that each of these runtimes can base themselves around. So, while people had to figure out basic things like streaming through trial and error, this stuff will be carefully formulated in the future. The recent [Web Crypto Streams](https://webcrypto-streams.proposal.wintercg.org/) standard is fully based on the _WHATWG Streams_ standard.
 
 
 We first check to see if our value is something called a `SuspenseException`. First, let's look at that.
