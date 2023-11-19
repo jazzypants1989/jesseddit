@@ -1,0 +1,52 @@
+---
+let { extraStyle, src, videoID, h6, title } = Astro.props as {
+  videoID: string
+  extraStyle?: string | undefined
+  h6: boolean | undefined
+  title: string | undefined
+}
+
+extraStyle = h6
+  ? "height: 250px; background-color: #ccc;" + extraStyle
+  : "height: fit-content; background-color: #ccc;" + extraStyle
+---
+
+
+<iframe
+  width="560"
+  height="315"
+  style={`aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
+  src="https://www.youtube.com/embed/Y8Wp3dafaMQ&autoplay=1"
+  srcdoc=`<style>
+    * {
+        padding:0;margin:0;overflow:hidden; color:#a4a;
+    }
+    html,body{
+        height:100%
+    }
+    img,span{
+        position:absolute;width:100%;top:0;bottom:0;margin:auto
+    }
+    span{
+        height:1.5em;text-align:center;font:48px/1.5 sans-serif;text-shadow:0 0 0.5em purple
+    }
+    h6 {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 1.1rem;
+        background-color: #000;
+        border-radius: 20px;
+        padding: 5px 10px;
+    }
+</style>
+<a href=https://www.youtube.com/embed/${videoID}?autoplay=1>
+    <img src=https://img.youtube.com/vi/${videoID}/maxresdefault.jpg alt=${title}>
+    <h6>${title}</h6>
+    <span>▶</span>
+</a>`
+  frameborder="0"
+  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen
+  title={title || "YouTube video player"}
+></iframe>

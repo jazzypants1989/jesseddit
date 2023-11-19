@@ -1,12 +1,13 @@
 ---
 title: "React Server Components"
-video: "https://www.youtube.com/embed/gua_G1Jcksw"
+video: "gua_G1Jcksw"
 nextLink: "./2-reviving-thenables"
 ---
 
 import ImageLink from "../../../components/ImageLink.astro"
-import Announcement from '../../../assets/rsc/1/Announcement.png';
-import JSConf2013 from '../../../assets/rsc/1/JSConf2013.png';
+import Youtube from "../../../components/Youtube.astro"
+import ACDFramework from '../../../assets/rsc/1/ACDFramework.png';
+import Actions from '../../../assets/rsc/1/Actions.jpg';
 
 # You're not supposed to be here yet!!!
 
@@ -14,10 +15,9 @@ import JSConf2013 from '../../../assets/rsc/1/JSConf2013.png';
 
 In December 2020, the React team released a [“special Holiday Update”](https://legacy.reactjs.org/blog/2020/12/21/data-fetching-with-react-server-components.html). This included an hour long talk by Dan Abramov and Lauren Tan as well as an accompanying demo where people could try out an exciting new technology called “React Server Components”. It's been a long journey from that point, and the underlying API's have changed a bit since then, but _RSC_'s are finally reaching a point of maturity.
 
-<ImageLink 
-    src={Announcement} 
-    alt="React Server Components Announcement" 
-    href="https://www.youtube.com/watch?v=TQQPAU21ZUw" 
+<Youtube
+    videoID="TQQPAU21ZUw"
+    title="Data Fetching with React Server Components"
 />
 
 ## History of SSR in React
@@ -52,21 +52,21 @@ This is a way of building applications that rely on pre-rendered HTML to build a
 
 JAMStack was always more of a state of mind than an actual guide to building applications. Composing together the data requirements of a modern application can be extremely difficult. This is especially true when you are trying to render each page both on the server and the client. It can be hard to split up not only the data requirements of each page, but also the code required to load that data.
 
-So, [frameworks like Next.js](https://nextjs.org) have become extremely popular. They provide a way to statically analyze the requirements for each page and then build a single, optimized bundle for each one. They remove much of the mental overhead involved with efficiently loading data in a React application. In fact, a core React team member tweeted that ["If you use React, you should be using a React framework"](https://twitter.com/acdlite/status/1617611126514266112).
+So, [frameworks like Next.js](https://nextjs.org) have become extremely popular. They provide a way to statically analyze the requirements for each page and then build a single, optimized bundle for each one. They remove much of the mental overhead involved with efficiently loading data in a React application. In fact, a React core team member tweeted that "If you use React, you should be using a React framework".
+
+<ImageLink 
+    src={ACDFramework}
+    alt="Andrew Clark's Tweet about using a React framework"
+    href="https://twitter.com/acdlite/status/1617611126514266112" 
+/>
 
 ### The Future of React
 
 While [a whole host of techniques](https://www.patterns.dev/react) have been developed by the community for rendering dynamic data as efficiently as possible, the React team have been developing a first-party solution for these problems for quite some time now. Eventually, in 2018, the React team started to [iteratively release parts of this solution](https://reactjs.org/blog/2018/03/01/sneak-peek-beyond-react-16.html). 
 
-The key to it all was a concept called [Suspense for Data Fetching](https://reactjs.org/docs/concurrent-mode-suspense.html). This is a way of declaratively specifying the data requirements of each component. Then, React can use this information to optimize the pageload. The first tools provided for this were [`React.Suspense` and `React.lazy`](https://web.dev/code-splitting-suspense/). However, `React.Suspense` cannot be used to their full data fetching potential outside of either a Server Component context or [the Relay Framework](https://relay.dev/). So, this limited it to just helping with code-splitting for most developers for [a long time](https://blog.6nok.org/the-suspense-is-killing-me:-part-1/).
+The key to it all was originally called [Suspense for Data Fetching](https://reactjs.org/docs/concurrent-mode-suspense.html). The first tools provided for this were [`React.Suspense` and `React.lazy`](https://web.dev/code-splitting-suspense/). However, `React.Suspense` cannot be used to its full data fetching potential outside of either a Server Component context or [the Relay Framework](https://relay.dev/). So, this limited it to just helping with code-splitting for most developers for [a long time](https://blog.6nok.org/the-suspense-is-killing-me:-part-1/).
 
 Although this series of articles will be primarily focused on React Server Components which are internally codenamed _Flight_ by the React team, _RSC_'s are completely dependent on their earlier research into HTTP streaming codenamed _Fizz_. The original release of streaming SSR was with [React 16.0](https://legacy.reactjs.org/blog/2017/09/26/react-v16.0.html) in [September 2017](https://medium.com/hackernoon/whats-new-with-server-side-rendering-in-react-16-9b0d78585d67). This stuff takes time!
-
-<ImageLink 
-    src={JSConf2013} 
-    alt="[JSConfUS 2013] Tom Occhino and Jordan Walke: JS Apps at Facebook" 
-    href="https://www.youtube.com/watch?v=GW0rj4sNH2w" 
-/>
 
 ## What Are React Server Components?
 >In a lot of ways, server components is "Suspense for Data Fetching". That's what that is. We're not calling it that anymore, but that is our first-class, like, this is the solution we think for the best way to compose data requirements into your app.
@@ -78,23 +78,29 @@ While there are [obvious benefits to streaming by itself](https://medium.com/air
 
 [The implications of this architecture are mind-blowing](https://vercel.com/blog/how-react-18-improves-application-performance) when fully considered. For instance, you don't need to worry (as much) about the bundle size of the dependencies used in each server component as they will not be sent to the client. But, this is just the [tip of the iceberg](https://www.joshwcomeau.com/react/server-components/) in terms of DX & performance benefits.
 
-You can even use the server to do things like [make calls to your database](https://www.mux.com/blog/what-are-react-server-components) inside of your component. You no longer have to figure out how to bounce back authentication requests using things like `useEffect` while trying to hide critical environmental variables in the browser. Instead, server components allow you to enjoy the classic unidirectional flow of data that React has always championed. 
+You can even use the server to do things like [make calls to your database](https://www.mux.com/blog/what-are-react-server-components) inside of your component. You no longer have to choose between figuring out how to bounce back authentication requests using things like `useEffect` while trying to hide critical environmental variables in the browser or hoisting everything out into a `getServerSideProps` call. Instead, server components allow you to enjoy the classic unidirectional flow of data that React has always championed. 
 
 You don't even have to worry about leaking any secrets because that code will never run in the browser. This is because it is [fully serialized into a special data format colloquially known as the _RSC Payload_](https://demystifying-rsc.vercel.app/). This contains encoded instructions that React uses to transform this serialized representation into valid HTML on the client.
 
 ### State & Server Actions
 
+<ImageLink
+    src={Actions}
+    alt="Sam Selikoff's Talk about Server Components and Server Actions"
+    href="https://www.youtube.com/watch?v=9CN9RCzznZc"
+/>
+
 As I said at the beginning of this section, it is a common mistake to think that server components are completely converted into HTML on the server. That's actually how the old `renderToString` API from `react-dom/server` worked. Instead, when `react-server-dom-webpack` runs the function for each server component, it produces a _React Element_-- a JSON representation of the HTML.
 
-Most importantly, this object is then serialized so that it can be sent over the network. Because the render process only occurs once on the server and it must produce something serializable, this means that server components are stateless and cannot have any side-effects-- which require a stateful environment. Thus, with no `useState` or `useEffect`, server components are static by nature. 
+Most importantly, this object is then serialized so that it can be sent over the network. Because the render process only occurs once on the server and it must produce something serializable, this means that server components are stateless. So, you cannot have any side-effects because the very concept of an effect requires a stateful environment. Thus, with no `useState` or `useEffect`, server components are static by nature. 
 
-However, we are no longer limited to purely static portions of websites as the React team have recently unveiled [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions). This is a form of [Remote Procedure Call](https://en.wikipedia.org/wiki/Remote_procedure_call) which can be used to request fresh server components. They are immensely powerful, and I think the potential DX benefits will be plain to see when we explore how they work in closer detail in [chapter six.](./6-server-actions)
+However, we are no longer limited to building purely static websites with server components as the React team have recently unveiled [server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions). This is a form of [Remote Procedure Call](https://en.wikipedia.org/wiki/Remote_procedure_call) which can be used to request fresh server components. They are immensely powerful, and I think the potential DX benefits will be plain to see when we explore how they work in closer detail in [chapter six.](./6-server-actions)
 
 ### RSC & SSR
 
 Because they do not actually produce HTML, _React Server Components_ are usually paired with traditional server-side rendering. This is for the same reason that _SSR_ has always been popular-- _SEO_, progressive enhancement, and less visible loading. Because _RSC's_ are rendered to a serializable format, this doesn't even need to occur on the same server-- [at least until the first `Suspense` boundary](https://nextjs.org/learn/dashboard-app/partial-prerendering).
 
-In fact, [the example implementations](https://github.com/facebook/react/commit/e7d7d4cb4b61624c5762521370a58d941c1c46e3) promote an architecture where the _RSC's_ are rendered on separate, regional servers. These are controlled by a global server that is responsible for _SSR_. While it is beneficial in many ways, it's important to note that _SSR_ is not strictly required for implementing _RSC's_.
+In fact, [the example implementations](https://github.com/facebook/react/commit/e7d7d4cb4b61624c5762521370a58d941c1c46e3) promote an architecture where the _RSC's_ are rendered on a separate server which can be deployed regionally on the edge. These are controlled by a global server that is responsible for _SSR_. While it is beneficial in many ways, it's important to note that _SSR_ is not strictly required for implementing _RSC's_.
 
 When you are server rendering an app built with server components, one counter-intuitive thing is that the _SSR_ server is actually [acting as a "client"](https://github.com/reactwg/server-components/discussions/4) in this scenario. Because the server components are not valid HTML, the _SSR_ server still needs to process them along with all of the client components. Thus, "client components" still need to worry about things like whether or not the `window` object is available to avoid hydration errors.
 

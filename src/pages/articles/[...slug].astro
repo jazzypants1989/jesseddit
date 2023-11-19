@@ -1,6 +1,7 @@
 ---
 import Headings from "../../components/Headings.astro"
-import IFrame from "../../components/IFrame.astro"
+// import IFrame from "../../components/IFrame.astro"
+import Youtube from "../../components/Youtube.astro"
 import Layout from "../../layouts/Layout.astro"
 
 // Static Paths...
@@ -82,7 +83,8 @@ let others = ["Home", "About", "Portfolio"]
     <p class="text-center text-purple-600 dark:text-purple-400 text-xl">
       By Jesse Pence
     </p>
-    {video && <IFrame id="ytplayer" src={video} allowfullscreen />}
+    <!-- {video && <IFrame id="ytplayer" src={video} allowfullscreen />} -->
+    {video && <Youtube videoID={video} title={title} />}
     <article
       class="prose p-2 max-w-none prose-lg flex flex-col justify-center items-center tracking-wide bg-blue-100 rounded-lg shadow-2xl dark:bg-gray-800 text-gray-800 dark:text-gray-200 dark:prose-DARK indent-8"
     >
