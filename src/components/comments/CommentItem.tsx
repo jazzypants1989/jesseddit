@@ -212,7 +212,7 @@ const CommentItem = (props: {
           >
             🔗
           </a>
-          <Show when={comment.user?.id === props.user.id}>
+          <Show when={comment.user?.id === props.user?.id}>
             <button
               onClick={() => setShowEdit((showEdit) => !showEdit)}
               class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
@@ -220,7 +220,7 @@ const CommentItem = (props: {
               📝
             </button>
           </Show>
-          <Show when={comment.user?.id === props.user.id}>
+          <Show when={comment.user?.id === props.user?.id}>
             <button
               onclick={() => onDelete(comment)}
               class="flex justify-start dark:bg-slate-600 dark:text-slate-200 bg-purple-300 text-black p-2 rounded-md w-fit"
@@ -229,7 +229,7 @@ const CommentItem = (props: {
             </button>
           </Show>
           <Show
-            when={props.user.id}
+            when={props.user?.id}
             fallback={
               <a
                 href="/login"

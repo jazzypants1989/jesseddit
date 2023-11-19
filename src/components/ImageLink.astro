@@ -1,0 +1,14 @@
+---
+import { Image } from "astro:assets"
+const { src, alt, href } = Astro.props
+---
+
+<a
+  class="flex flex-col items-center justify-center p-4 m-4 text-center border border-purple-400 rounded-md shadow-md hover:shadow-lg hover:border-purple-300 hover:bg-purple-800"
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <Image src={src} alt={alt} />
+  <small>{alt}</small>
+</a>

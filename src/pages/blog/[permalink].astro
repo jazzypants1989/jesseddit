@@ -53,44 +53,19 @@ if (!post) {
 
 let { title, body, likes, createdAt, updatedAt, comments } = post
 
-const userCookie = Astro.cookies.get("user")?.value ?? null
-
-const user = userCookie ? JSON.parse(userCookie) : {}
-
-const userInDB =
-  user && user.login
-    ? await prisma.user.findUnique({
-        where: {
-          login: user.login,
-        },
-      })
-    : null
-
-if (!userInDB && user.login) {
-  await prisma.user.create({
-    data: {
-      login: user.login,
-      id: user.id,
-      avatar_url: user.avatar_url,
-      html_url: user.html_url,
-      location: user.location,
-      name: user.name,
-      email: user.email,
-      twitter_username: user.twitter_username,
-    },
-  })
-}
+const userCookie = Astro?.cookies?.get("user")?.value
+const user = userCookie ? JSON.parse(userCookie) : null
 ---
 
 <Layout now="Blog" others={others}>
   <div class="flex justify-center items-center max-w-2xl mx-auto">
     <div
-      class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-blue-200 rounded-lg shadow-md dark:bg-gray-800"
+      class="flex flex-col justify-center items-center w-full max-w-2xl p-4 mx-auto my-8 bg-blue-100 rounded-lg shadow-md dark:bg-gray-800"
     >
       <h1 class="text-3xl font-bold text-gray-800 dark:text-white">{title}</h1>
       <p class="mt-2 text-xl text-black dark:text-gray-300">{body}</p>
       <span id="likes" class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        <PostLike post={post} user={user} client:only />
+        <PostLike post={post} user={user} client:load />
       </span>
       <span
         id="createdAt"
@@ -109,7 +84,7 @@ if (!userInDB && user.login) {
         )
       }
       <ToC />
-      <CommentList comments={comments} post={post} user={user} client:only />
+      <CommentList comments={comments} post={post} user={user} client:load />
     </div>
   </div>
 </Layout>

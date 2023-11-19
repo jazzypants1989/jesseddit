@@ -3,7 +3,7 @@ import Layout from "../layouts/Layout.astro"
 import AsWhatGenerator from "../utils/AsWhatGenerator"
 let others = ["Blog", "About", "Portfolio"]
 
-const cookie = Astro.cookies.get("user").value
+const cookie = Astro.cookies?.get("user")?.value
 
 const user = cookie
   ? JSON.parse(cookie)

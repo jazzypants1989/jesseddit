@@ -100,7 +100,7 @@ export async function unlikeComment(id: string | undefined) {
 // POST LIKES
 
 export function userLikedPost(post: PostProps, user: User) {
-  const like = post.likes?.find((like) => like.userId === user.id)
+  const like = post.likes?.find((like) => like.userId === user?.id)
   if (like) {
     return like
   }
@@ -159,7 +159,7 @@ export function commentHasBeenEdited(comment: CommentItemProps) {
   const updatedAt = new Date(comment.updatedAt)
   const allowableDifference = 1000 * 60 * 1 // 1 minute
   const difference = updatedAt.getTime() - createdAt.getTime()
-  return difference > allowableDifference || newMessage().length > 0
+  return difference > allowableDifference || newMessage().body !== comment.body
 }
 
 // DELETE COMMENT

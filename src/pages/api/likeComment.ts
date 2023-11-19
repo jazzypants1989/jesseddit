@@ -1,7 +1,7 @@
 import db from "../../utils/db"
 import type { APIContext, APIRoute } from "astro"
 
-export const post: APIRoute = async ({
+export const POST: APIRoute = async ({
   request,
   redirect,
   cookies,
@@ -9,7 +9,7 @@ export const post: APIRoute = async ({
   const { id } = await request.json()
   console.log("id", id) // id 1
 
-  const cookie = cookies.get("user").value
+  const cookie = cookies?.get("user")?.value
 
   const user = cookie ? JSON.parse(cookie) : null
 
@@ -34,14 +34,14 @@ export const post: APIRoute = async ({
   })
 }
 
-export const del: APIRoute = async ({
+export const DELETE: APIRoute = async ({
   request,
   redirect,
   cookies,
 }: APIContext) => {
   const { id } = await request.json()
   console.log("id", id) // id 1
-  const cookie = cookies.get("user").value
+  const cookie = cookies?.get("user")?.value
 
   const user = cookie ? JSON.parse(cookie) : null
 

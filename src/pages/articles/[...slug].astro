@@ -84,20 +84,20 @@ let others = ["Home", "About", "Portfolio"]
     </p>
     {video && <IFrame id="ytplayer" src={video} allowfullscreen />}
     <article
-      class="prose p-2 max-w-none prose-lg flex flex-col justify-center items-center tracking-wide bg-blue-200 rounded-lg shadow-2xl dark:bg-gray-800 text-gray-800 dark:text-gray-200 dark:prose-DARK indent-8"
+      class="prose p-2 max-w-none prose-lg flex flex-col justify-center items-center tracking-wide bg-blue-100 rounded-lg shadow-2xl dark:bg-gray-800 text-gray-800 dark:text-gray-200 dark:prose-DARK indent-8"
     >
       {article !== "1-introduction" ? <Headings /> : <h1>Hey there!</h1>}
       <Content />
     </article>
     <div class="flex items-center justify-between w-full h-24 mt-4 text-center">
       <a
-        class="cursor-pointer bold text-blue-600 dark:text-blue-500 hover:text-purple-700 dark:hover:text-blue-400 bg-blue-200 dark:bg-gray-700 rounded-2xl text-sm md:text-base shadow-purple-400 drop-shadow shadow-2xl px-2 py-1 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
+        class="cursor-pointer bold text-blue-600 dark:text-blue-500 hover:text-purple-700 dark:hover:text-blue-400 bg-blue-100 dark:bg-gray-700 rounded-2xl text-sm md:text-base shadow-purple-400 drop-shadow shadow-2xl px-2 py-1 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
         href={`/blog/${blog}`}
       >
         Table of Contents
       </a>
       <a
-      class="cursor-pointer bold text-blue-600 dark:text-blue-500 hover:text-purple-700 dark:hover:text-blue-400 bg-blue-200 dark:bg-gray-700 rounded-2xl text-sm md:text-base shadow-purple-400 drop-shadow shadow-2xl px-2 py-1 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
+      class="cursor-pointer bold text-blue-600 dark:text-blue-500 hover:text-purple-700 dark:hover:text-blue-400 bg-blue-100 dark:bg-gray-700 rounded-2xl text-sm md:text-base shadow-purple-400 drop-shadow shadow-2xl px-2 py-1 hover:shadow-lg hover:shadow-purple-500 transition-all duration-700 ease-in-out"
       href={`/blog/${blog}#comments`}
       >
       Comments 

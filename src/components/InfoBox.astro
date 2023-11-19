@@ -2,6 +2,7 @@
 export interface Props {
   warning?: boolean
   hint?: boolean
+  summary: string
 }
 
 const { warning, hint } = Astro.props
@@ -20,19 +21,19 @@ function titleFinder() {
   if (warning) {
     return "Warning!"
   } else if (hint) {
-    return "Hint:"
+    return "Hint"
   } else {
-    return "Note:"
+    return "Note"
   }
 }
 ---
 
-<div
+<details
   class={`px-4 py-3 rounded-2xl relative flex items-center flex-col indent-0 shadow-lg border-l border-b border-r-2 ${classFinder()} mb-4 mt-2`}
   role="alert"
 >
-  <span class="font-bold">{titleFinder()}</span>
+  <summary class="font-bold cursor-pointer text-lg">{titleFinder()}</summary>
   <span class="block sm:inline">
     <slot />
   </span>
-</div>
+</details>

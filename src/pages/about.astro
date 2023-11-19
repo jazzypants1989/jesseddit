@@ -2,7 +2,7 @@
 import Layout from "../layouts/Layout.astro"
 let others = ["Home", "Blog", "Portfolio"]
 
-const cookie = Astro.cookies.get("user").value
+const cookie = Astro.cookies?.get("user")?.value
 
 const user = cookie
   ? JSON.parse(cookie)

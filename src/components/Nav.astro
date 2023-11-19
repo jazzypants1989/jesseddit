@@ -4,7 +4,7 @@ export interface Props {
   others: Array<string>
 }
 
-const cookie = Astro.cookies.get("user").value
+const cookie = Astro.cookies?.get("user")?.value
 
 const user = cookie ? JSON.parse(cookie) : null
 ---

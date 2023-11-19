@@ -6,6 +6,7 @@ import netlify from "@astrojs/netlify/functions"
 
 // https://astro.build/config
 export default defineConfig({
+  adapter: netlify(),
   integrations: [
     tailwind({
       config: { applyBaseStyles: false },
@@ -15,7 +16,9 @@ export default defineConfig({
       shikiConfig: { theme: "rose-pine-moon" },
     }),
   ],
+  redirects: {
+    "/blog/client-side-routing-1": "/blog/client-side-routing",
+  },
   output: "server",
-  adapter: netlify(),
   site: "https://www.jessedit.tech",
 })

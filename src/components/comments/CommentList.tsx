@@ -71,7 +71,7 @@ const CommentList = (props: {
               {error()}
             </div>
           )}
-          {props.user.id ? (
+          {props.user?.id ? (
             <button
               class="p-2 self-end font-bold bg-purple-600 text-purple-200 rounded-md text-xl hover:bg-purple-800 hover:text-purple-300"
               type="submit"

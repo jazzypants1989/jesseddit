@@ -187,7 +187,7 @@ module.exports = {
             a: {
               color: theme("colors.green.700"),
               "&:hover": {
-                color: theme("colors.green.500"),
+                color: theme("colors.green.900"),
               },
             },
             h1: {

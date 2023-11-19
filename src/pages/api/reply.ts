@@ -1,7 +1,7 @@
 import db from "../../utils/db"
 import type { APIContext, APIRoute } from "astro"
 
-export const post: APIRoute = async ({
+export const POST: APIRoute = async ({
   request,
   redirect,
   cookies,

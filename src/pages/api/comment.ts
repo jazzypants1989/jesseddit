@@ -2,7 +2,7 @@ import type { CommentItemProps } from "../../components/comments/CommentItem"
 import db from "../../utils/db"
 import type { APIContext, APIRoute } from "astro"
 
-export const post: APIRoute = async ({
+export const POST: APIRoute = async ({
   request,
   redirect,
   cookies,
@@ -10,9 +10,9 @@ export const post: APIRoute = async ({
   const { body, permalink } = await request.json()
   console.log("Body: ", body)
   console.log("Permalink: ", permalink)
-  console.log(cookies.get("user").value)
+  console.log(cookies?.get("user")?.value)
 
-  const cookie = cookies.get("user").value
+  const cookie = cookies?.get("user")?.value
 
   const user = cookie ? JSON.parse(cookie) : null
 
@@ -50,7 +50,7 @@ export const post: APIRoute = async ({
   })
 }
 
-export const put: APIRoute = async ({
+export const PUT: APIRoute = async ({
   request,
   redirect,
   cookies,
@@ -59,7 +59,7 @@ export const put: APIRoute = async ({
   console.log("Body: ", body)
   console.log("ID: ", id)
 
-  const cookie = cookies.get("user").value
+  const cookie = cookies?.get("user")?.value
 
   const user = cookie ? JSON.parse(cookie) : null
 
@@ -97,7 +97,7 @@ export const put: APIRoute = async ({
   })
 }
 
-export const del: APIRoute = async ({
+export const DELETE: APIRoute = async ({
   request,
   redirect,
   cookies,
@@ -105,7 +105,7 @@ export const del: APIRoute = async ({
   const { id, userId, children } = await request.json()
   console.log("Children: ", children)
 
-  const cookie = cookies.get("user").value
+  const cookie = cookies?.get("user")?.value
 
   const user = cookie ? JSON.parse(cookie) : null
 
