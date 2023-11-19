@@ -16,7 +16,6 @@ extraStyle = h6
   width="560"
   height="315"
   style={`aspect-ratio: 16/9; width: 100%; border: 2px solid #000; border-radius: 10px; shadow: 0 10px 10px 0 rgba(0, 0, 0, 0.4); ${extraStyle}`}
-  src="https://www.youtube.com/embed/Y8Wp3dafaMQ&autoplay=1"
   srcdoc=`<style>
     * {
         padding:0;margin:0;overflow:hidden; color:#a4a;
@@ -40,7 +39,7 @@ extraStyle = h6
         padding: 5px 10px;
     }
 </style>
-<a href=https://www.youtube.com/embed/${videoID}?autoplay=1>
+<a href=${videoID}?autoplay=1>
     <img src=https://img.youtube.com/vi/${videoID}/maxresdefault.jpg alt=${title}>
     <h6>${title}</h6>
     <span>▶</span>
