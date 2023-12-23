@@ -11,7 +11,6 @@ extraStyle = h6
   : "height: fit-content; background-color: #ccc;" + extraStyle
 ---
 
-
 <iframe
   width="560"
   height="315"
@@ -40,12 +39,11 @@ extraStyle = h6
     }
 </style>
 <a href=https://www.youtube.com/embed/${videoID}?autoplay=1>
-    <img src=https://img.youtube.com/vi/${videoID}/maxresdefault.jpg alt=${title}>
+    <img src=https://img.youtube.com/vi/${videoID}/hqdefault.jpg alt=${title}>
     <h6>${title}</h6>
     <span>▶</span>
 </a>`
   frameborder="0"
   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
   allowfullscreen
-  title={title || "YouTube video player"}
-></iframe>
+  title={title || "YouTube video player"}></iframe>

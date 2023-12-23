@@ -199,6 +199,7 @@ module.exports = {
             },
             h3: {
               color: theme("colors.purple.600"),
+              indent: "0",
             },
             h4: {
               color: theme("colors.purple.600"),
@@ -282,6 +283,7 @@ module.exports = {
             },
             h3: {
               color: theme("colors.purple.400"),
+              indent: "0",
             },
             h4: {
               color: theme("colors.purple.400"),

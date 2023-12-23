@@ -458,6 +458,62 @@ declare module 'astro:content' {
   collection: "articles";
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] };
+"react-server-components/2-1-distributed-computing.mdx": {
+	id: "react-server-components/2-1-distributed-computing.mdx";
+  slug: "react-server-components/2-1-distributed-computing";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-2-RPCs.mdx": {
+	id: "react-server-components/2-2-RPCs.mdx";
+  slug: "react-server-components/2-2-rpcs";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-3-the-web.mdx": {
+	id: "react-server-components/2-3-the-web.mdx";
+  slug: "react-server-components/2-3-the-web";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-4-events.mdx": {
+	id: "react-server-components/2-4-events.mdx";
+  slug: "react-server-components/2-4-events";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-5-Web-Standards.mdx": {
+	id: "react-server-components/2-5-Web-Standards.mdx";
+  slug: "react-server-components/2-5-web-standards";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-6-Node.mdx": {
+	id: "react-server-components/2-6-Node.mdx";
+  slug: "react-server-components/2-6-node";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-7-Promises.mdx": {
+	id: "react-server-components/2-7-Promises.mdx";
+  slug: "react-server-components/2-7-promises";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
+"react-server-components/2-8-Fetch.mdx": {
+	id: "react-server-components/2-8-Fetch.mdx";
+  slug: "react-server-components/2-8-fetch";
+  body: string;
+  collection: "articles";
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] };
 "react-server-components/2-reviving-thenables.mdx": {
 	id: "react-server-components/2-reviving-thenables.mdx";
   slug: "react-server-components/2-reviving-thenables";
@@ -510,13 +566,6 @@ declare module 'astro:content' {
 "react-server-components/9-client-components.mdx": {
 	id: "react-server-components/9-client-components.mdx";
   slug: "react-server-components/9-client-components";
-  body: string;
-  collection: "articles";
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] };
-"react-server-components/99-rejects.mdx": {
-	id: "react-server-components/99-rejects.mdx";
-  slug: "react-server-components/99-rejects";
   body: string;
   collection: "articles";
   data: InferEntrySchema<"articles">

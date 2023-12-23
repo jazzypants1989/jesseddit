@@ -3,48 +3,56 @@ export interface Props {
   title?: string
   now: string
   others: Array<string>
+  image?: string
 }
 
 import Nav from "../components/Nav.astro"
 
 import "../styles/global.css"
 
-const { title = "Jessedit", now, others } = Astro.props
+const { title = "Jessedit", now, others, image } = Astro.props
 
 const url = new URL(Astro.url)
 ---
 
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600&display=swap"
-  rel="stylesheet"
-/>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<meta name="generator" content={Astro.generator} />
-<!-- Meta image: "/pengy.png" -->
-<meta property="og:image" content="/pengy.png" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="Jovial Penguin, LLC" />
-<meta property="og:type" content="website" />
-<meta property="og:site_name" content="Jessedit" />
-<meta property="og:title" content={title} />
-<meta property="og:description" content="Jessedit" />
-<meta property="og:url" content="https://jessedit.tech/blog/into-the-future" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:site" content="@jesse_pence5" />
-<meta name="twitter:creator" content="@jesse_pence5" />
-<meta name="twitter:title" content={title} />
-<meta name="twitter:description" content="Jessedit" />
-<meta name="twitter:image" content="/pengy.png" />
-<meta name="twitter:image:alt" content="Jovial Penguin, LLC" />
-<meta name="twitter:url" content="https://jessedit.tech/blog/into-the-future" />
-<meta name="twitter:label1" content="Est. reading time" />
-<meta name="twitter:data1" content="5-3000 minutes" />
-<title>{title}</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="generator" content={Astro.generator} />
+  <meta property="og:image" content={image ?? "/pengy.png"} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Jovial Penguin, LLC" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Jessedit" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content="Jessedit" />
+  <meta
+    property="og:url"
+    content="https://jessedit.tech/blog/into-the-future"
+  />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@jesse_pence5" />
+  <meta name="twitter:creator" content="@jesse_pence5" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content="Jessedit" />
+  <meta name="twitter:image" content="/pengy.png" />
+  <meta name="twitter:image:alt" content="Jovial Penguin, LLC" />
+  <meta
+    name="twitter:url"
+    content="https://jessedit.tech/blog/into-the-future"
+  />
+  <meta name="twitter:label1" content="Est. reading time" />
+  <meta name="twitter:data1" content="5-3000 minutes" />
+  <title>{title}</title>
+</head>
 <body
   class="scroll-behavior-smooth max-w-full overflow-x-hidden bg-purple-300 text-lg tracking-wide text-purple-900 antialiased dark:bg-purple-800 dark:text-purple-200"
 >

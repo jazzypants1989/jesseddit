@@ -1,0 +1,55 @@
+import CodeBlock from "../../../CodeBlock.astro"
+// FILE DATE: 11/22/2023
+// https://github.com/facebook/react/blob/a3172e933c7eb54aa02ec1d303453a96bc76181b/packages/react-client/src/ReactFlightClient.js#L140
+
+<CodeBlock>
+```js
+function Chunk(status: any, value: any, reason: any, response: Response) {
+  this.status = status;
+  this.value = value;
+  this.reason = reason;
+  this._response = response;
+}
+// We subclass Promise.prototype so that we get other methods like .catch
+Chunk.prototype = (Object.create(Promise.prototype): any);
+// TODO: This doesn't return a new Promise chain unlike the real .then
+Chunk.prototype.then = function <T>(
+  this: SomeChunk<T>,
+  resolve: (value: T) => mixed,
+  reject: (reason: mixed) => mixed,
+) {
+  const chunk: SomeChunk<T> = this;
+  // If we have resolved content, we try to initialize it first which
+  // might put us back into one of the other states.
+  switch (chunk.status) {
+    case RESOLVED_MODEL:
+      initializeModelChunk(chunk);
+      break;
+  }
+  // The status might have changed after initialization.
+  switch (chunk.status) {
+    case INITIALIZED:
+      resolve(chunk.value);
+      break;
+    case PENDING:
+    case BLOCKED:
+      if (resolve) {
+        if (chunk.value === null) {
+          chunk.value = ([]: Array<(T) => mixed>);
+        }
+        chunk.value.push(resolve);
+      }
+      if (reject) {
+        if (chunk.reason === null) {
+          chunk.reason = ([]: Array<(mixed) => mixed>);
+        }
+        chunk.reason.push(reject);
+      }
+      break;
+    default:
+      reject(chunk.reason);
+      break;
+  }
+};
+```
+</CodeBlock>

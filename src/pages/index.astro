@@ -31,10 +31,10 @@ const titleInsult = AsWhatGenerator()
     >
       {
         name
-          ? `${name} is a web developer. Today, I think they are`
-          : "Jesse is a web developer. Today, I think they are"
+          ? `${name} is a web developer. Right now, I think they are`
+          : "Jesse is a web developer. Right now, I think they are"
       }
-      <span class="text-blue-500 animate-pulse">{AsWhatGenerator()}.</span>
+      <span class="text-blue-500 animate-pulse">{titleInsult}.</span>
     </h2>
     <div class="mt-10 animate-bounce hover:animate-fade-out-up">
       <img
@@ -50,7 +50,7 @@ const titleInsult = AsWhatGenerator()
       cat. Also, the remark above is randomly generated. If it's my name, and it
       seems like I'm full of myself-- I'm sorry. If you're logged in, and it
       insulted you-- I'm more sorry. I'm sure you're not{" "}
-      {titleInsult} at all. I'm sure you're {AsWhatGenerator()}. That's better,
+      {titleInsult} at all. Maybe you're {AsWhatGenerator()}... That's better,
       right?)
     </small>
   </main>

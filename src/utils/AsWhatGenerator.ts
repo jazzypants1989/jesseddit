@@ -257,4 +257,5 @@ const nouns = [
   "possum",
   "raccoon",
   "wombat",
+  "programmer",
 ]

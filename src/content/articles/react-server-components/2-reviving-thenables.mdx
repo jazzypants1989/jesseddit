@@ -2,6 +2,852 @@
 title: "Reviving Thenables"
 nextLink: "./3-chunks"
 ---
-## Coming Soon!
+import CodeBlock from "../../../components/CodeBlock.astro"
+import InfoBox from "../../../components/InfoBox.astro"
+import IFrame from "../../../components/IFrame.astro"
 
-I'm writing as fast as I can, I swear!
+import Chunk from "../../../components/demos/rscs/2-thenables/Chunk.mdx"
+import ResolveModelSmall from "../../../components/demos/rscs/2-thenables/ResolveModelSmall.mdx"
+
+
+## Introduction
+
+As we delve deeper into the depths of React Server Components (_RSC_), I'm going do my best to give you all the background information you need to truly understand each part of the code. Hopefully, the last chapter cemented the basic concept of _React Server Components_ (RSC) in your mind and helped you see how it differs from _Server Side Rendering_ (_SSR_). It's important to fully grasp this distinction as we move forward. 
+
+This is not the only background knowledge that you need, however. Before we get into the heart of the _React Server Component_ codebase, it's essential that we understand the types of problems that it was built to solve. Also, _RSC_'s adopt a whole host of clever tricks which use some of the more obscure features of the [Web](https://www.w3.org/wiki/Open_Web_Platform) [Platform](https://2ality.com/2013/03/web-platform.html). So, we'll need to cover some of these advanced concepts first to understand how they work.
+
+There are a few more chapters like this later, too. I know it might be frustrating to not dive headfirst into the React codebase, but a thorough knowledge of these concepts is key to understanding how _RSC_'s actually work. I've worked really hard to put together a bunch of demos that make it all very clear. I will also be establishing some basic _RSC_ knowledge throughout the chapter which I will refer to throughout the series. 
+
+In this chapter, we're going to be discussing [asynchronous code on the web](https://exploringjs.com/impatient-js/ch_async-js.html). I mean, have you ever thought about what that really means? We hear terms like single-threaded and event loop thrown around a lot, but it seems like relatively few developers take the time to understand what's really happening under the hood.
+
+To answer this question, we'll weave a narrative based on the history of the Web itself. We'll frame it as the journey from primitive events to modern APIs. The majority of this chapter will focus on [_promises_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises), how they work, and how React uses them. 
+
+However, to fully understand the React internals, there are a few more things we need to cover. So, we will also explore _JSON [Replacer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#the_replacer_parameter) and [Reviver](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#the_reviver_parameter)_ functions. These are used to customize the serialization of JavaScript objects, and React uses them extensively in their streaming process. 
+
+Finally, we'll briefly examine how the `fetch` method encapsulates the evolution of many of these concepts, as it is a deceptively simple interface for efficiently streaming dynamic, asynchronous data with JavaScript. This will naturally lead us into our next chapter on _Streams_. So, let's explore the history of the web and the internal mechanisms of JavaScript runtimes to start understanding how React deftly conducts an orchestra of modern web APIs to make server components work. It all starts with events.
+
+## Asynchronous JavaScript
+
+For the first few of years, almost every web page was completely static. [Tim Berners-Lee](https://home.cern/science/computing/birth-web/short-history-web) created [the first website](https://info.cern.ch/hypertext/WWW/TheProject.html) in late 1991, and that very same year [a browser called Viola introduced forms](https://www.webdesignmuseum.org/web-design-history/violawww-1992). ViolaWWW became [well regarded](https://arstechnica.com/information-technology/2019/05/before-netscape-forgotten-web-browsers-of-the-early-1990s/2/) for this and [other features](https://web.archive.org/web/19990830034431/http://viola.org/vintage/montage.html), but it was pretty rare for a website to do very much with this new capability. 
+
+You could dynamically respond to the user's request when they filled out the form, but this required an entire round-trip back and forth from the server. This could be [frustratingly slow in the era of the dial-up modem](https://bkardell.com/blog/Brief-ish-History-of-The-Web-Part-3.html). This was because it required loading in an entirely new document while discarding everything on the current page. 
+
+Usually, this was facilitated by a [Common Gateway Interface](https://webdevelopmenthistory.com/1993-cgi-scripts-and-early-server-side-web-programming/). This was a specification for designing dynamic web servers that was developed at the NCSA. The [National Center for Supercomputing Applications](https://en.wikipedia.org/wiki/National_Center_for_Supercomputing_Applications) was responsible for many of the early innovations on the web.
+
+Chief among these was [a web browser called Mosaic](https://en.wikipedia.org/wiki/Mosaic_(web_browser)) that was released in 1993. Created by two developers named Marc Andreessen and Eric Bina while working at the NCSA, Mosaic distinguished itself by being able to do little things like [show images in the same window](https://thehistoryoftheweb.com/the-origin-of-the-img-tag/) as the rest of the document. Beyond these UX improvements, Mosaic was also the first browser available on multiple platforms, and it quickly became the most popular browser in the world.
+
+Andreessen and Bina left the NCSA to found their own company with a man named James H. Clark. First calling themselves Mosaic Communications to try to capitalize on its popularity, they quickly built a browser that they originally codenamed ["Mozilla" as they intended to create the "Mosaic Killer" or the "Godzilla" that would crush Mosaic](https://web.archive.org/web/20130615045013/http://www.youtube.com/watch?v=qEFu-B1wj1E&gl=US&hl=en). Eventually, they settled on the less provocative name of Netscape for their browser, but the codename popped up again later. 
+
+They were forced to adopt the name Netscape for the entire company because the NCSA owned the trademark for Mosaic, and they changed the name of the browser to Navigator. Many disregarded the name change as this was their only real product. Most people just continued to call the browser Netscape. 
+
+[Netscape changed everything](https://www.popularmechanics.com/culture/web/a27033147/netscape-navigator-history/). The first version became [extremely popular](https://webdevelopmenthistory.com/1996-netscape-lays-the-groundwork-for-web-applications/) as it introduced things like tables and background images. At that point, it was expected that these kinds of presentational aspects would emerge. 
+
+What was much less obvious was how to add more dynamicism to a web page than a form could offer. Tim Berners-Lee thought that you needed [something really powerful, but at the same time ubiquitous"](http://1997.webhistory.org/www.lists/www-talk.1992/0065.html). Although Viola had experimented with adding a scripting language to browsers, no one really took it seriously. So, the [release of Netscape 2.0](http://sunsite.uakom.sk/sunworldonline/swol-10-1995/swol-10-netscape.html) truly changed the web forever when it introduced the world to JavaScript.
+
+### Events
+
+Asynchronous code has [always been a part of JavaScript](https://webdevelopmenthistory.com/1995-the-birth-of-javascript/). This is most evident when adding an event listener to a DOM element. You're saying that you want some code to run eventually, but only after the user initiates it by doing something in the browser.
+
+JavaScript's event system was [greatly inspired](https://www.youtube.com/watch?v=QgwSUtYSUqA&t=1035s) by an application development kit from Apple called [HyperCard](https://en.wikipedia.org/wiki/HyperCard). HyperCard was included for free in all Macintosh computers. It allowed programmers to easily respond to ["System Messages"](https://cancel.fm/stuff/share/HyperCard_Script_Language_Guide_1.pdf) like when the user was hovering their mouse over something. 
+
+If you look at the initial [release notes](https://web.archive.org/web/19970614001401/http://home.netscape.com/eng/mozilla/2.0/relnotes/mac-2.0b2.html) for the beta version in which JavaScript was released to the world, this is how it was described:
+
+> A programmable API that allows cross-platform scripting of events, objects, and actions. It allows the page designer to access events such as startups, exits, and user mouse clicks.
+
+Although some [early work was done](https://www.w3.org/TR/WD-script-960627), events were not a part of any actual spec until [DOM level 2](https://www.w3.org/TR/DOM-Level-2-HTML/). This was despite the [original JavaScript guide released with Netscape 2.0](https://web.archive.org/web/19970613234917/http://home.netscape.com/eng/mozilla/2.0/handbook/javascript/index.html) having [a whole section](https://web.archive.org/web/19970617232705fw_/http://home.netscape.com/eng/mozilla/2.0/handbook/javascript/ref_m-q.html#onBlur_event) dedicated to event handlers. Dom level 2 added what are [now familiar API's like `addEventListener`](https://en.wikipedia.org/wiki/DOM_event), but it was a bit of an uphill battle to get to this point. This didn't happen until the year 2000-- around five years after the first version of JavaScript was released. More importantly, it was long after Microsoft had invented an entirely different event system of their own.
+
+### Internet Explorer
+
+It's hard to [fully encapsulate the effect that Netscape had](https://bkardell.com/blog/Brief-ish-History-of-The-Web-Part-4.html) on the early web. Microsoft ignored them at first, but it was impossible to do this for long. After releasing an internal memo called ["The Internet Tidal Wave"](https://www.wired.com/2010/05/0526bill-gates-internet-memo/), Microsoft [attempted to purchase Netscape in 1994](https://topenddevs.com/podcasts/javascript-jabber/episodes/124-jsj-the-origin-of-javascript-with-brendan-eich). After being rebuffed, they pivoted and [courted a competitor named Spyglass](https://www.nytimes.com/1998/03/02/business/spyglass-a-pioneer-learns-hard-lessons-about-microsoft.html) who were the purveyors of the Mosaic license. 
+
+While this started as a licensing agreement, Microsoft soon took the codebase and created Internet Explorer. They completely upset the market by releasing it for free-- abusing as [many](https://en.wikipedia.org/wiki/United_States_v._Microsoft_Corp.) [legal](https://www.theringer.com/tech/2018/5/18/17362452/microsoft-antitrust-lawsuit-netscape-internet-explorer-20-years) [grey](https://ericsink.com/Browser_Wars.html) [areas](https://archive.nytimes.com/www.nytimes.com/library/tech/98/05/biztech/articles/25microsoft-java.html) as possible at the time. No one had even considered that a browser could be free-- especially all the people paying for something almost identical.
+
+This marked the beginning of the [browser wars](https://en.wikipedia.org/wiki/Browser_wars) which was really more like a massacre. To avert the "monster truck in their rear-view mirror", Netscape made the audacious yet necessary move to [open-source their software suite in February 1998](https://web.archive.org/web/19980706003741/http://www.netscape.com/newsref/pr/newsrelease577.html). The community that formed to steward the codebase was [named Mozilla in honor of the original codename for Netscape Navigator](https://www.oreilly.com/openbook/opensources/book/netrev.html).
+
+The first version wasn't very exciting, but Microsoft started iterating rapidly on Internet Explorer. Soon, it was the most popular browser by far. This was not surprising as it was not only free and [more performant than Netscape](https://web.archive.org/web/20200307173732/http://www.wirfs-brock.com/allen/files/jshistory/JScriptInterview.mp3), but it was also [incredibly innovative at first](https://humanwhocodes.com/blog/2012/08/22/the-innovations-of-internet-explorer/). It blazed the trail for many exciting features including [the first full CSS integration](https://en.wikipedia.org/wiki/CSS). 
+
+Of course, it also needed a dynamic scripting language. The original plan for Internet Explorer was to implement a simple form of Visual Basic, but the engineers correctly thought that would take two years. Also, they knew that they would have to support all the same websites as Netscape to be able to supplant it. 
+
+### JScript
+
+So, Microsoft created [JScript](https://en.wikipedia.org/wiki/JScript) in 1996 by reverse engineering JavaScript. Eventually, they even got a subset of Visual Basic called Visual Basic Script (VBS) to run in its interpreter. The replication of JavaScript was near exact ([bugs and all](http://weblogs.mozillazine.org/hyatt/archives/2004_01.html#004721)), but there were some key differences when it came to user interaction. 
+
+With Internet Explorer 4, [they introduced](https://news.microsoft.com/1997/04/08/microsoft-announces-microsoft-internet-explorer-4-0/) a much more robust [object model called DHTML](https://webdevelopmenthistory.com/1997-the-year-of-dhtml/) with groundbreaking api's like `innerHTML`. While [Netscape also called their new object model _DHTML_](https://web.archive.org/web/20120404132548/https://www.downes.ca/cgi-bin/page.cgi?post=276), they had [little in common](https://web.archive.org/web/20080122184210/http://www.solscape.com/site/articles/nsvsms.html). Internet Explorer also used a completely different event system.
+
+Unfortunately, because there was no standard, Internet Explorer made their events [completely oriented around a single global Event object](https://docstore.mik.ua/orelly/webprog/jscript/ch19_03.htm). This differed from [Netscape's model](https://docstore.mik.ua/orelly/webprog/jscript/ch19_04.htm) of passing the event as an argument to its handler. If you've ever been confused by the concepts of event [bubbling and capturing](https://javascript.info/bubbling-and-capturing), you have this period of relative chaos to blame. 
+
+Thankfully, over a decade later, _IE_ [eventually jumped on board](https://www.howtocreate.co.uk/jshistory.html) with the _DOM Level 2_ event model by the time of IE9 in 2007. Developers were still forced to do checks for `window.event` for years afterwards to ensure backwards compatibility. We'll explore this lost decade in greater detail later on.
+
+### `setTimeout` and `setInterval`
+
+So, that covers events and the introduction of scripted, programmatic responses to user interaction in the browser. But, you don't always want to rely on the behavior of the user to get things going. What about something that happens over a span of time independent of outside stimulus-- like [a cool text ticker](https://web.archive.org/web/19990203103422fw_/http://planetx.bloomu.edu/~mpscho/jsarchive/ticker.html)!
+
+In my research for this article, I was really struggling to find any definitive information about the introduction of `setTimeout`. It's one of the objects that have been included since Netscape 2.0 that are sometimes referred to as [DOM level 0](https://www.quirksmode.org/js/dom0.html). Shortly before I found that Netscape 2.0 JavaScript guide, I got frustrated and decided to just ask the man himself. [According to Brendan Eich](https://x.com/BrendanEich/status/1705273184109596726), setTimeout was created in 1995.
+
+Considering that JavaScript was released in December of that year, it's pretty safe to say that it's been there since the very beginning. `setInterval` joined it soon afterwards in 1996. `setTimeout` and `setInterval` both take two arguments: a function and an amount of time.
+
+`setTimeout` will run the function once after that amount of time whereas `setInterval` will run the function repeatedly at whatever rate is specified by the second argument. This is only possible because JavaScript has ["First-Class Functions"](https://en.wikipedia.org/wiki/First-class_function). This means that you can pass them as arguments to other functions and assign functions to variables so they can be called at a later point. These functions are appropriately termed _callbacks_.
+
+### Callbacks
+
+The idea is simple. You construct a function that takes some parameters and uses them to do stuff. Then, you pass that function as an argument to another function or as an HTML event attribute to define what happens when a certain condition is met. Instead of running the function immediately, the browser holds it in memory and waits to _call it back_ when the event fires, the timeout runs out, the download completes, etc.
+
+This pattern dominated the JavaScript scene for the first twenty years. It's a natural fit for browser code, and it still works well for many situations. Before [the birth of AJAX](../client-side-routing/2-a-brief-history-of-client-side-routing#the-birth-of-ajax), it was pretty rare for a website to do anything complex with JavaScript. 
+
+If you did, it was far too easy to end up in [callback hell](http://callbackhell.com/). One of the worst aspects is error-handling. If you want to deal with any exceptions that may occur, you need to pass a special callback through as an additional argument to each level of this [pyramid of doom](https://en.wikipedia.org/wiki/Pyramid_of_doom_(programming)). 
+
+So, this was enough for client-side JS for a long time, and it was part of what attracted Ryan Dahl to the language when created Node. As we'll discuss in the next chapter, Node created the custom class `EventEmitter` for things like streams specifically so that they could be represented within an event-driven architecture. This [continuation-passing style](https://2ality.com/2012/06/continuation-passing-style.html) was the only way to avoid writing blocking, synchronous code in JavaScript at the time.
+
+### Synchronous Code
+
+From the very beginning, the way that browsers have [interpreted documents](https://www.oreilly.com/library/view/head-first-html/9781449324469/ch01.html#:~:text=When%20the%20browser%20reads%20your,and%20meaning%20of%20your%20text.) has been [rather complex](https://web.dev/howbrowserswork/#tree-construction-algorithm). This is partially due to HTML's [forgiving nature](https://blog.codinghorror.com/javascript-and-html-forgiveness-by-default/) as browsers will still try to show you something even if the developer made a mistake. Even though the way that each browser does it is a little different, one thing is assured: each document is parsed from the top-down to build the DOM.
+
+If it gets to any script tags, the browser will pause everything else until it finishes executing what it finds inside. This ["run-to-completion"](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop#run-to-completion) model is synchronous in nature because the browser processes each line of code sequentially-- one after the other. Everything runs within a [single thread](https://developer.mozilla.org/en-US/docs/Glossary/Main_thread) of execution. This makes JavaScript extremely predictable, but it can lead to a bad user experience if one line of code takes a long time.
+
+This is what it means when we talk about **blocking the main thread**. When we're talking about computers, [a thread](https://en.wikipedia.org/wiki/Thread_(computing)) just represents the smallest thing that a computer can do at once. The main thread is what is actually running the code that you write [among many other things](https://www.youtube.com/watch?v=7Rrv9qFMWNM&start=300). Critically, it's also the thread that is used to build the DOM and render the page.
+
+So, you have to be careful about [how you load and run your JavaScript](https://developer.mozilla.org/en-US/docs/Web/Performance/How_browsers_work#interactivity). Although modern computers have access to [multiple cores](https://en.wikipedia.org/wiki/Multi-core_processor) and [multithreading](https://en.wikipedia.org/wiki/Multithreading_(computer_architecture)) exists, the browser is doing much more than just running your JavaScript. And, your computer is doing much more than just running the browser. So, when one function takes a long time, it is said to be [blocking the main thread](https://developer.chrome.com/blog/inside-browser-part3/#javascript-can-block-the-parsing). As long as that function is running, the browser cannot do anything else.
+
+This is why nested _callbacks_ and elaborate `setTimeout` chains were so dominant in JavaScript. The internet is asynchronous in nature. It takes time to download requests. So, you had to bend over backwards to try to make all of this synchronous code work in an asynchronous world. An official solution was inevitable. We'll get to that soon, but in order to understand promises, it's essential to understand the event loop itself.
+
+## The Event loop
+
+This will just be an introduction. Before we can understand how promises fit into this structure, we need to understand why the event loop even exists. If all JavaScript code was synchronous, there would be no need for it.
+
+### Web API's
+
+Despite JavaScript's single-threaded nature, browsers need to be able to handle things like `setTimeout` or events that aren't processed immediately. This might surprise you, but _Web API_'s like `setTimeout` are not actually a part of the core JavaScript specification. Despite the fact that it is so essential to the language that it has been there since the very beginning, the earliest discussion I could find about [standardizing `setTimeout` was in 2005](https://brendaneich.com/2005/06/javascript-1-2-and-in-between/#comment-289). 
+
+Eventually, [it was added to the HTML standard in 2011](https://www.w3.org/TR/2011/WD-html5-20110525/timers.html). It's still rather barebones however, and the timers are an implementation detail left up to the individual browsers. Although [it was discussed in 2010](https://esdiscuss.org/topic/bringing-settimeout-to-ecmascript), it is still not included in the EcmaScript Standard. This is what it means when we say something is a [_Web API_](https://developer.mozilla.org/en-US/docs/Web/API). It's something extra that each runtime adds to the JavaScript engine individually. For instance, if you download just the v8 engine and try to use `setTimeout`, [you will get a `ReferenceError`](https://stackoverflow.com/questions/12335222/settimeout-and-v8).
+
+Sometimes, these _Web APIs_ are referred to as the [Browser Object Model](https://javascript.info/browser-environment#bom-browser-object-model). This was because it was originally just a few objects like `navigator` that provided information about the execution environment. But, with the spread of these standards to server-side JavaScript, this term is slightly outdated. The important thing to understand is [this is what separates a JavaScript engine like v8 from a JavaScript runtime like Node](https://www.lexicon.com.au/insights/run-javascript-run). The engine only implements the core JavaScript specification which is mostly logic and syntax. The runtime gives it an environment where that code can be executed and ways to interact with the outside world.
+
+Generally, these _Web APIs_ will operate on a separate thread of execution. This is what gives JavaScript the ability to operate concurrently, but it's important to note that everything still needs to be processed sequentially on the main thread. So, the runtime needs a way to keep track of all of these asynchronous tasks and schedule them to be processed in the correct order. This is where the event loop comes in.
+
+### Memory: Stack and Heap
+
+Before actually executing any code, the JavaScript runtime will first go through the script and [parse it](https://www.nearform.com/blog/what-is-an-abstract-syntax-tree/) into an [abstract syntax tree](https://astexplorer.net/). It will create a new [lexical environment](https://github.com/getify/You-Dont-Know-JS/blob/2nd-ed/scope-closures/ch1.md) for each code block that it finds. For each of these lexical environments, the runtime will create an [environment record](https://blog.openreplay.com/explaining-javascript-s-execution-context-and-stack/) which will contain any variables declared within their scope. Every one of these environments is defined within a [code realm](http://dmitrysoshnikov.com/ecmascript/javascript-the-core-2nd-edition/#realm) which provides a global [_execution context_](https://www.atatus.com/blog/how-does-javascript-works/#execution-contexts-and-execution-stack). 
+
+That's a lot of big words to describe what we know as [hoisting in JavaScript](https://stackoverflow.com/questions/45620041/how-does-hoisting-work-if-javascript-is-an-interpreted-language). In layman's terms, this is how [the runtime keeps track of each variable and function](https://www.yash.works/hoisting-in-javascript) that it finds so it can [use them later](https://dev.to/lydiahallie/javascript-visualized-hoisting-478h) if needed. The runtime stores all of this in [a memory heap](https://v8.dev/blog/pointer-compression#value-tagging-in-v8) which is [a flexible data structure](https://deepu.tech/memory-management-in-v8/) that can grow and shrink as needed. 
+
+However, the JavaScript runtime also needs a way to keep track of the order in which any functions are invoked. Each runtime keeps a fixed amount of memory where it stores a data structure known as the [call stack](https://developer.mozilla.org/en-US/docs/Glossary/Call_stack) for this purpose. This facilitates a scheduling mechanism called [the _event loop_](https://www.youtube.com/watch?v=8aGhZQkoFbQ).
+
+### The Call Stack
+
+After building the global _execution context_, the runtime begins to actually process the script [line-by-line](https://www.youtube.com/watch?v=Z6a1cLyq7Ac&list=PLWrQZnG8l0E4kd1T_nyuVoxQUaYEWFgcD&index=1). As it interprets the code, the JavaScript runtime builds [a _call stack_](https://en.wikipedia.org/wiki/Call_stack) of all the function invocations that it finds. This is what allows it to keep track of where it is in the code. When it encounters the pair of parentheses necessary to call a function, the runtime pushes the function being invoked onto the _call stack_ and starts executing it. 
+
+The [_call stack_ is _LIFO (Last In, First Out)_](https://blog.gyen.dev/the-javascript-call-stack-and-event-loop). Moving from top to bottom, each function is popped off the stack when it gets to a `return` statement and finishes executing. But, if a function calls a bunch more synchronous functions, all of those need to run before the engine can move on to the next line of code.
+
+Each function that gets invoked gets turned into something called [a _stack frame_](http://rabbit.eng.miami.edu/class/519/frames.html). This contains everything necessary for the function to run such as the arguments, local variables, and the current line number. The runtime creates a variable environment where anything defined in the function is stored. All together, this is known as [that function's _execution context_](https://cabulous.medium.com/javascript-execution-context-part-1-from-compiling-to-execution-84c11c0660f5). We'll cover execution context in greater detail in [chapter 7](./7-proxies-and-context).
+
+As the JavaScript engine is working its way through the _call stack_, it is also building a _task queue_ for anything asynchronous. Anything that doesn't resolve immediately like network requests, `setTimeout` callbacks, or any other call to a _Web API_ will be placed into this queue. The runtime executes these on separate threads so that they don't interfere with the single-threaded _call stack_.
+
+### The Task Queue
+
+As each frame is processed and the _call stack_ unwinds, the _task queue_ is growing. Generally, this is done by giving the _Web API_ a callback that describes what you need to happen later. So, the _task queue_ is also sometimes known as the _callback queue_.
+
+As each _Web API_ finishes whatever it was doing, it places the callback it was given into the _task queue_. When we reach the end of the script, the runtime will check the _task queue_ to see if anything's there. If there is, each callback is moved onto the _call stack_ in sequential order starting with the oldest one.
+
+In contrast to the _call stack_, the _task queue_ is _FIFO (First In, First Out)_. So, everything placed in the queue will progressively run in the order it is added. If there are multiple items in the queue, and the first task adds more tasks to the queue, those new tasks have to wait for everything else in the queue to finish before they can be processed. 
+
+None of that can happen until the _call stack_ created by the first task is fully unwound. So, if the first task invokes several more synchronous functions, each of those must be processed and the _call stack_ must be drained again before the runtime can move on to the next item in the _task queue_. This is why it's so important to avoid blocking the main thread, because the next item in the _task queue_ might be from the user trying to interact with the web page.
+
+So, the [_event loop_](https://felixgerschau.com/javascript-event-loop-call-stack/) is what allows JavaScript code to be non-blocking when the engine itself is synchronous and single-threaded. It gives JavaSript runtimes a stable, predictable way to process asynchronous code. This is part of what made it attractive as a server-side language.
+
+The event loop ensures that each HTTP request can be processed in a predictable, efficient manner-- just like clicking a button. Although Node has become immensely popular, JavaScript's road to server-side prominence was a long and winding one. This is despite the fact that there were plans for it from the very beginning.
+
+### LiveWire
+
+Node may have been what made the world take JavaScript seriously as a server-side language, but it wasn't even close to the first use of JavaScript on the server. In fact, the very first time Netscape even hinted at JavaScript was in their press release for [a server framework called LiveWire](https://web.archive.org/web/19981202062552/http://home.netscape.com/newsref/pr/newsrelease41.html). It briefly described a "Java-based scripting language to enable developers to create and execute Live Objects, or interactive multimedia content, within their applications." 
+
+In its earliest days around May of 1995, [this was codenamed Mocha](https://brendaneich.com/2008/04/popularity/). By the time of the first beta version in September, it was [briefly named LiveScript](https://www.oreilly.com/library/view/node-up-and/9781449332235/pr03.html) to match the server framework, but this was all [changing very fast](https://groups.google.com/g/comp.lang.javascript/c/CqDXNTWNZPA/m/eTo7NCWHNyAJ). By the time of the [very first press release](https://web.archive.org/web/20070916144913/https://wp.netscape.com/newsref/pr/newsrelease67.html) for it in December, the scripting language had been given its final name.
+
+> JavaScript is an easy-to-use object scripting language designed for creating live online applications that link together objects and resources on **both clients and servers**. While Java is used by programmers to create new objects and applets, JavaScript is designed for use by HTML page authors and enterprise application developers to dynamically script the behavior of objects running on **either the client or the server**.
+
+### Applets
+
+Java was brand new and extremely popular at the time. Netscape had acquired the copyright because they wanted to incorporate it into their browser. In the end, the connection between JS and Java has always been tenuous at best. Brendan Eich went as far as to call this a [marketing scam](https://www.youtube.com/watch?v=WqMbzVWIAjY&start=195).
+
+Java was much more capable than JavaScript, but one could argue that this was part of its downfall. It's [a compiled language](https://www.youtube.com/watch?v=QXjU9qTsYCc). While it still gets interpreted at runtime like JavaScript, the runtime cannot use the actual source code. Instead, it must first be compiled into [bytecode](https://en.wikipedia.org/wiki/Bytecode). So, the `.java` files that you write must be [compiled into `.class` files](https://www.atomiccommits.io/how-similar-is-the-execution-of-java-and-javascript) before they can be run. 
+
+Then, you use a [Virtual Machine](https://www.youtube.com/watch?v=OjaAToVkoTw) to process that and turn it into machine code that the computer can understand. On the other hand, [a JavaScript engine](https://softwareengineeringdaily.com/2018/10/03/javascript-and-the-inner-workings-of-your-browser/) is also a virtual machine, but it can just interpret the source code directly. This is why JavaScript is considered an interpreted language whereas Java is considered a compiled language, but we'll see that this distinction will quickly become less clear.
+
+Regardless, the Java Virtual Machine (_JVM_) runtime was rather large for the time. This was both a blessing and a curse. [It was multithreaded](https://www.gbengasesan.com/fyp/43/ch18.htm) which just means that you can have multiple execution contexts running at once unlike JavaScript with its single event loop. You could even make streaming network requests from the very beginning. 
+
+However, all of these features came at a cost. It was notoriously slow. The sheer size of the API made it difficult to learn for new developers, and the large runtime would require lengthy downloads every time that Java wanted to fix any of this.
+
+### Why JavaScript Won
+
+Java was fundamentally broken as a client-side language when it was released. Even its biggest fans admitted [pieces were missing](https://web.archive.org/web/19970525023627/http://reality.sgi.com/shiffman_engr/Java-Hype.html). Not only did Java [take forever to load](https://www.google.com/books/edition/Web_Performance_Tuning/sX60mAi0eQUC?hl=en&gbpv=1&pg=PA378&printsec=frontcover), but it was far too [easy to make mistakes](https://www.wiley.com/legacy/compbooks/press/mcgch1.html) as it was [riddled with security problems](https://web.archive.org/web/19981202121419/http://www.naples.net/%7Enfn03457/960304.html). The web was brand new, and the industry was still learning how conniving criminals can be.
+
+There were plans for deep integrations with the browser, but they never really materialized. In fact, when they made the [DOM level 1](https://www.w3.org/TR/1998/REC-DOM-Level-1-19981001/DOM.pdf), it contained an entire appendix for the Java bindings. NetScape tried to build [improved Java interfaces](https://www.phdcc.com/javaart2.html), but [Sun and Netscape did not get along](https://news.ycombinator.com/item?id=1894374). 
+
+Netscape even agreed to build a Navigator browser in Java that they were calling [JavaGator](https://www.infoworld.com/article/2077018/sun--netscape-make-java-browser-plans.html), but the [partnership was doomed](https://news.ycombinator.com/item?id=19837817). Soon, [Microsoft swooped in](https://www.cnet.com/tech/tech-industry/microsoft-insults-netscapes-java/) with a [much better, propietary JVM](https://en.wikipedia.org/wiki/Microsoft_Java_Virtual_Machine). They were even letting users [download it as a plugin for NetScape](https://www.infoworld.com/article/2076957/java-1997--a-detailed-look-at-where-java-s-going-this-year-and-in-the-near-future.html). Before long, [JavaGator was cancelled](https://www.zdnet.com/article/a-year-ago-friction-behind-aol-netscape-sun-deal/) because Netscape couldn't afford it.
+
+While you couldn't do [nearly as much](https://www.vice.com/en/article/8q8n3k/a-brief-history-of-the-java-applet) with JavaScript, the code was [less verbose](https://mrsimon.tripod.com/TwoButtons.html), and [the UI matched the rest of the page](https://news.ycombinator.com/item?id=26500949). Also, JavaScript had first-class function expressions while [Java did not](https://www.infoq.com/articles/Java-8-Lambdas-A-Peek-Under-the-Hood/#:~:text=Java%208%20was%20released%20in,more%20concise%20and%20flexible%20code.). As we learned, this is crucial for writing simple, non-blocking code.
+
+[The key difference](https://web.archive.org/web/19970521151532/http://reality.sgi.com/shiffman_engr/Java-QA.html#Java-1) was being able to write simple code right in the middle of the mark-up, and using it to directly manipulate the actual web page. Unlike Java, you didn't need any special tooling-- just a text editor. You also didn't have to worry about picking one of [three different HTML tags](https://web.archive.org/web/20100609015456/http://download.java.net/jdk7/docs/technotes/guides/plugin/developer_guide/using_tags.html#embed) to try to figure out how to embed your applet. You just opened a `<SCRIPT>` tag and started writing code.
+
+### One Step Beyond HTML
+
+So, Java was never a good fit for the browser. NetScape knew they needed a light-weight scripting language for handling events directly within HTML documents. Marc Andreessen [later said this about why he wanted to create JavaScript](https://web.archive.org/web/20051113013615/https://wp.netscape.com/comprod/columns/techvision/innovators_be.html):
+
+> What people wanted back then (and still want) is the ability to go one step beyond HTML and add a little bit of code that makes a web page dynamic... things that HTML cannot express. That's really where you need a programming language, but something simpler than Java or C++.
+
+So, Netscape hired Brendan Eich to create what eventually became JavaScript. For the first year, he was the only engineer working on it. He later said that Andreessen told him the language needed to be ["right there in the page"](https://www.youtube.com/watch?v=krB0enBeSiE&start=2220). This idea to write the code directly in the middle of the mark-up was radically innovative. 
+
+[Netscape Livewire exploited this](http://web.archive.org/web/19961115040956/http://developer.netscape.com/library/documentation/livewire/index.html). Livewire used a special `<SERVER>` tag within which one could do any server-side processing necessary like queries to databases. For the first few months, Brendan Eich actually worked on the Netscape server team.
+
+### LiveWire
+
+While it was marketed aggressively initially, it seems like Netscape Livewire ended up as a bit of an afterthought. According to Brendan Eich, it got ["overwhelmed in the Java onslaught"](https://brendaneich.com/2011/01/harmony-of-my-dreams/#comment-826).  It was basically [a fairly limited HTML pre-processor](https://dev.to/macargnelutti/server-side-javascript-a-decade-before-node-js-with-netscape-livewire-l72). It was vaguely reminiscent of something like PHP or [a primitive version of Astro](https://web.archive.org/web/20000823053204/https://www.datacraft.com/livewire.html). Some aspects of working with Livewire are reminiscent of modern server-side JavaScript, but others are drastically different.
+
+It [required compilation](https://www.leins.net/gespiegeltes/javascript-11-developers-guide.html) into a single, propietary `.web` file for the entire server. This allowed it to have [a native multi-threaded execution model](https://stackoverflow.com/questions/18350910/netscape-enterprise-server-and-server-side-javascript-ssjs-vs-node-js), but it lacked asynchronous features so one had to be careful not to block any of these threads. It also had a stateful request caching system, but this was [met with mixed reviews](https://philip.greenspun.com/wtr/livewire.html). For the most part, the options for [passing state back and forth between client and server](https://docs.oracle.com/cd/E19957-01/816-6411-10/sessmgmt.htm#1036896) were pretty limited, but somewhat familiar to what we have today. Things like cookies and url encoding were already well established. 
+
+Netscape encapsulated their grand vision of an inter-connected, cross-platform development environment into a holistic brand called [Netscape One](http://home.netscape.com/comprod/one/white_paper.html). Later, the [LiveConnect feature](https://docs.oracle.com/cd/E19957-01/816-6411-10/lc.htm) actually enabled developers to share objects between JavaScript and Java. Unfortunately, [this had some security issues](http://www.white-mountain.org/jamie/software/livewire-sucks.shtml) and never really caught on.
+
+### The Death of Netscape
+
+Despite Netscape's [incredibly successful IPO](https://web.archive.org/web/20110209204342/https://www.nytimes.com/1995/08/10/us/with-internet-cachet-not-profit-a-new-stock-is-wall-st-s-darling.html) which landed [Marc Andreessen on the cover of Time Magazine](https://content.time.com/time/covers/0,16641,19960219,00.html), they were [never able to turn a profit](https://www.youtube.com/watch?v=LOWOLJci8d8). The plan was to get people hooked on the web and then figure out how to make money from it. Once Internet Explorer was released for free, Netscape was doomed. 
+
+In November of 1998, Netscape was [purchased by America Online](https://money.cnn.com/1998/11/24/technology/aol/) for the absurd price of $4.2 billion dollars. Despite spending this much money on the acquisition and [some lofty aspirations](https://web.archive.org/web/19990508123753/http%3A//home.netscape.com/columns/mainthing/merger.html), nothing much ever came from this deal. After five years and another merger, [AOL Time Warner sold what was left of Netscape](https://www.forbes.com/2003/05/30/cx_da_0530topnews.html?sh=24be73171176) for $750 million dollars to Microsoft.
+
+While Netscape's server offerings continued to exist through the [iPlanet alliance with Sun](https://www.cnet.com/tech/tech-industry/aol-layoffs-slam-sun-netscape-alliance/), it was never very successful. There were a few other server-side JavaScript implementations in the years afterwards. [Rhino](https://en.wikipedia.org/wiki/Rhino_(JavaScript_engine)) rose from the ashes of JavaGator and was reborn as a JavaScript engine written in Java. This helped some embrace its use on the server, but Microsoft was doing the most in this period.
+
+[ASP](https://en.wikipedia.org/wiki/Active_Server_Pages) was released by Microsoft at the end of 1996, and it allowed developers to use JScript & VBS on the server. The [Web Forms feature](https://www.dotnetcurry.com/aspnet/1492/aspnet-history-part-1) released with the .NET framework in the early 2000s was mildly popular. At one point, they even released a [weird, compiled version of JScript called JScript.NET](https://en.wikipedia.org/wiki/JScript_.NET) that was specifically [designed for server-side use](https://learn.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/scripting-articles/ms974588(v=msdn.10)).
+
+Many in the community were [still convinced](https://www.slideshare.net/alexandre_morgaut/state-of-the-art-server-side-java-script-webworkerscamp-9406069) that JavaScript had a place on the server. This cross-platform ability is mentioned explicitly in the overview of [the very first EcmaScript Standard](https://www.ecma-international.org/wp-content/uploads/ECMA-262_1st_edition_june_1997.pdf) in June 1997. This was even before the concept of an "event" was formalized in Dom Level 2. 
+
+> ECMAScript was originally designed to be a Web scripting language, providing a mechanism to enliven Web pages in browsers and **to perform server computation** as part of a Web-based client-server architecture. ECMAScript can provide core scripting capabilities for **a variety of host environments**, and therefore the core scripting language is specified in this document apart from any particular host environment.
+
+<IFrame src="https://stackblitz.com/edit/primitive-async?ctl=1&embed=1&view=preview" />
+
+## Web Standards
+
+From the very beginning, standards on the web have faced a bit of an uphill battle. For instance, [when Marc Andreessen first proposed the IMG tag](http://1997.webhistory.org/www.lists/www-talk.1993q1/0182.html), he pretty much ignored all the suggestions from his peers-- [even Tim Berners-Lee](http://1997.webhistory.org/www.lists/www-talk.1993q1/0186.html). In retrospect, this seems to have been [more of an announcement than a proposal](https://lunduke.substack.com/p/brendan-eich-interview-jan-9th-2018). 
+
+Netscape was the biggest player in the game, and they didn't want to wait for anyone's approval before dictating the shape of HTML. As I discussed in [another article](../client-side-routing/2-a-brief-history-of-client-side-routing), the [_W3C_](https://www.w3.org/) are a consortium founded by Tim Berners-Lee which was formed in 1994. [One of the founders](https://web.archive.org/web/20070809234115/https://www.w3.org/People/Raggett/book4/ch02.html) even framed it as having between born out of frustration with Netscape's disinterest in standards. Things got worse before they got better.
+
+### Quirks Mode
+
+As each browser scrambled to outdo the other with cool, new features, it became more and more difficult to build a working website that would function in all of them. Most developers don't understand the minutiae of the standards, and most of us don't care. We just want to build cool websites. So, most folks just targeted one browser while putting up [a badge to let you know which one](https://obriencg.com/locked-in/bestviewedin/). 
+
+It was hard not to pick sides in the browser wars, because you would have to build two completely different websites to support both. We won't discuss it often in this series, but the best example of this is CSS. In a desparate attempt to pre-empt Netscape under the guise of adherence to standards, Internet Explorer [adopted CSS before the first version was finished](https://www.w3.org/Style/LieBos2e/history/Overview.en.html). 
+
+This resulted in them [implementing a completely different box model](https://www.jefftk.com/p/the-revenge-of-the-ie-box-model) than what actually ended up in the standard. One could argue that the IE version was [more logical](https://web.archive.org/web/20030207203545/http://netdiver.net/interviews/peterpaulkoch.php). Today, we know it as [`box-sizing: border-box`](https://web.archive.org/web/20110414111823/https://helephant.com/2008/10/20/css3-box-sizing-attribute/). This was just the beginning of a long line of CSS hacks that would plague developers for years to come. People started building with Microsoft's broken box model immediately, so they couldn't fix it without breaking the internet. 
+
+Soon, Microsoft realized that they could use the `DOCTYPE` to [trigger the correct rendering mode](https://web.archive.org/web/20011006054319/http://www.oreillynet.com/pub/a/network/2000/04/14/doctype/index.html). To brings themselves in line with the actual standards, Microsoft introduced "standards mode" with [Internet Explorer 6](https://www.quirksmode.org/css/quirksmode.html), and the old version quickly became known as ["quirks mode"](https://www.quirksmode.org/css/quirksmode.html). By 2002, there were three different rendering modes with slightly different rules: Quirks Mode, Standards Mode, and [Almost Standards Mode](https://meyerweb.com/eric/thoughts/2008/01/24/almost-target/).
+
+### Which Scripts?
+
+It wasn't just HTML and CSS that varied wildly between browsers. Netscape introduced JavaScript without asking anyone, and developers first had to [worry about whether browsers would even support it](https://docstore.mik.ua/orelly/web/jscript/ch18_02.html). After JScript introduced an entirely different DOM, things like [browser sniffing](https://hea-www.harvard.edu/~fine/CFA/browser_type.html) and [object detection](https://www.quirksmode.org/js/support.html) became unfortunately common. To make things worse, nobody could agree on how to tell the browser what language or even which version you were using.
+
+Initially, Netscape envisioned using the [language attribute](https://docs.oracle.com/cd/E19957-01/816-6409-10/embed.htm) on the script tag for versioning so that they could introduce [new features to JavaScript](https://www.oreilly.com/library/view/javascript-the-definitive/0596000480/ch01s02.html). This was quickly abandoned in favor of the `type` attribute as a representation of the [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types). This was so [misunderstood and misused](https://bugzilla.mozilla.org/show_bug.cgi?id=62485) that there were at least [sixteen different types](https://www.ietf.org/rfc/rfc4329.txt) in use by the time it was finally standardized in 2006. This is partially due to the fact that the W3C had no control over the scripting languages actually being used.
+
+### ECMA International
+
+The first version of JavaScript was extremely simple. It did not even [have arrays](https://2ality.com/2013/12/dom-arrays.html). Brendan Eich famously built the first JavaScript engine in ten days. There wasn't much there, and it was full of bugs. So, it was no surprise when both Microsoft and Netscape started making adjustments to the language. The problem was that they were rarely compatible with each other. 
+
+After realizing they were doomed, Netscape did not go easily into the good night. Because Microsoft was perverting the language with incompatible additions to JScript, Netscape realized they needed to get serious about standards. After their difficulty reverse-engineering the language, Microsoft was ready to play ball. 
+
+However, the relationship between Netscape and the _W3C_ had already been frayed by Netscape's callous disregard for the _W3C_'s authority. Members of the _W3C_ now claim [they were not interested in standardizing programming languages](https://www.madmode.com/2013/js-w3c-ecma.html). Regardless, [Ecma International](https://ecma-international.org/) was chosen instead. Brendan Eich says this was due to their proven history of forcing Microsoft to conform to standards, but Microsoft quickly [embraced the process](https://news.microsoft.com/1997/06/30/microsoft-embraces-ecma-internet-scripting-standard-delivers-industrys-first-ecma-compliant-scripting-language-jscript-3-0in-key-microsoft-products/).
+
+### Three Years, Three Standards
+
+The [first meeting](https://web.archive.org/web/19981203070212/http://cgi.netscape.com/newsref/pr/newsrelease289.html) was held in November 1996. As this was the 39th Technical Committee formed at Ecma International, the group was inventively called TC39. Due to [trademark issues](https://tinyclouds.org/trademark) with Sun, they were forced to name the official language EcmaScript. This name has been largely maligned as an unwanted annoyance, and Brendan Eich likened it to ["a skin disease"](https://web.archive.org/web/20110522170037/https://mail.mozilla.org/pipermail/es-discuss/2006-October/000133.html). 
+
+Microsoft wrote a hurried draft document which the committee adopted as a starting point simply because [it used Microsoft Word which they preferred](https://www.wirfs-brock.com/allen/files/jshistory/JScriptInterview.mp3). Both sides quickly agreed that host-specific things like [the object model of each browser](https://web.archive.org/web/20170427220310/http://www.digital-web.com/articles/the_document_object_model/) would be outside of the scope of the standard. After over eight months of bargaining, the first EcmaScript standard was released in June 1997-- nominally ending the initial year and a half of anarchy.
+
+The first standard was rather basic as the primary goal was ensuring interoperability between the implementations. All new features were deferred to future versions. Within a year, the committee [released a second version](https://archives.ecma-international.org/1998/TC39/8T39-010.pdf) to gain full acceptance as an International Standards Organization (_ISO_) standard. In all, this only added a few minor corrections and some changes to the Date object to prepare for Y2K.
+
+Both Internet Explorer and Netscape were constantly innovating with new features during this entire time, and they were rarely compatible with each other. So, while features like closures, strict equality, _try-catch-finally_ and `RegExp` were standardized and adopted by the _de jure_ language, the committee was still playing catch-up to the _de facto_ implementations in the browsers. Nevertheless, the third edition was released on December 16th, 1999.
+
+### The Web Standards Project
+
+[Retro-specs](http://diveintohtml5.info/past.html) like ES3 were unfortunately common at the time, but it was the only way to get the browsers on the same page. Even when the browsers did agree to conform to the standards, they were slow to comply. To make things worse, the specifications were written so poorly that they were often [implemented incorrectly](https://archive.webstandards.org/css/winie/). 
+
+Developers were immensely frustrated by this. The [Web Standards Project](https://www.webstandards.org/about/history/index.html) (WaSP, for some reason) was born in 1998 to try to push the browsers to [adopt common standards more quickly](https://www.webstandards.org/about/mission/). The WaSP were largely successful in their initial goal of getting the major browsers to adopt HTML 4, CSS 1, and EcmaScript. They were crucial in [holding Microsoft accountable](https://www.webstandards.org/press/releases/2000-ie5/index.html), and I will also credit them for being the first group out of all of my sources to make accessibility a priority. 
+
+However, they were too late to avoid the glaring differences in developing for each browser like the _DOM_. In retrospect, this seems to have been part of an intentional strategy from Microsoft to coerce the development of websites that didn't work in Netscape. There was not much that WaSP could do to stymie the collateral damage of the browser wars.
+
+### The Browser Wars
+
+As I mentioned earlier, Microsoft won the first browser war fairly quickly. By 1999, Internet Explorer was the dominant browser, buoyed by the strength of its [powerful rendering engine called Trident](https://en.wikipedia.org/wiki/Trident_(software)). Although much had been achieved in the first three years, Netscape was clearly dying by the time the third edition was released. 
+
+Netscape still technically existed, but they had been drastically weakened by a [disasterous fifth version that was never released](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i/). [Opera](https://en.wikipedia.org/wiki/Opera_(web_browser)) existed, but it was paid software. [Konqueror](https://en.wikipedia.org/wiki/Konqueror) emerged as an open-source alternative, and there were a few others. But, all of these were [the minority by far](https://en.wikipedia.org/wiki/Browser_wars#/media/File:Layout_engine_usage_share-2009-01-07.svg). 
+
+As the [dot-com bubble had just burst](https://en.wikipedia.org/wiki/Dot-com_bubble), it didn't seem likely that anyone would be able to challenge Microsoft's dominance. Konqueror's KHTML engine was later forked by Apple and [turned into WebKit](https://en.wikipedia.org/wiki/WebKit#Origins)-- the rendering engine used in Safari. That didn't happen until 2003, however. Until then, [Internet Explorer was the default](https://en.wikipedia.org/wiki/Internet_Explorer_for_Mac) on Macintosh Computers as well.
+
+### JavaScript 2.0
+
+After the third edition of EcmaScript finally passed in 1999, the first wave of committee members were replaced. Brendan Eich stopped actively working on Netscape in 1998 as he became one of the founders of the Mozilla project, and he left JavaScript in the hands of [a math whiz named Waldemar Horwat](https://youtu.be/qRsvSz7u_d4?si=m7zVbNqxhvHJKCYw&t=1092). At some point, there was no one left on TC-39 that had any [production experience with JavaScript](https://www.youtube.com/watch?v=o30j-gm0eq4&t=670s). 
+
+All that remained were a bunch of old-school programmers and ["compiler jocks"](https://topenddevs.com/podcasts/javascript-jabber/episodes/jsj-392-the-murky-past-and-misty-future-of-javascript-with-douglas-crockford). They were brilliant, but they were much more familiar with static, typed languages. Even before the third edition was released, Horwat was already making plans for [JavaScript 2.0](https://www-archive.mozilla.org/js/language/js20-1999-02-18/index.html) which was going to be a [radical transformation](https://www-archive.mozilla.org/js/language/evolvingJS.pdf) of the language. Static type declarations were just one of many features proposed, and there were no plans for the language to be backwards compatible. The argument was that developers could simply opt in to the new language by using the `type` attribute on the `<SCRIPT>` tag.
+
+Horwat tried to make changes to his proposal to keep up with Microsoft's propietary JScript.net, and it saw many changes between 1999 and [the final version in 2003](https://www-archive.mozilla.org/js/language/old-es4). Unfortunately, it was all for naught. In 2003, he lost his job at Netscape in the midst of the AOL merger, and he resigned as ES4 editor. 
+
+### The Birth of .NET
+
+After the [deal with AOL to finish off Netscape](https://web.archive.org/web/20051120180326/http://news.zdnet.co.uk/software/developer/0%252C39020387%252C2135438%252C00.htm), Internet Explorer was [made an official part of the operating system](https://web.archive.org/web/20051120180326/http://news.zdnet.co.uk/software/developer/0%252C39020387%252C2135438%252C00.htm) where it soon began to stagnate. The IE team was reduced to a skeleton crew as many of their best engineers were [moved to work on MSN Explorer](https://www.infoworld.com/article/2972589/up-down-out-20-years-microsoft-internet-explorer.html?page=3)-- a subscription-based portal similar to AOL. This was a bit of a problem because Microsoft quickly lost interest in standardizing EcmaScript. Once they were the only major player, progress on the fourth edition ground to a halt for over a decade. 
+
+Microsoft [pivoted to their internal, proprietary technologies](https://www.youtube.com/watch?v=Fv9qT9joc0M&t=4252s) like [ActiveX](https://en.wikipedia.org/wiki/ActiveX). Internet Explorer 6 was released in 2001, but it was already [immensely broken within 18 months of release](https://ln.hixie.ch/?start=1051031464&count=1). This was the last version of Internet Explorer to be released for five years. With no clear competitors in sight, Microsoft stopped betting on the open web.
+
+Microsoft shifted development to something called Avalon which eventually became [Silverlight and the troubled Longhorn project](https://www.infoworld.com/article/2972589/up-down-out-20-years-microsoft-internet-explorer.html). As part of this overall strategy, Microsoft unveiled their [new .NET framework](https://news.microsoft.com/2000/06/22/microsoft-unveils-vision-for-next-generation-internet/) which was designed to [compete with Java](https://www.theserverside.com/news/1365389/J2EE-vs-MicrosoftNET-A-comparison-of-building-XML-based-web-services) in 2000. While the first press release is extremely vague, it claims that this "Next Generation Framework" was built around standards. To wit, one acronym is repeated over and over: XML. 
+
+### XML
+
+EcmaScript wasn't the only language subjected to chaotic growth followed by stagnation. Shortly after [the release of first website](https://thehistoryoftheweb.com/the-first-website-in-the-united-states-was-made-for-physicists/), the first [HTML standards](https://en.wikipedia.org/wiki/HTML) were released in [rapid succession](https://web.archive.org/web/20070809234115/https://www.w3.org/People/Raggett/book4/ch02.html) between 1993 and 1997. Despite [a few hiccups](https://www.youtube.com/watch?v=41mnNyMxPOA), HTML reached 4.0 in 1998. Just like EcmaScript, this was usually a simple matter of retroactively standardizing what Internet Explorer and Netscape had already done and making them compatible with each other.
+
+At this point, HTML was facing an uncertain future. People on the _W3C_ were saying things like, ["The Future of HTML as we know it should be: Nasty, Brutish, and Short"](https://www.w3.org/MarkUp/future/papers/singer/im-164149.htm). The _W3C_ had started the process of [standardizing the DOM](https://webdevelopmenthistory.com/1998-mozilla-w3c-dom-wasp/), but this kept hitting the same roadblock-- the differences between [HTML and XML](https://www.laurenwood.org/anyway/2004/04/dom-level-3-a-w3c-recommendation/).
+
+Soon, the _W3C_ were no longer even working on HTML. Instead, they were working on [reformulating it to XML](https://web.archive.org/web/20010627201120/https://www.w3.org/TR/1999/NOTE-xhtml-roadmap-19991117/). XML, or eXtensible Markup Language, was a [new standard](https://www.w3.org/press-releases/1998/xml10-rec/) that was supposed to be the new markup language for the internet. The _W3C_ thought that HTML was [too limited and had not developed properly](https://www.itwriting.com/xmlintro.php) due to the thoughtless way that the browsers had implemented it. 
+
+While the _W3C_ was formed with the best intentions, it was quickly [stalled by corporate interests](https://www.reddit.com/r/javascript/comments/5swe9b/what_is_the_difference_between_the_w3c_and_the/ddl6xi8/). The gulf between the gurus on the standards bodies and actual developers was widening as the internet became more popular. People weren't always using the web in the way that the _W3C_ had envisioned.
+
+So, they became derailed by things like an [XHTML2 spec](https://www.w3.org/TR/2002/WD-xhtml2-20020805/) which was [incompatible with much of the internet](https://web.archive.org/web/20061006100144/https://diveintomark.org/archives/2002/08/20/how_liberal_is_too_liberal). Unlike HTML, which is [very forgiving](https://www.w3.org/wiki/The_web_standards_model_-_HTML_CSS_and_JavaScript#What_is_XHTML.3F), XHTML incorporated [draconian error handling](https://www.w3.org/html/wg/wiki/DraconianErrorHandling). If the page included any malformed markup, [the browser would refuse to render it](https://robertnyman.com/2005/06/26/xhtml-and-error-handling/). Instead, the user would just see [an ugly error screen](https://blog.codinghorror.com/javascript-and-html-forgiveness-by-default/).
+
+Thankfully, [unless you sent a specific MIME type](https://web.archive.org/web/20060613193727/https://diveintomark.org/archives/2004/01/14/thought_experiment), browsers would fall back to parsing it as HTML. Even XML's biggest advocates admitted that "[switching from HTML 4.01 to XHTML 1.0 brings almost no direct benefits for the visitors of your Web site](https://www.webstandards.org/learn/articles/askw3c/oct2003/index.html)". So, developers had little incentive in dealing with this increased mental overhead.
+
+### Embrace, Extend, and Extinguish
+
+Throughout the late '90s, Microsoft was trying to find their vision for the internet. By January 1994, there was an internal memo that imagined Windows as ["The Next Killer Application on the Internet"](https://web.archive.org/web/20070309230139/https://www.microsoft.com/about/companyinformation/timeline/timeline/docs/di_killerapp_InternetMemo.rtf), but [Microsoft's way of doing things](https://archive.ph/20050419194550/http://reactor-core.org/in-microsoft-we-trust.html) was not compatible with the open web. Although his commitment to propietary technology had been shown in [internal memos](https://web.archive.org/web/20071009185717/http://antitrust.slated.org/www.iowaconsumercase.org/011607/2000/PX02991.pdf), Bill Gates publically stated that Microsoft would ["embrace and extend"](https://web.archive.org/web/20141031135343/https://www.nytimes.com/1996/07/16/business/tomorrow-world-wide-web-microsoft-pc-king-wants-reign-over-internet.html?pagewanted=all) industry standards. Apparently, there was a third "e" verb that he would use in private: extinguish.
+
+Microsoft quickly became enamored with _XML_ after one of their engineers named Alex Hopmann realized that it could be used for [more complex data storage and transfer](https://www.w3.org/TR/NOTE-XMLsubmit). [An Intel executive testified](https://cyber.harvard.edu/msdoj/transcript/summaries2.html) that Microsoft planned to extend the HTML standard to the point where Netscape could not keep up. This was not restricted to Netscape. 
+
+In 1996, Microsoft hired [Anders Hejlsberg](https://en.wikipedia.org/wiki/Anders_Hejlsberg) to create [Visual J++](https://en.wikipedia.org/wiki/Visual_J%2B%2B). This was a modified version of Java that would only run on Windows. Internet Explorer 3.0 shipped with [a version of the Java Virtual Machine](https://web.archive.org/web/20101129175931/https://www.nytimes.com/1997/10/08/business/sun-sues-microsoft-on-use-of-java-system.html). All of this [violated Microsoft's licensing agreement with Sun](https://web.archive.org/web/20090819120756/http://www.sun.com/lawsuit/summary.html), and it was part of their intentional strategy to ["wrest control of Java away from Sun"](https://web.archive.org/web/20160309063942/https://www.nytimes.com/1998/10/22/business/memos-released-in-sun-microsoft-suit.html?sec=&spon=&partner=permalink&exprod=permalink). 
+
+This led to one of Microsoft's [many lawsuits](https://en.wikipedia.org/wiki/Microsoft_litigation) at the time, and it [wasn't settled until 2001](https://www.computerworld.com/article/2590116/microsoft--sun-settle-java-suit.html) for $20 million dollars. At this point, they had [moved on](https://www.zdnet.com/article/sun-vs-microsoft-battle-over-java-drags-on/) to their new .NET framework. It used [a new language called C#](https://www.cnet.com/tech/tech-industry/sun-microsoft-settle-java-suit/) which was also written by Anders Hejlsberg. It was [clearly inspired by Java](https://dontpaniclabs.com/blog/post/2021/07/07/a-history-of-microsoft-net-part-1-introduction/).
+
+With the .NET framework, Microsoft made some half-hearted commitments to web standards. The [_SOAP_](https://en.wikipedia.org/wiki/SOAP) (Simple Object Access Protocol) standard for data transfer [came out in 2000](https://news.microsoft.com/2000/07/11/microsoft-delivers-first-net-platform-developer-tools-for-building-web-services/), and it was [based on _XML_](https://www.w3.org/TR/2000/NOTE-SOAP-20000508/#_Toc478383492). It had evolved out of developers looking for a way to build a type system into _XML_ to facilitate [remote procedure calls over HTTP](https://www.xml.com/pub/a/ws/2001/04/04/soap.html). Microsoft planned to use _SOAP_ and _XML_ to build ["a web services architecture"](https://www.theregister.com/2022/02/15/20_years_of_dotnet/).
+
+### The Birth of AJAX
+
+At the same time, Microsoft was building some of the first true web apps. While they were mostly focused on their propietary technologies, there were still some internal teams at Microsoft that were experimenting with what the web could do. Most influential of these was the [Outlook Web Access](https://en.wikipedia.org/wiki/Outlook_on_the_web) team as their work led to something that would change the web forever. 
+
+Some of the Outlook Web Access developers wanted it to look [exactly like the desktop client](https://web.archive.org/web/20101221075156/http://blogs.technet.com/b/exchange/archive/2005/06/21/406646.aspx). After the legal troubles with Sun, a Java applet was out of the question. So, this would require an extreme amount of innovation at the time. At first, they achieved this with [hidden frames](https://lchandara.wordpress.com/2012/03/06/comet-programming-the-hidden-iframe-technique/). However, the dynamic nature of an e-mail client made this difficult to maintain.
+
+Eventually, Alex Hopmann and a few other members of the team came up with a new, innovative way to make HTTP requests while maintaining client state. As the `MSXML` library was already shipping with Internet Explorer 5, they decided that this was the easiest way to get this code into the browser. IE5 was [released in 1999](https://web.archive.org/web/20090130092236/http://www.alexhopmann.com/xmlhttp.htm), and developers could gain access to this `XMLHTTP` ActiveXObject to make any HTTP request they wanted in their own code. No standards body was involved at any point in this process, but that was not unusual at the time.
+
+No one could truly see how much this would change things. It was only available in Internet Explorer for the first three years and rarely used. In 2002, it was reverse engineered by Mozilla and added to their new Gecko layout engine used in Netscape 6. This accounted for the vast majority of browsers by this point, so more people started experimenting with it. Web developers quickly fell in love with this newfound power. [By 2005](https://www.w3.org/html/wg/wiki/History), it was in every major browser.
+
+### The Second Browser War
+
+As [some predicted at the time](https://www.jwz.org/gruntle/aol.html), the sale of Netscape to AOL in 2003 actually turned out to be a great thing for the Mozilla project. [Blessed with a parting gift](https://www.acquired.fm/episodes/the-browser-with-brendan-eich-chief-architect-of-netscape-mozilla-and-ceo-of-brave) of $2 million dollars, [the Mozilla Foundation was formed](https://blog.mozilla.org/press/2003/07/mozilla-org-announces-launch-of-the-mozilla-foundation-to-lead-open-source-browser-efforts/) which completely separated them from any corporate interests. Now, they were able to [fully focus on the open web](https://www.mozilla.org/en-US/about/history/). The [Gecko layout engine](https://en.wikipedia.org/wiki/Gecko_(layout_engine)) was the culmination of all their work, and it was at the heart of the Mozilla project's first, big release. 
+
+The [Mozilla Application Suite was released on June 5th, 2002](https://blog.mozilla.org/press/2002/06/mozilla-org-launches-mozilla-1-0/). It was called a suite because it also included email and IRC clients, and it was the first browser to be [built on web standards](https://arstechnica.com/features/2002/07/moz/). While the browser was widely lauded, the additional applications never really caught on. Mozilla was the open-source community's best hope at freeing the web from Microsoft's clutches, and [some were worried that Mozilla wasn't focused enough](https://web.archive.org/web/20180624134046/https://www.wired.com/2009/06/dayintech-0605/). This led a browser that was originally called [Phoenix](https://website-archive.mozilla.org/www.mozilla.org/firefox_releasenotes/en-us/firefox/releases/0.1). 
+
+Later, it was briefly called [FireBird](https://website-archive.mozilla.org/www.mozilla.org/firefox_releasenotes/en-us/firefox/releases/0.6) before they finally settled on the name of [Firefox when it hit 1.0 in November 2004](https://blog.mozilla.org/press/2004/11/mozilla-foundation-releases-the-highly-anticipated-mozilla-firefox-1-0-web-browser/). Firefox removed all the extra cruft to try to make the browsing experience as fast and easy as possible. It was [incredibly innovative](https://www.youtube.com/watch?v=1qUlxXTp-ko) for its time. The first edition popularized things like a built-in pop-up blocker, tabs, and browser add-ons. 
+
+Some of these innovations were also available in Opera, and Apple's Safari web browser was released in 2003. Suddenly, there were a lot of options for people who wanted to use something other than Internet Explorer. Despite the standards bodies having made it clear that HTML was dead, not all of these browser vendors shared Microsoft's enthusiasm for XML. This led to the formation of [the WHATWG](https://html.spec.whatwg.org/dev/introduction.html#history-2) in 2004.
+
+### The What Who?
+
+In August 2003, a new proposal called [XForms](https://www.w3.org/TR/2003/PR-xforms-20030801/) was presented to the W3C. In [the FAQ](https://www.w3.org/MarkUp/Forms/2003/xforms-faq.html), the ability to "integrate with Web services, for instance by using SOAP and XML RPC" is listed as one of the benefits. It was met with some criticism by [Apple](https://lists.w3.org/Archives/Public/www-forms-editor/2003Sep/0006.html) and [Opera](https://lists.w3.org/Archives/Public/www-forms-editor/2003Sep/0017.html) as it was extremely difficult to implement on the web.
+
+In December, a young developer who worked for Opera named Ian Hickson issued an alternate proposal to the _W3C_ mailing group. Hickson initially called it [XForms Basic](https://lists.w3.org/Archives/Public/www-forms/2003Dec/0000.html), and it included some [common sense extensions to HTML web forms](https://www.hixie.ch/specs/html/forms/xforms-basic-1). It was not particularly well received, and it was even derided as a [political statement](https://lists.w3.org/Archives/Public/www-forms/2003Dec/0001.html). Nevertheless, these renegade browser vendors kept working on their own solutions.
+
+Meanwhile, the era of AJAX was upon us. Amidst [a flurry of development from Google](https://simpleprogrammer.com/history-internet-14-google-and-ajax-apps/), new apps like [GMail changed the game](https://daringfireball.net/2004/06/location_field). Soon, everyone wanted to use that ["XML HTTP thing"](https://web.archive.org/web/20140523000633/http://kayaklabs.blogspot.com/2006/04/kayak-user-interface.html). There were many other examples by this point like [Flickr and Facebook](https://github.com/whatwg/web-history). When Safari finally added XMLHttpRequest, they mentioned how you could now ["rate your friends [on Orkut]"](https://web.archive.org/web/20090602041255/http://weblogs.mozillazine.org/hyatt/archives/2004_02.html) which was a social networking site. All of this convinced Hickson that [the web needed better support for applications](https://ln.hixie.ch/?start=1074466808&count=1) as he imagined [a suite of tools specifically for client-side development](https://ln.hixie.ch/?start=1080506019&count=1).
+
+### Web Applications 1.0
+
+In April of 2004, Ian Hickson published the first draft of [Web Applications 1.0](https://www.hixie.ch/specs/html/apps/web-apps-1). Around the same time, Mozilla and Opera jointly released a [position paper stating their design principles for web apps](https://www.w3.org/2004/04/webapps-cdf-ws/papers/opera.html). They suggested that the most important considerations in any future designs were [backwards compatibility](https://ln.hixie.ch/?start=1085764602&count=1), [better error handling](https://ln.hixie.ch/?start=1074730185&count=1), and an open process. Hickson released [a blog post](https://ln.hixie.ch/?start=1085056751) shortly afterwards where he said this,
+
+>In my opinion, the way to go for Web applications is the creation of a public mailing list dedicated to the creation of extensions to HTML and the DOM that address the needs of Web authors, and to have someone edit a spec that brings the ideas that are discussed together. A good start for this would be the Web Forms 2 and Server Sent Events specs I've been writing.
+
+In June of 2004, the _W3C_ held their [Workshop on Web Applications and Compound Documents](https://www.w3.org/2004/04/webapps-cdf-ws/). Within the opening minutes, one of the people leading the committee openly called JavaScript, ["the worst invention ever”](https://www.phonk.net/Gedachten/JavaScript). On the first day, the Mozilla and Opera teams [presented their position paper](https://www.w3.org/2004/04/webapps-cdf-ws/minutes-20040601.html#topic18) while showing off a [Lemmings](https://en.wikipedia.org/wiki/Lemmings_(video_game)) game written in HTML, JavaScript, and CSS. Nearly every other group presented something based on XML. Instead of incrementally building on HTML, they wanted to rip everything up and start over with their own propietary XML systems. 
+
+Alex Hopmann was there for Microsoft presenting something called [_XAML_](https://en.wikipedia.org/wiki/Extensible_Application_Markup_Language). This was short for eXtensible Application Markup Language, but the 'A' originally stood for 'Avalon'. As you may have guessed, this was the culmination of the Avalon project. At the workshop, Hopmann admitted that they had no plans to standardize it whatsoever. Microsoft's Chris Wilson admits now that [Avalon was Microsoft's failed attempt to supercede the web](https://www.youtube.com/watch?v=VEF5WgUEX_Q).
+
+### The WHATWG
+
+The Opera and Mozilla presentation was met with little enthusiasm, and Hickson wrote a blog post that night where he [started wondering if the pragmatists involved should just do their own thing](https://ln.hixie.ch/?start=1086158925&count=1). On the second day, a straw poll was held to see if the _W3C_ should work on extending HTML. While the results were not one-sided, the [_W3C_ decided to dismiss Opera and Mozilla's suggestions](https://www.w3.org/2004/04/webapps-cdf-ws/minutes-20040602.html#topic28.1). Again, Hickson wrote a blog post, and this time he ended it by asking ["What working group is going to work on extending HTML..."](https://ln.hixie.ch/?start=1086387609).
+
+That same day, the [Web Hypertext Applications Technology Working Group](https://whatwg.org/news/start) (the _WHATWG_) was born. Within a month, [over 600 messages were sent on the mailing list](https://ln.hixie.ch/?start=1088526392&count=1). This included members of Safari and prominent JavaScript library authors. While [they had little support from the standards bodies at first](https://lists.w3.org/Archives/Public/public-whatwg-archive/2004Jun/0283.html), many in the development community supported this. [One person wrote](https://dbaron.org/log/2004-06#e20040609a), "So the _W3C_ may have decided years ago to replace the Web with XHTML, but they've clearly failed to do so, and I don't see any signs of that changing."
+
+At this point, Brendan Eich was quickly becoming the public face of Mozilla. While [Mitchell Baker](https://en.wikipedia.org/wiki/Mitchell_Baker) was doing a commendable job as the CEO, Eich served as chief technologist and kept a public blog. He wrote a [well regarded blog post](https://brendaneich.com/2004/06/the-non-world-non-wide-non-web/) expressing his support for the _WHATWG_. He went on a podcast a couple months later and [said this about the _WHATWG_'s intentions](https://web.archive.org/web/20130729234702/http://origin.conversationsnetwork.org/The%20Gillmor%20Gang%20-%20July%209%2C%202004.mp3) at the time:
+
+> Authors know HTML and to some extent CSS... These tools are used by millions of people. Not all of them top programmers or designers, but there's nothing competing with [these tools] that I know of.... I think it's much likelier to say that you could get the web shifted incrementally towards richer content and application models than you could roll out a brave new world of XHTML and SVG and X-Forms... It's not just browser vendors wanting to satisfy their own codebase convenience, we're always thinking of what the mass market of web authors want.
+
+### Macromedia Flash
+
+Eich's rising public advocacy was desparately needed at the time. This was 2004, and the fourth edition of EcmaScript was still nowhere in sight. The committee had been meeting regularly, but they were still unable to agree on anything. At this point, people were openly wondering if [EcmaScript was dead](https://archives.ecma-international.org/2004/TG1/tc39-tg1-2004-005.pdf). The language was still frozen in place in a rather primitive form, and the web was moving on without it. Although Java applets had been a failure, there was a new technology that was quickly becoming ubiquitous: [Macromedia Flash](https://en.wikipedia.org/wiki/Adobe_Flash). 
+
+Flash became popular because it was extremely difficult to make a unique, exciting website without it-- particularly if you wanted to include any animations. HTML was limited to simple boxes with ugly [marquee](https://en.wikipedia.org/wiki/Marquee_element) and [blink](https://en.wikipedia.org/wiki/Blink_element) tags, and CSS animations would not exist [until 2007](https://snook.ca/archives/javascript/css_animations_in_safari/). [A few people](https://web.archive.org/web/20120404132548/https://www.downes.ca/cgi-bin/page.cgi?post=276https://web.archive.org/web/20120404132548/https://www.downes.ca/cgi-bin/page.cgi?post=276) experimented with trying to build rich experiences with web technologies, but they were extremely limited. You could do [rudimentary animations with JavaScript](https://web.archive.org/web/20030801113658/http://computer.howstuffworks.com/web-animation.htm), but people craved a way to do [more complex vector graphics](https://en.wikipedia.org/wiki/Vector_graphics).
+
+Most people simply included [GIF animations](https://en.wikipedia.org/wiki/GIF), but these files were extremely large. They took forever to download, and they could not be interactive. So, a [new browser plug-in emerged](https://web.archive.org/web/20030701122735/http://www.animationarena.com/flash-animation.html) to fulfill this need. Just like Java before it, it was notorious for security vulnerabilities. Because it was closed source, these were not always easy to avoid. Regardless, people didn't care because the internet was a much more exciting place with Flash. 
+
+By 2011, [close to a third of the web](https://www.statista.com/chart/3796/websites-using-flash/) was built with flash. While the web browsers stagnated, Flash introduced a whole host of new features like [streaming video and audio](https://usa.kaspersky.com/blog/life-and-death-of-adobe-flash/27291/). Macromedia even built a scripting language into Flash Player 5 called [ActionScript](https://en.wikipedia.org/wiki/ActionScript). Originally, this was a completely original language, but eventually they started basing it on EcmaScript. Soon, they were taking part in the committee.
+
+### E4X
+
+Jeff Dyer from Macromedia became editor of TC-39 in 2004, and they quickly decided not to go forward with Waldemar Horwat's draft. They decided it was "too sweeping and broad for completion or adoption", and the committee agreed to take a more incremental approach. This was despite the fact that JScript.NET and ActionScript had based their designs around Horwat's draft. 
+
+Mozilla became a member of Ecma International that same year, and [Eich attended his first meeting in five years](https://archives.ecma-international.org/2004/TG1/tc39-tg1-2004-006.pdf). While there was little hope of creating a new version of the main standard any time soon, there were folks who were interested in something called E4X. Brendan Eich decided to use E4X to get [Microsoft's attention](https://topenddevs.com/podcasts/javascript-jabber/episodes/124-jsj-the-origin-of-javascript-with-brendan-eich) to get them to ["stop stalling and sitting on the web"](https://youtu.be/Rj49rmc01Hs?si=1oZjnbgZ6ObUh_4Q&t=191). 
+
+This was a new standard for embedding XML directly into JavaScript. This was actually the second time that Ecma International had tried to make EcmaScript in XML work, but [ECMAScript Components](https://ecma-international.org/wp-content/uploads/ECMA-290_1st_edition_june_1999.pdf) were never even implemented. It may not have had the immediate effect Brendan Eich intended, but the [E4X Standard was passed in June 2004](https://www-archive.mozilla.org/js/language/ECMA-357.pdf). 
+
+It can be seen as an early ancestor of JSX. In fact, Eich would later joke that ["Some of you are using React, you're kinda using E4X"](https://skillsmatter.com/skillscasts/10595-opening-keynote-javascript-the-next-generation). Unfortunately, E4X was considered a bad standard, and it was never widely adopted. By 2011, Brendan Eich was asking if it should be deprecated, and within two years people were openly saying that ["E4X is dead, and for very good reasons".](https://bugzilla.mozilla.org/show_bug.cgi?id=695577#c1)
+
+### EcmaScript 4
+
+Soon after his success with E4X, Eich was starting to rally support for [a new version of EcmaScript 4](https://mdn.dev/archives/media/presentations/xtech2006/javascript/index.html). While it differed from the previous version in many ways, it was still a radical departure from the third edition. People were still calling it [JavaScript 2](https://www.infoworld.com/article/2653798/javascript-creator-ponders-past--future.html), and it had a wide range features from [static types](https://brendaneich.com/2005/11/js2-design-notes/) to [packages and namespaces](https://evertpot.com/ecmascript-4-the-missing-version/). 
+
+Along the way, Mozilla released [new versions of JavaScript](https://web.archive.org/web/20070210000833/http://developer.mozilla.org/en/docs/New_in_JavaScript_1.7) that intrepid developers could try out that included exciting new features. All the developer needed to do was add a version parameter to the `type` attribute of their script tag. These wouldn't work in any other browsers however, and Firefox's market share was far too low for major websites to use them.
+
+All these new features were intended to help JavaScript programmers deal with their labyrinthine _AJAX_ apps, but the fourth edition made the language over [twice as large as the third edition](https://brendaneich.com/2007/11/es4-news-and-opinion/). [Some people](https://web.archive.org/web/20091003023857/http://www.riffraff.info/2007/10/25/ecmascript-4-the-fourth-system-syndrome) thought this was [too much](https://web.archive.org/web/20080827182714/http://almaer.com/blog/javascript-2-a-perl-6-disaster-that-matters-so-much-more-but-wait). Chief among these critics were Microsoft's delegates to TC-39.
+
+### The Sleeping Giant
+
+After five years of dormancy, Microsoft released Internet Explorer 7 in 2006. The [security issues had finally become too bad to ignore](https://web.archive.org/web/20050217021739/http://blogs.msdn.com/ie/archive/2005/02/15/373104.aspx). At this point, Microsoft was realizing that they had stabbed themselves in the back. Microsoft quit developing for the web because [web applications don't require Windows](https://www.joelonsoftware.com/2004/06/13/how-microsoft-lost-the-api-war/), but their desktop applications couldn't compete with the portability of _AJAX_ applications. The great irony was that these apps only existed because Microsoft had built `XMLHttpRequest`. 
+
+[Chris Wilson](https://web.archive.org/web/20080205095942/https://blogs.msdn.com/cwilso/archive/2007/10/31/what-i-think-about-es4.aspx) was one of the project managers tasked with bringing Microsoft back to the table. He had been working on browsers since Mosaic. He and other Microsoft employees such as [Pratap Lakshman](https://web.archive.org/web/20080906205609/https://wiki.ecmascript.org/doku.php?id=discussion:browser_profile) and [Allen Wirfs-Brock](https://learn.microsoft.com/en-us/archive/blogs/jscript/ecmascript-3-and-beyond-the-road-to-harmony) suggested a more minimal approach. From today's vantage point, it's easy to see the Microsoft team's point. 
+
+Brendan Eich did not take this charitably, however. He thought that Microsoft were blocking progress intentionally. [One person even said,](https://web.archive.org/web/20080221152106/https://www.neilmix.com/2007/11/01/the-story-behind-es4/) "Brendan's passion is coming off as wild-eyed fanaticism. This is turning lots of people off." The fight was [ugly](https://brendaneich.com/2007/10/open-letter-to-chris-wilson/) and [public](https://web.archive.org/web/20071103151240/https://blog.mozilla.com/rob-sayre/2007/10/31/working-on-a-proposal/#comment-4403). Amidst it all, a new delegate from Yahoo! turned out to be a key figure in making peace among the delegates. His name was Douglas Crockford.
+
+### Douglas Crockford
+
+[Douglas Crockford](https://en.wikipedia.org/wiki/Douglas_Crockford) is a veteran programmer who has been working on the web since the very beginning. He was an [early evangelist](https://www.crockford.com/javascript/javascript.html) for JavaScript as he [helped web developers](https://crockford.com/javascript/inheritance.html) understand its [hidden capabilities](https://www.crockford.com/javascript/private.html). He also helped invent the [E programming language](https://en.wikipedia.org/wiki/E_(programming_language)) with [Mark Miller](https://en.wikipedia.org/wiki/Mark_S._Miller), [Dan Bornstein](https://en.wikipedia.org/wiki/Dan_Bornstein), and [Chip Morningstar](https://en.wikipedia.org/wiki/Chip_Morningstar) which is the [main influence for modern promises](https://youtu.be/X3ExqafLgwk?si=qwOC2PjZHudT3Kqt&t=1504). However, as we'll see later, their concept of a promise is [much more monadic](https://www.youtube.com/watch?v=dkZFtimgAcM&t=1904s) than what we know now. 
+
+Crockford worked at Yahoo! which was one of the biggest users of JavaScript at the time. This earned him a seat on TC-39, and he was one of the only members of the committee that had actually built a large-scale JavaScript application. At [his first meeting](https://web.archive.org/web/20071104154413/http://wiki.ecmascript.org/doku.php?id=meetings:minutes_jun_21_2006) after he joined in 2006, the delegates noted that this perspective was sorely needed. I'm sure Crockford agreed as he had declared that ["TC39 should be deeply embarrassed"](https://www.crockford.com/javascript/javascript.html) in his first public statement on JavaScript. 
+
+In retrospect, it's easy to see that Crockford would side with the Microsoft delegates. From the beginning, he has advocated for curating the language rather than expanding it with new features. In 2002, he created the first [JavaScript linting tool](https://www.jslint.com/) that was designed to help programmers avoid common mistakes. It was an extremely opinionated syntax checker that restricted developers from using large parts of JavaScript which Crockford considered to be dangerous. 
+
+In 2008, he wrote a book called [JavaScript: The Good Parts](https://archive.org/details/javascriptgoodpa00croc_0). Crockford was convinced that JavaScript was an excellent language as long as you avoided certain parts of it. So, it's not surprising that he would be skeptical of a standard that was trying to add so many new features. He knew the frustration of waiting for old browsers to die out, he had already seen how people were misusing existing features, and [security issues were one of his top priorities](https://web.archive.org/web/20071212041239/http://wiki.ecmascript.org/doku.php?id=meetings:minutes_jul_27_2006) when he joined TC-39.
+
+### EcmaScript 3.1  
+
+Brendan Eich once called Crockford “the Yoda of Lambda JavaScript programming”. In the midst of the ES4 battle at TC-39, he revised this to [Gandalf protecting the JS hobbits from the ES4 balrog](https://brendaneich.com/2007/11/my-media-ajax-keynote/). Predictably, Crockford sided with the Microsoft delegates on wanting a more minimal approach to the language. Together, they produced an alternative proposal that eventually became known as [EcmaScript 3.1](https://web.archive.org/web/20071108003429/http://wiki.ecmascript.org/lib/exe/fetch.php?id=es3.1%3Aes3.1&cache=cache&media=proposals:proposal_to_refocus_tc39-tg1.pdf).
+
+Crockford was aided by new delegates from other groups like Google and the newly formed [Dojo Foundation](https://download.dojotoolkit.org/release-0.4.4/dojo-0.4.4-src/documents/web0.3/foundation/). [Mark Miller](https://esdiscuss.org/topic/i-m-confused-about-the-design-constraints-on-es4#content-2) worked for Google at the time, and quickly proved to be a valuable asset to TC-39 as a whole. Eventually, the committee split into two groups-- each working on their own version of the standard. 
+
+This allowed both sides to work on their own vision for the language, but they still needed to come together to agree on a final standard. [ECMA demanded a compromise](https://youtu.be/JUKPcWzsPpo?t=771) after almost ten years of inaction. EcmaScript is their most popular language by far, and they did not want to see it die.
+
+### EcmaScript Harmony
+
+After over a year of public bickering, the two sides came to a consensus after a groundbreaking meeting in Oslo. Soon afterwards, Brendan Eich sent out an e-mail with the title [EcmaScript Harmony](https://web.archive.org/web/20160405024014/https://mail.mozilla.org/pipermail/es-discuss/2008-August/006837.html). He summarized the meeting by saying that the committee would fully collaborate on ES3.1 for immediate implementation.
+
+They added some meta-programming features to 3.1 to give developers more flexibility in building their own tools, and they also agreed to take several of the most controversial features from ES4 off the table permanently. [This was crucial](https://web.archive.org/web/20120508165906/https://open-web-podcast.googlecode.com/files/openwebpodcast-20080814.mp3) in getting Crockford and Microsoft to agree to the new standard. Brendan Eich summarized the new ES Harmony process as [both quality and date driven](https://www.youtube.com/watch?v=1EyRscXrehw&t=394s), and he was confident that they could get it done by the next year. 
+
+Finally, TC-39 started [regaining the faith of the community](https://web.archive.org/web/20080827150106/http://alex.dojotoolkit.org/2008/08/thoughts-on-harmony/). The plan was to address [a wide array of bugfixes](https://web.archive.org/web/20071016071529/http://wiki.ecmascript.org/doku.php?id=proposals:bug_fixes), but [tough problems like modules were pushed down the road](https://web.archive.org/web/20080827203432/http://ejohn.org/blog/ecmascript-harmony/). They decided that incremental progress was better than nothing at all. Eventually, it was agreed that EcmaScript 4 and JavaScript 2.0 had become toxic entities, and the group resolved to simply skip to EcmaScript 5.
+
+### EcmaScript 5
+
+One thing that really [helped sway Crockford](https://web.archive.org/web/20101230140038/http://www.yuiblog.com/blog/2010/12/14/strict-mode-is-coming-to-town/) was the addition of a new [_strict mode_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode). This was a way to opt into a [more secure subset](https://2ality.com/2011/01/javascripts-strict-mode-summary.html) of the language by reducing ambiguity and throwing more exceptions. This not only helped developers avoid common mistakes, but it also allows for better lexical scoping and [possibly even better browser performance](https://stackoverflow.com/questions/3145966/is-strict-mode-more-performant).
+
+Although there was only a [small subset of new features](https://mvolkmann.github.io/other-presentations/ECMAScript5.pdf), TC-39 made a conscious decision to add things that would impact everyday developers. Much of this was intended to give library authors the tools they needed to build better low-level abstractions. For instance, developers could finally apply [getters and setters like DOM objects](https://brendaneich.com/2011/08/my-txjs-talk-twitter-remix/) or [customize an object's behavior](https://johnresig.com/blog/ecmascript-5-objects-and-properties/).
+
+Several additions were made to the standard library. Mozilla had already added several "array helpers" like `map()` and `filter()`, and these were formalized into the language. Most important of all may have been the addition of the JSON object.
+
+### JSON
+
+Douglas Crockford has a long, storied career, but he is widely known today due to his "discovery" of the JSON protocol. This was a new way of serializing data that was based on JavaScript's object literal syntax. [JSON was born out of a need to send messages back and forth from client to server](https://www.youtube.com/watch?v=-C-JoyNuQJs).
+
+He coined the name along with Chip Morningstar, but Crockford claims that they merely discovered it rather than inventing it. People have been using similar techniques since the early days of scripts and frames. Crockford just needed something that would work in both Internet Explorer and Netscape. 
+
+[He soon built a whole website for it](https://www.json.org/json-en.html) which evolved into [a standard for data transfer](https://datatracker.ietf.org/doc/html/rfc4627). Contrary to the voluminous standards required for XML, the JSON standard could [fit on the back of a business card](http://james.newtonking.com/archive/2009/07/29/json-standard-business-card). By 2006, he was calling it a ["fat-free alternative to XML"](https://www.json.org/fatfree.html) with no namespaces, schemas, or any other mental overhead.
+
+In fact, JSON helped [overcome some of the limitations of XMLHttpRequest](https://web.archive.org/web/20071112192007/http://blog.programmableweb.com/2005/12/16/yahoo-javascript-and-json/). While the name _AJAX_ implied using _XML_ to transfer the data, Jesse James Garrett even noted how this wasn't required in [the article where he coined the term](https://web.archive.org/web/20180317050829/http://adaptivepath.org/ideas/ajax-new-approach-web-applications/). Eventually, nuanced techniques emerged with one of the most popular being [called JSONP](https://en.wikipedia.org/wiki/JSONP).
+
+### From De Facto to De Jure
+
+Because the DOM was so poorly developed, a wide range of JavaScript frameworks were built to help developers deal with the inconsistencies between browsers. [MooTools](https://web.archive.org/web/20070723084332/http://docs.mootools.net/Remote/Json-Remote.js), [Dojo toolkit](https://web.archive.org/web/20051231045153/http://manual.dojotoolkit.org/json.html), [Prototype](https://web.archive.org/web/20070202030304/http://prototypejs.org/learn/introduction-to-ajax), and especially [jQuery](https://web.archive.org/web/20060831170517/http://jquery.com/docs/ajax/)-- these libraries often provided helpers for using JSON to send data back and forth. As _AJAX_ grew more popular, JSON became the de facto standard for data transfer on the web. 
+
+The _W3C_ and Ecma International were not involved in any of this. Developers just needed a simple data format that could be used on both the browser and the server, but there were small differences between each implementation. So, [John Resig from jQuery](https://johnresig.com/blog/native-json-support-is-required/) was adamant that JSON should be not only be a part of the standard library, but that it should also have some serialization helpers built in. His wish came true with ES5 as `JSON.stringify()` and `JSON.parse()` were added to the language.
+
+In preparation for it becoming a part of the language, [Crockford released a new, better version of his library](https://johnresig.com/blog/the-state-of-json/) which mirrored the official API. This way, developers could use it in browsers that didn't support it natively. Once [IE8 had native JSON](https://web.archive.org/web/20090421190847/http://blogs.msdn.com/ie/archive/2008/09/10/native-json-in-ie8.aspx), it was clear that a new era of JavaScript was upon us.
+
+## How and Why React Uses - JSON methods
+
+As I said, the `JSON` object comes with two methods: `JSON.stringify()` and `JSON.parse()`. At this point, this is the common way to deal with sending complex data across the internet. Both sides of a web request need to agree on not only how to represent the data, but also how to parse it on the other end. This process is known as [serialization](https://en.wikipedia.org/wiki/Serialization). 
+
+`JSON.stringify()` transforms the value into a string that can be understood by the `JSON.parse()` method on the other side and turned back into the original value. These serialization methods can be customized. EcmaScript provides a very sensible default serialization algorithm which works for most cases. So, often people only provide one argument to [the `JSON.stringify()` method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify), or they skip to the third (which is for spacing) while ignoring the second. However, this second argument can be an extremely powerful function called the `replacer` that allows you to customize the serialization process.
+
+This `replacer` function is called for every single property on the object being serialized. It is passed two arguments. The first is the key of the property, and the second is the value. The `replacer` function can then conditionally return new values in place of the original ones. If it returns `undefined`, that property will be omitted from the serialization process entirely.
+
+The `replacer`'s counterpart is the `reviver` function on the other side. This function is called for every property on the object being deserialized with `JSON.parse()`. It also receives each key and value pair, and it can conditionally change the values. Again, if it returns `undefined` then that property will simply be removed from the object.
+
+### resolveModelToJSON
+
+Like I said, the `stringify` method has a default serialization that works for most cases. However, there are some values that cannot be serialized because they are too complex for a generic algorithm. This can be much more restrictive than you might think.
+
+Additionally, some objects like `Date` are automatically serialized into strings. Even if you attempt to override this behavior with a `replacer` function, it won't work. The only ways I could find to change this were pretty hacky-- like [overriding the `.toJSON` method on the `Date` object itself](https://stackoverflow.com/questions/31096130/how-to-json-stringify-a-javascript-date-and-preserve-timezone). 
+
+This is usually unnecessary, but there are a lot of little edge cases like this. Because of this, the `replacer` and `reviver` functions for _React Server Components_ are some of the most complex and important parts of the entire process. Let's take a quick peek at just [a small portion](https://github.com/facebook/react/blob/6c7b41da3de12be2d95c60181b3fe896f824f13a/packages/react-server/src/ReactFlightServer.js#L901) of the replacer function called `resolveModelToJSON()`.
+
+<ResolveModelSmall />
+
+As you can see, some things like boolean values can be simply passed through, but React is using their own serialization process for numbers. This is because [`JSON.stringify()` will return `null` if it encounters a `NaN` or `Infinity`](https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript). So, even something as simple as numbers requires some customization. React handles almost every type of value differently, so this function is huge. We'll go through the entire thing in [Chapter Four](/4-flight-request). For now, here's some more demos to get you comfortable with `replacer` and `reviver` functions.
+
+<IFrame src="https://stackblitz.com/edit/json-replacer-and-reviver-functions?ctl=1&embed=1&view=preview" />
+
+### The iPhone
+
+When Brendan Eich announced that much of ES4 would be tossed in the trash, [many people](https://web.archive.org/web/20080926051406/http://whydoeseverythingsuck.com/2008/08/ru-roh-adobe-screwed-by-ecmascript.html) were [shocked by this development](https://blog.gskinner.com/archives/2008/08/javascript_stal.html). TC-39 had spent years on ES4, and Flash's ActionScript was based on it. Adobe already had a [mostly working virtual machine](https://en.wikipedia.org/wiki/Tamarin_(software)). To quote Douglas Crockford, ["A change to a widely used standard is an act of violence"](https://qconsf.com/sf2010/dl/qcon-sanfran-2009/slides/DouglasCrockford_TheStateAndFutureOfJavaScript.pdf). Surprisingly, [Adobe publically backed ES Harmony](https://web.archive.org/web/20080818073915/http://blogs.adobe.com/open/2008/08/blog_entry_dated_81408_715_pm.html) as they were more interested in the future of the web than their own propietary language.
+
+The truth is that the most likely reason everyone was finally willing to come to the table was because the market had just been completely disrupted. In January 2007, [Steve Jobs announced the iPhone](https://www.youtube.com/watch?v=wGoM_wVrwng). The internet on phones was nothing new. In fact, the [first mobile browser was created in 1994](https://en.wikipedia.org/wiki/Mobile_browser), and many people used [Blackberrys](https://en.wikipedia.org/wiki/BlackBerry) and [PalmPilots](https://en.wikipedia.org/wiki/PalmPilot) to browse the web. This was a relatively blank slate compared to the web, and many had thought that mobile platforms would be a good avenue for [XML to take hold](https://web.archive.org/web/20060211041531/http://www-128.ibm.com/developerworks/xml/library/x-futhtml2.html). However, Apple had a unique vision for the future of mobile computing.
+
+From the very beginning, the iPhone never supported Flash. It was a huge security risk, and it was designed for computers from the early 90's. In the early days of iOS, Apple tried to help Adobe port it over. The [performance was abysmal](https://9to5mac.com/2021/04/27/apple-tried-to-help-adobe-bring-flash-to-ios-but-the-results-were-embarrassing/). Steve Jobs even wrote an open letter called [Thoughts on Flash](https://web.archive.org/web/20100603082917/https://www.apple.com/hotnews/thoughts-on-flash/) where he explained why they would never support it.
+
+> By almost any definition, Flash is a closed system. Apple has many proprietary products too. Though the operating system for the iPhone, iPod and iPad is proprietary, we strongly believe that all standards pertaining to the web should be open. Rather than use Flash, Apple has adopted HTML5, CSS and JavaScript-- all open standards.
+
+## Modern Standards
+
+
+
+EcmaScript Harmony kicked off for real in 2008. 
+
+
+Eich was a signatory to the Extensible Web Manifesto, and he wanted to [open up the standardization process](https://web.archive.org/web/20140218171403/https://www.javaworld.com/article/2078918/mobile-java/brendan-eich-spills-the-beans-on-next-two-javascript-upgrades.html).
+
+
+
+
+[a Twitter account summarizing recent developments](https://twitter.com/esdiscuss)
+
+In 2010, Allen Wirfs-Brock [quit his job at Microsoft](https://www.wirfs-brock.com/allen/jshopl.pdf) to move to Mozilla and became the full-time editor of the specification. This proved to be a huge boon to the language as he skillfully guided the committee through the long, winding process. He has declared that [interoperability is TC-39's highest priority](https://youtu.be/EPHmm8JiGbg?si=aMvSRSDqc7MZ5UyK&t=1833) as they began to implement a [rigorous test suite](https://github.com/tc39/test262#goals--state-of-test262).
+
+
+They stated that there would be a "proposal freeze" in May 2011, and they were targeting a release for [the end of 2013](https://tc39wiki.calculist.org/es6/).
+
+[5.1](https://262.ecma-international.org/5.1/#sec-10.5)
+
+["puts library developers more on par with platform (browser) providers"](https://web.archive.org/web/20100509111100/http://google-caja.googlecode.com/svn/trunk/doc/html/es5-talk/es5-talk.pdf)
+
+[A wiki had worked well](https://web.archive.org/web/20030620161438/http://www.intertwingly.net/blog/1472.html) when developers came together to build the [Atom Syndication Format](https://en.wikipedia.org/wiki/Atom_(web_standard)) in 2003.
+
+5.1 [nested functions](https://bugs.webkit.org/show_bug.cgi?id=27226#c4)
+
+Native EcmaScript promises landed with EcmaScript 6 in 2015 as Harmony finally came to fruition. This was the big, major change to the language that Brendan Eich had dreamed about since 2004. No one intended for this to take six years after ES5, but they wanted to make sure that they got it right. [Almost every major feature](http://es6-features.org/) that we will discuss from this point forward can trace its roots back to this period. Classes, modules, proxies, and promises were all included, and that's just the beginning.
+
+Things changed rapidly over this period. Eich gave an [early preview of ES6](https://brendaneich.com/2011/10/jsconf-eu/) that he admitted was the version of his dreams in 2011, and it looks very little like what we got. 
+
+You may wonder why the community was suddenly willing to make such a big change. One of the guiding principles of TC-39 is "Don't Break the Web". That's why one of ES4's biggest sticking points was that the syntax was not backwards compatible. They had tried something similar to versioning with "use strict" in ES5, but it was not widely adopted. The most popular plan was to use the `type` attribute in the script tag, but Mozilla had been pushing that for years with limited success.
+
+Instead, TC-39 coalesced behind the concept of ["One JavaScript"](https://esdiscuss.org/topic/es6-doesn-t-need-opt-in#content-65) for ES6. Basically, the idea was that [the vast majority of changes needed to be non-breaking](https://archives.ecma-international.org/2012/TC39/tc39-2012-005.pdf). Key to this agreement was the idea that there could be [no changes to semantics of existing syntax](https://www.youtube.com/watch?v=AkjcxlAuyLI). 
+
+This involved exploiting some clever ambiguities and using the module system to hide some of the key differences. Additionally, if code is executed inside of a module, 'strict mode' is automatically applied. In the end, ES6 only had [a few minor breaking changes](https://exploringjs.com/es6/ch_one-javascript.html#sec_breaking-changes-es6), and they are obscure enough that I won't even mention them.
+
+In 2011,
+
+
+
+[Two years later](https://blog.whatwg.org/html5-at-last-call), the WHATWG announced a "last call", but they quickly realized that there was still a lot of work to be done. So, they decided to continue working on the document as a [living standard](https://spec.whatwg.org/) that would be updated as browsers changed. Because of this, Ian Hickson renamed the specification to simply [_HTML_](https://blog.whatwg.org/html-is-the-new-html5).
+
+So, the _WHATWG_ persisted with a [renewed focus on accessibility](https://annevankesteren.nl/2008/ajaxexperience) and user experience. Through the years, the _W3C_ and the _WHATWG_ have had [many clashes](https://www.cnet.com/tech/services-and-software/html5-is-done-but-two-groups-still-wrestle-over-webs-future/) on topics such as [_DRM_](https://blog.whatwg.org/drm-and-web-security). Despite this, [browser vendors said](https://groups.google.com/g/mozilla.dev.platform/c/BnY1261cNJo/m/MdkaT_EX6M0J) that when the W3C's and _WHATWG_'s HTML specifications differed, they followed the _WHATWG_. After years of impotency, the [_W3C_ was not widely respected](https://infrequently.org/2007/12/the-w3c-cannot-save-us/).
+
+While the _W3C_ issued competing (unused) specs for many years, they eventually accepted the _WHATWG_ and [started working together with them in 2019](https://www.w3.org/blog/2019/w3c-and-whatwg-to-work-together-to-advance-the-open-web-platform/). Today, the _WHATWG_ maintain the living standard, and the _W3C_ will occasionally [publish snapshots](https://www.w3.org/TR/html52/) of it. This is because modern browsers change very rapidly, but this wasn't the case when the _WHATWG_ was founded. Everything changed when Google released their new web browser.
+ [ES5 Shim](https://2ality.com/2011/02/es5-shim-use-ecmascript-5-in-older.html)
+ [ES5, EcmaScript.next, ES6](https://2ality.com/2011/06/ecmascript.html)
+
+ 
+### Silverlight is dead
+
+["get the facts"](https://www.osnews.com/story/21695/microsoft-launches-get-the-facts-campaign-for-ie8/)
+ [boat-anchor browser](https://www.paulirish.com/2011/browser-market-pollution-iex-is-the-new-ie6/)
+[Microsoft added auto-update in 2011](https://www.sitepoint.com/microsoft-adds-ie-auto-update/)
+[Hanselman says use HTML5](https://www.hanselman.com/blog/should-i-use-html5-or-silverlight-one-mans-opinion)
+[Silverlight is fucking dead](https://www.neowin.net/news/former-microsoft-pm-silverlight-is-dead/)
+[JavaScript at 90% by 2012](https://w3techs.com/technologies/history_overview/client_side_language/all/y)
+[2015: JavaScript has won](https://www.hanselman.com/blog/javascript-has-won-run-flash-with-mozilla-shumway-and-develop-silverlight-in-js-with-fayde)
+ [feature history](https://platform.html5.org/history/)
+ [Evergreen Browsers](https://css-tricks.com/evergreen-does-not-mean-immediately-available/)
+ [Java Browser Plugin deprecated in 2016](https://arstechnica.com/information-technology/2016/01/oracle-deprecates-the-java-browser-plugin-prepares-for-its-demise/)
+ [Flash lived on as a zombie until 2020](https://blog.google/products/chrome/saying-goodbye-flash-chrome/)
+
+
+[As early as 2010](https://web.archive.org/web/20120820081926/http://piratepad.net/amwb-20101129), Brendan Eich was [publically expressing his love](http://brendaneich.com/2010/11/paren-free/) for JavaScript compilers. He was already imagining tools that would [automatically convert new JavaScript syntax into something compatible with older browsers](https://web.archive.org/web/20120314235839/http://www.aminutewithbrendan.com/pages/20110131). In truth, this wasn't exactly new. [Mascara](https://web.archive.org/web/20080824213614/http://blog.ecmascript4.com/) was a compiler developed for ES4 that was released in 2008. It was designed to allow developers to use [the new ES4 syntax](https://johnresig.com/blog/writing-ecmascript-4-today/) while still targeting browsers like IE6.
+
+Eich praised TypeScript as soon as it came out, and he admitted that [ES6 was inspired by CoffeeScript](https://brendaneich.com/2012/10/harmony-of-dreams-come-true/#comment-1201). He shared the stage with its creator [CoffeeScript's](https://en.wikipedia.org/wiki/CoffeeScript) creator [Jeremy Ashkenas](https://en.wikipedia.org/wiki/Jeremy_Ashkenas) at JSConfUS in 2011. Shortly afterwards, [Alex Russell and Peter Hallam](https://www.youtube.com/watch?v=ntDZa7ekFEA) debuted Google's [Traceur Compiler](https://github.com/google/traceur-compiler). 
+
+[Closure Compiler in 2012](https://web.archive.org/web/20121004014851/https://developers.google.com/closure/compiler/)
+
+Its concept was simple-- it would allow developers to use the Harmony features as they were still being developed. It would then compile it down to something that would run in current browsers. This was crucial for the adoption of ES6 features, and it was a major inspiration for the creation of [Babel](https://babeljs.io/). We'll talk more about compilation in future chapters.
+
+In fact, improving the use of JavaScript as a compilation target was an explicit goal for [ES6](https://www.infoworld.com/article/2937716/its-official-ecmascript-6-is-approved.html).
+
+People had been experimenting with macros for years with libraries like [Sweet.js](https://www.sweetjs.org/doc/tutorial).
+
+At this point, there are [dozens of languages](https://github.com/jashkenas/coffeescript/wiki/List-of-languages-that-compile-to-JS) that compile to JavaScript.
+
+As [compiling became the best option](https://2ality.com/2012/12/es6-workflow.html)
+
+
+[In 2012, Rick Waldron began taking detailed notes](2013-03/mar-12.md#412-stopiterationgenerator)
+
+In 2012, [Brendan Eich said this](https://news.ycombinator.com/item?id=4630057#4634735),
+
+> With no one to look ahead or synthesize ideas from compile-to-JS and other languages that win user support, JS will tend to stagnate, all else equal. Champions (not just me) must fight for a better future.
+
+
+ [EcmaScript standards process](https://tc39.es/process-document/)
+ [asm.js found that JavaScript could be very fast](https://arstechnica.com/information-technology/2013/05/native-level-performance-on-the-web-a-brief-examination-of-asm-js/)
+ [The Birth of WebAssembly](https://2ality.com/2015/06/web-assembly.html)
+ 
+
+ - started pushing more rapid browser updates
+
+### Generators and Async Iterators
+
+[node fibers in 2011 (coroutine)-- races and locks. would need to save stack on the heap](https://github.com/laverdet/node-fibers)
+
+[unlike coroutines, generators can only suspend their own function activation. you can make a shallow coroutine by combining with a promise](https://web.archive.org/web/20120820081926/http://piratepad.net/amwb-20101129)(http://calculist.org/blog/2011/12/14/why-coroutines-wont-work-on-the-web/)
+
+[proven in Python-- "For all practical purposes, the scheduler and the tasks are two completely different execution domains. There is a good reason for keeping this separation. Namely it promotes a loose coupling between tasks and their execution environment."](https://www.dabeaz.com/coroutines/)
+
+[Generators](https://exploringjs.com/es6/ch_generators.html#sec_overview-generators)
+[Added to v8 behind a flag in 2013](http://wingolog.org/archives/2013/05/08/generators-in-v8)
+[support was soon added to Node](https://web.archive.org/web/20131022203143/https://blog.alexmaccaw.com/how-yield-will-transform-node/)
+
+["We essentially have a way to write terse distributed code that can operate across processes, or even machines, while looking synchronous."](https://archive.jlongster.com/A-Study-on-Solving-Callbacks-with-JavaScript-Generators) 
+
+[
+Secondly, I'm hesitant about promises converting all exceptions into errors (even ones like foo is undefined), which makes me always have to make sure I'm finishing my promise chain correctly (to make errors re-thrown). On the other hand, Q does have the ability to trace the async flow and reconstruct error stacks, which is pretty awesome, and probably why it has such a strict definition of error handling.
+
+You get more power with promises, but at a complexity cost. There's a ton of diversity here, and it would be a mistake to pick one as the winner. The contour and depth of a project's codebase varies drastically, driven not only by requirements but also by personality. Learn deeply about all these approaches, and do what feels right for your project.
+](https://archive.jlongster.com/A-Closer-Look-at-Generators-Without-PromisesD)
+
+[First off generators are complementary to callbacks, some form of callback is required to “feed” the generators. These “futures”, “thunks”, or “promises”--whatever you prefer to call them allow deferred execution of some logic, this is what you yield a value and allow the generator to handle the rest.
+
+generators used in this way are effectively the same mechanism as a callback, however with some added benefits that we’ll look at soon.
+
+Why is this so great? Error handling! If you’ve worked with Node.js where exceptions are quite prevelant even compared to the browser, you’ll know that error handling is no simple feat. Sometimes you get multiple callbacks which have undefined side-effects, or forget a callback all-together and fail to properly handle or report the exception. Or perhaps you forgot to listen for an “error” event, in which case it becomes an uncaught exception and brings down the process.
+
+](https://web.archive.org/web/20131127012443/https://medium.com/code-adventures/174f1fe66127)
+and [CoffeeScript](https://github.com/jashkenas/coffeescript/pull/3078#issuecomment-21316938)
+[facebook released regenerator](https://facebook.github.io/regenerator/)
+[Iterators gonna iterate](https://jakearchibald.com/2014/iterators-gonna-iterate/)
+[Iterables and iterators](https://exploringjs.com/es6/ch_iteration.html)
+[can be helpful](https://archive.jlongster.com/A-Study-on-Solving-Callbacks-with-JavaScript-Generators)
+
+[combining them helps with error handling](https://www.youtube.com/watch?v=qbKWsbJ76-s)
+
+which could really [be a pain in Node.js](https://web.archive.org/web/20140401155055/https://www.joyent.com/developers/node/design/errors) due to the increased amount of asynchronous code.
+[callbacks versus generators](https://medium.com/@tjholowaychuk/callbacks-vs-coroutines-174f1fe66127)
+
+[As early as 2010, people were combining promises and generators](https://blog.ometer.com/2010/11/28/a-sequential-actor-like-api-for-server-side-javascript/)
+[and other wild, new ideas](https://swannodette.github.io/2013/08/24/es6-generators-and-csp/)
+At NodeConf in 2011, he sold them as a solution for ["callback-free i/o"](https://brendaneich.com/2011/05/mozillas-nodeconf-presentation/)
+
+### Extensible Web Manifesto
+
+HTML5 was immensely popular to the point where it became a buzzword, but the _WHATWG_ were not infallible. The best example of this is the appCache API that came out of Google Gears. It was summarized in a famous article by Jake Archibald called [Application Cache is a Douchebag](https://alistapart.com/article/application-cache-is-a-douchebag/). [Ian Hickson later said that](https://html5doctor.com/interview-with-ian-hickson-html-editor), "The appcache API is another big mistake. It's the best example of not understanding the problem before designing a solution, and I'm still trying to fix that mess."
+
+In May 2013, many of the web's brightest luminaries from a wide range of vendors signed an open letter to web standards committees called the [Extensible Web Manifesto](https://extensiblewebmanifesto.org/). They demanded that standards bodies defer to the community and "seed the discussion of high-level APIs through JavaScript implementations of new features" so that they could ["collect the slang"](https://briankardell.wordpress.com/2013/05/17/dropping-the-f-bomb/). They wanted to see more experimentation and less bureaucracy by [removing the gulf between developers and the platform](https://www.smashingmagazine.com/2013/11/laying-the-groundwork-for-extensibility/).
+
+Instead of developing new APIs that [hid their implementation behind magic](https://yehudakatz.com/2013/05/21/extend-the-web-forward/), they insisted that standards bodies should expose the underlying primitives. This would not only make things easier to [polyfill](https://remysharp.com/2010/10/08/what-is-a-polyfill/), but it would also allow developers to build their own abstractions so that [their ideas can compete](https://dev.opera.com/articles/houdini/). The group hoped that this would incite more experimentation and innovation.
+
+### Reforming the TAG
+
+After Douglas Crockford brought new blood into TC-39, there was a wave of JavaScript library authors getting involved in the process. Groups like the [jQuery standards team](https://blog.jquery.com/2011/10/24/announcing-the-jquery-standards-team/) were formed and sent people like [Yehuda Katz](https://yehudakatz.com/about/). Google had recently hired [Alex Russell](https://infrequently.org/about-me/) who was already on the committee from his work with Dojo Toolkit.
+
+A few of these young developers also invaded the W3C. They insisted that the standards bodies should stop ignoring JavaScript and use it as the [bedrock of the web](https://infrequently.org/2012/04/bedrock/). Alex Russell, Yehuda Katz, and a few others [went on to help reform the _W3C_ Technical Architecture Group](https://infrequently.org/2012/12/reforming-the-w3c-tag/). They wanted to build [new primitives into the DOM](https://www.youtube.com/watch?v=eRZ4pO0gVWw) that actually worked with JavaScript and not against it.
+
+To paraphrase Alex Russell, [the DOM is merely the largest built-in JS library](https://infrequently.org/2012/04/one-for-dave-and-david/#comment-239699). He and his compatriots wanted JavaScript to be so built into the web that it could be used to build the web itself. It may sound like something obvious today, but they were incredibly proud when Andreas Gal created [dom.js](https://github.com/andreasgal/dom.js) which is a fully compliant JavaScript implementation of the DOM. This was only possible because of key improvements to the language occurring at the same time.
+
+Not everyone agreed with him, but [Alex Russell believed](https://fronteers.nl/congres/2011/sessions/web-components-and-model-driven-views-alex-russell) that the ultimate culmination of this line of thought was something called [Web Components](https://en.wikipedia.org/wiki/Web_Components). We won't talk about them much, but relatively few of their APIs were available in browsers upon release (especially IE). Instead, the [Polymer](https://en.wikipedia.org/wiki/Polymer_(library)) project issued a series of ["prollyfills"](https://groups.google.com/g/polymer-dev/c/cV5fIheS8FU). One of these was for an API called [MutationObserver](https://github.com/webcomponents/webcomponentsjs/blob/feef1883d19c80072c411b332cf97e3e99c11941/src/MutationObserver/MutationObserver.js).
+
+### Mutation Observers
+
+Appcache wasn't the first time that the standards bodies had produced something that was not only useless, but actively harmful. Another prominent example of this is mutation events. These were a set of events that fired every time a chosen part of the DOM changed. 
+
+Mutation Events were originally intended to be used for things like [data binding](https://en.wikipedia.org/wiki/Data_binding), but the events fired synchronously and were [extremely expensive](https://lists.w3.org/Archives/Public/public-webapps/2011JulSep/0779.html). At this point in 2011, there was a huge demand for this kind of functionality as libraries like [Knockout](https://en.wikipedia.org/wiki/Knockout_(web_framework)), [Ember](https://en.wikipedia.org/wiki/Ember.js), and [Angular](https://en.wikipedia.org/wiki/Angular_(web_framework)) were becoming popular. So, some of the browser vendors decided to build a replacement.
+
+As they were designing it, there were [multiple options for when this new API should fire](https://lists.w3.org/Archives/Public/public-webapps/2011JulSep/0780.html). The developers knew that they wanted them to be asynchronous because they needed to [wait until after things happen](https://github.com/rafaelw/mutation-summary/blob/master/DOMMutationObservers.md). They also needed to be batched to avoid performance issues. This evolved into the [full proposal for MutationObserver](https://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1622.html) which defined the moment of firing as a microtask checkpoint. 
+
+[Mutation Observers](https://hacks.mozilla.org/2012/05/dom-mutationobserver-reacting-to-dom-changes-without-killing-browser-performance/) are pretty fantastic, and they have [some fans](https://addyosmani.com/blog/mutation-observers/). However, we're just mentioning them because this was the first time that the term "microtask" was used in the standards. Once they were used for MutationObserver, there were plans to use them for [several other potential new features](https://www.w3.org/Bugs/Public/show_bug.cgi?id=22185) like [object.observe](https://podcastindex.org/podcast/978611?episode=324141393) which unfortunately [died in 2015](https://esdiscuss.org/topic/an-update-on-object-observe). The way that most people know about microtasks today is through the `Promise` API.
+ 
+## Promises/A+ and Thenables
+
+It might surprise you to know that Node contained [something called a promise](https://github.com/nodejs/node-v0.x-archive/blob/490cac0d7e9b455de74eb6038e555a60a2fafe13/src/node.js#L196) in some of its very first versions. This is because asynchronous interactions on the server tend to be much more complicated than those in the browser. There may be several steps involved in a single request, and it's important to be able to handle errors at each step.
+
+Promises even [came up in Ryan Dahl's initial announcement](https://groups.google.com/g/commonjs/c/tFO0rDFYAmg/m/0kDHteaMRB8J) to the CommonJS group. At [the talk at JSConf EU 2009](https://www.youtube.com/watch?v=EeYvFl7li9E) where he announced Node to the rest of the world, Dahl spent some time to define them. He included a slide that declared that "A Promise is an `EventEmitter` which emits either a success or an error event (but not both)".
+
+Eventually, these proto-promises were [removed in early 2010](https://groups.google.com/g/nodejs/c/jaufClrXU9U/m/ov5WHIk7SAwJ) as there were some [flaws in the API](https://groups.google.com/g/nodejs/c/sWE0Oa80iNg/m/-n7xPyOdGd8J) and Ryan Dahl eventually decided to [defer to user libraries](https://groups.google.com/g/nodejs/c/RvNoQtoWyZA/m/a8Hu83Ewb0IJ) for any future promise implementations. He later listed this as [one of his greatest regrets when it came to Node](https://www.youtube.com/watch?v=M3BM9TB-8yA), and it [caused a bit of frustration at the time](https://www.sequoiacap.com/article/deno-spotlight/).
+
+This goes to show how long people have been considering something like promises to be a useful tool when working with asynchronous code. In fact, the concept goes [back much further than that](https://samsaccone.com/posts/history-of-promises.html). You can trace it to the conception of a "thunk" in [ALGOL languages](https://en.wikipedia.org/wiki/ALGOL_60), or the idea of [a future](https://en.wikipedia.org/wiki/Futures_and_promises). Basically, it's just a way to represent a variable whose value cannot be determined immediately. We'll explore them in detail at the end of this chapter.
+
+### Standardization
+
+The first attempt at properly classifying promises in JavaScript came from CommonJS. Because no one had taken JavaScript on the server seriously before Node, developers were seeking structure in the chaos. Node made a conscious effort to [ignore standards bodies](https://www.youtube.com/watch?v=GaqxIMLLOu8), so [CommonJS](https://web.archive.org/web/20091102162547/https://wiki.commonjs.org/wiki/CommonJS) formed with a goal of "building up the JavaScript ecosystem for web servers, desktop and command line apps and in the browser." While Ryan Dahl never truly [deferred to their authority](https://www.infoq.com/interviews/node-ryan-dahl/), they still had a major impact.
+
+Their main contribution was the [CommonJS Modules specification](https://en.wikipedia.org/wiki/CommonJS), but they also created a [Promises/A specification](https://wiki.commonjs.org/wiki/Promises/A) in 2009. There were already many variations on the front-end. The [first version](https://groups.google.com/g/commonjs/c/6T9z75fohDk) of the spec explictly lists Dojo Toolkit as an inspiration which had the concept of [a `Deferred` object since at least 2007](https://web.archive.org/web/20071120053455/http://redesign.dojotoolkit.org/?q=jsdoc/dojo/HEAD/object/dojo.Deferred). jQuery has included a [slightly-less-functional version of promises](https://api.jquery.com/Types/#Deferred) since [2011](https://blog.jquery.com/2011/01/31/jquery-15-released/). In fact, something similar to `Deferred` is finally making its way into JavaScript with the [`Promise.withResolvers` proposal](https://github.com/tc39/proposal-promise-with-resolvers) which just hit stage four despite some considering it [an anti-pattern](https://github.com/petkaantonov/bluebird/wiki/Promise-anti-patterns#the-deferred-anti-pattern). 
+
+By 2013, there was a proliferation of [libraries intended to help developers with asynchronous code](https://web.archive.org/web/20130724052629/https://github.com/joyent/node/wiki/modules#wiki-async-flow) which had become much more common and complex in era of Node. Some of these libraries like [task.js](https://github.com/mozilla/task.js) and co even combined generators with promises.
+
+This was a clear indication that there was a need for a standard. Many in the community advocated for something stricter than the _Promises/A_ standard. So, [the _Promises/A+_ specification](https://promisesaplus.com/) was created in October of that year.
+
+### Promises/A+
+
+A hidden hero of the last decade of web standards is a man named [Domenic Denicola](https://blog.domenic.me/). He's currently the Staff Software Engineer at Google Tokyo, and he has been a voice behind many of the most prominent features of modern web development. You've probably used something that he helped create. Critically, he was a [huge propopent of the Extensible Web Manifesto](https://blog.domenic.me/the-extensible-web/).
+
+He helped usher in Web Streams as we'll discuss in [the next chapter](3-chunks). However, we will obviously be focusing on promises in this chapter. He released his article ["You're Missing the Point of Promises"](https://blog.domenic.me/youre-missing-the-point-of-promises/) in late 2012 which helped clarify the idea that mutable implementations like jQuery's fell short of the ideal. [Brian Cavalier](https://github.com/briancavalier) soon [created a github repo](https://github.com/promises-aplus) to facilitite discussion as they worked on the specification. As far as I can tell, this was the first public github repo to eventually become a formal standard.
+
+Domenic stressed that much of [the power of promises](https://www.youtube.com/watch?v=hf1T_AONQJU) came from their ability to be chained together, and that each promise needed to be able to return a new promise. He was [one of the driving forces](https://www.youtube.com/watch?v=V2Q13hzTGmA) behind the new specification, and he helped create a rigorous test suite to ensure that all implementations were compliant. As we'll see in the next section, the modern API conforms closely to his 2013 paper ["States and Fates"](https://github.com/domenic/promises-unwrapping/blob/master/docs/states-and-fates.md). 
+
+As you may have noticed, no standards body was necessary for this to happen. To be clear, the Promises/A+ standard was widely respected immediately. It just wasn't a part of any formal standardization process. It was backed up by a rigorous test suite, but developers had to choose one of many libraries to use them. Developers collaborated to decide on a formal set of best practices. This was just like JSON except that it was a group process.
+
+Although it originated with the CommonJS group, they were always more of a loose collection than a formal organization. People had been using promises for years, and it had slowly taken a recognizable shape. There were just a few small differences between the various implementations. Some people take these small differences very seriously, however. 
+
+### Native Promises
+
+It was only a matter of time before promises made their way into the language in some form. In December 2012, only four months after Domenic Denicola released "You're Missing The Point of Promises", [Alex Russell contributed the first commit](https://github.com/slightlyoff/Promises/commit/2d8729233bdcbf784fdbfe6d796ff67ae5ce1030) to the repository that ended up becoming the reference repository for promises. This came after [two years of planning](https://www.xanthir.com/b4PY0) after APIs like XHR made _WHATWG_ realize that [the DOM needed promises](https://github.com/slightlyoff/Promises/tree/master/historical_interest).
+
+It began as something called a [Future in the DOM spec](https://infrequently.org/2013/06/sfuturepromiseg/). This was intended to avoid a namespace conflict because Russell was optimistic that something called Promise would end up in the language. These terms were [almost interchangable at the time](https://stackoverflow.com/questions/6801283/what-are-the-differences-between-deferred-promise-and-future-in-javascript/18858041#18858041). He was eventually proven correct, but getting to that point was not easy. There were [several arguments over whether the _W3C_ should wait on TC39](https://esdiscuss.org/topic/futures-was-request-for-json-ld-api-review).
+
+[Brendan Eich once said](https://esdiscuss.org/topic/are-promises-and-microtasks-introduced-into-es6), "the event loop and shared state concurrency have haunted ECMA-262 like Banquo's ghost, forever." The [first proposals](https://web.archive.org/web/20120505100559/http://wiki.ecmascript.org/doku.php?id=strawman:deferred_functions) were `Deferred` objects similar to jQuery & Dojo's.
+
+[EcmaScript meeting where promises get added](https://github.com/tc39/notes/blob/main/meetings/2013-09/sept-19.md)
+
+[trampolining](https://raganwald.com/2013/03/28/trampolines-in-javascript.html)
+
+[strawman proposal](https://web.archive.org/web/20111206192751/http://wiki.ecmascript.org/doku.php?id=strawman:concurrency)
+
+https://fronteers.nl/congres/2013/sessions/state-of-javascript
+https://www.youtube.com/watch?v=V2Q13hzTGmA
+
+
+Unfortunately, TC-39 was deep in a [massive fight over semantics](https://esdiscuss.org/topic/futures#content-75). So, over time Alex Russell [first renamed the _W3C_ object from `Promise` to `Future`](https://github.com/slightlyoff/Promises/commit/b4d3b95a24153057653275d44e7cf169fb1553f8) and
+[then back to promises again](https://github.com/slightlyoff/Promises/commit/d0f0e167e0c7e5ab6979848b7531a5c955c0b780) six months later as he tried to keep up. [It all started](https://esdiscuss.org/topic/promise-cast-and-promise-resolve#content-62) when Dave herman suggested using promises for the upcoming ES6 module loader API.
+
+The design was initiated around [Mark Miller's early work](https://web.archive.org/web/20120425085204/http://soft.vub.ac.be/~tvcutsem/talks/presentations/WGLD_CommEventLoops.pdf). In it, he defined a 'vat' as a container consisting of a memory heap, a call stack, and a message queue. He summarized it all down to [three proposals](https://web.archive.org/web/20140724082640/http://wiki.ecmascript.org/lib/exe/fetch.php?id=strawman%3Aconcurrency&media=strawman:promisesvsmonads2.pdf). The crux of the matter was how important [monadic](https://blog.jcoglan.com/2011/03/11/promises-are-the-monad-of-asynchronous-programming/) [purity](https://blog.jcoglan.com/2011/03/05/translation-from-haskell-to-javascript-of-selected-portions-of-the-best-introduction-to-monads-ive-ever-read/) was to the design. [An article by Brian McKenna](https://brianmckenna.org/blog/category_theory_promisesaplus) about how promises should become more monadic led to a [massive thread full of bickering on github](https://github.com/promises-aplus/promises-spec/issues/94#issuecomment-16176966). Domenic Denicola's uncharitable response led to a whole [family of monadic libraries](https://github.com/fantasyland/fantasy-land) being born.
+
+Eventually, [the chain method was removed](https://esdiscuss.org/topic/the-paradox-of-partial-parametricity#content-26) and 
+[intermediate promises](https://gist.github.com/ForbesLindesay/5392612) were flattened. The non-monadic side had won, and modern JavaScript promises 
+[are not monads](https://stackoverflow.com/questions/45712106/why-are-promises-monads/50173415#50173415). [Brendan Eich later said](https://esdiscuss.org/topic/monadic-extension-to-do-notation#content-8) that "draft ES6 tried for monadic, but compatibility with Promises libraries prevailed". Generally, unless [you are an extreme purist](https://staltz.com/promises-are-not-neutral-enough.html), this will not matter to you at all.
+
+In June 2013, [TC-39 got on board](https://web.archive.org/web/20131012012554/https://mail.mozilla.org/pipermail/es-discuss/2013-June/030958.html) with the W3C's version of promises, and Domenic Denicola's promises-unwrapping repo became [the official reference](https://github.com/domenic/promises-unwrapping/blob/e316b8bf81180c6303b2dddf946f77aa8c10f38d/README.md). While there was some confusion about how [EcmaScript and the DOM should interoperate](https://esdiscuss.org/topic/the-initialization-steps-for-web-browsers#content-31) when it came to queuing tasks, this was a landmark moment for web standards. Finally, it seemed like all of the web standards bodies were on the same page. That very month, [the _W3C_ Technical Architecture Group officially recommended](https://infrequently.org/2013/06/sfuturepromiseg/) that browser developers start using promises.
+
+After some discussion about [how to schedule the tasks properly](https://lists.w3.org/Archives/Public/www-dom/2013JulSep/0019.html), the committee 
+[eventually settled on using microtasks from mutation observers](https://lists.w3.org/Archives/Public/www-dom/2013JulSep/0020.html). This was the best way to get [things back into the event loop](https://www.w3.org/Bugs/Public/show_bug.cgi?id=20821#c13) without delay. It became a FIFO queue with [two levels of priority](https://www.w3.org/Bugs/Public/show_bug.cgi?id=22296#c26).
+
+[Not everyone](https://pouchdb.com/2015/05/18/we-have-a-problem-with-promises.html) has been happy about this development. Because [promises change the way you solve problems at a semantic level](https://blog.jcoglan.com/2013/03/30/callbacks-are-imperative-promises-are-functional-nodes-biggest-missed-opportunity/), you have to think about your code differently. This can lead to a [lot of confusion](https://avaq.medium.com/broken-promises-2ae92780f33) and [broken promises](https://www.youtube.com/watch?v=XV-u_Ow47s0&t=1299s). This is perfectly captured in the incredible article, ["What Color is Your Function?"](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/)
+
+### Async / Await
+
+[First proposed in 2011](https://web.archive.org/web/20120603062026/http://wiki.ecmascript.org/doku.php?id=strawman:async_functions)
+
+Soon after generators and promises arrived in ES6, people started discussing a way to make this syntax even nicer. Even though long chains of promises are much preferable to a gigantic pyramid of doom, they can still be a bit hard to read. People wanted to write asynchronous code that looked more like synchronous code. 
+
+Essentially, this was an attempt to [bring coroutines to JavaScript](https://en.wikipedia.org/wiki/Coroutine). The basic idea is that you can pause the execution of a function, go do other things while you wait for something asynchronous to complete. Then, you can [come right back](https://dmitrykandalov.com/coroutines-as-threads) into the context of the function where you were before. 
+
+While a generator allowed developers to do this with the context of a single frame, an async function would allow you to do this with the entire call stack. This makes it extremely convenient to write ergonomic, concurrent code even if you need to wait for multiple things to happen in the same function. In [early 2014](https://github.com/tc39/proposal-async-await/commit/2c499feb41df4c79a884d1520518cd00ab623e5b), the first proposal for `async` / `await` was created. 
+
+[People like Crockford think that making the code look too synchronous is a bad thing](https://skillsmatter.com/skillscasts/11232-keynote-how-javascript-works-a-preview)
+
+In truth, this is just some [syntax sugar around generators](https://tc39.es/proposal-async-await/#desugaring), but the authoring experience cannot be denied. You just add the `async` keyword to the function declaration. Then, every time you add the `await` keyword, the runtime will step out of the function until that promise resolves. 
+
+Async functions always return a promise even if you don't use the `await` keyword. Like `process.nextTick`, this can be a simple way to make sure that something important happens before the next pass through the event loop. However, it's also critical to note that each `await` is processed one at a time, so it can be easy to slow things down [a bit too much](https://web.dev/async-functions/#careful-avoid-going-too-sequential).
+
+### Promises 101
+
+[To quote MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), "A Promise is an object representing the eventual completion or failure of an asynchronous operation... [it's] a proxy for a value not necessarily known when the promise is created." 
+
+[A promise](https://javascript.info/promise-basics) is always in one of three states: _pending_, _fulfilled_, or _rejected_. Whether a promise is _fulfilled_ or _rejected_, it becomes _settled_ once it is no longer _pending_. Critically, this can only happen once as you _resolve_ the promise. Until _then_, the promise is _unresolved_.
+
+### Friendship 101
+
+Let's bring it back home with another fun metaphor. Don't worry, I'm not very inventive. Just think about making a promise to a friend. You're basically saying, "I will definitely do that one thing-- just not right now." Outside the _context_ of that promise, everything else you're doing at that moment is irrelevant. 
+
+What matters is what happens next. Until **then**, that promise (and your friendship) is **pending**. _Then_, you will see if you can **fulfill** that commitment. This will show the **value** of that promise to you both. Otherwise, you will have to **reject** your friend. They will expect a good **reason**.
+
+You can **resolve** this promise and find the **value** right away, or you can **resolve** it with another promise and pass the **value** along. If you can't complete your commitment to your friend immediately, this is like saying that you need to do something else first. _Then_, the first promise if **fulfilled**, and the new promise is **pending**.
+
+This is because you can't keep passing them the same promise forever. They're going to get tired of your excuses, so everything will have to get **settled** eventually. That can only happen once all the promises you made to your friend have been fully **resolved**. Technically, you can leave a promise **pending** forever, but only if your friend is okay with that.
+
+Any errors that you make when handling these promises will be the same as if you **rejected** your friend. You can make a single generic **reason** or you can try to handle each error individually. If you don't **catch** one of these errors, it could wreck your whole friendship. Your friendship is strong enough that they will accept the generic **reason**, but you respect your friend. So, you usually want to **catch** each error individually.
+
+In the end, each promise must be either **fulfilled** or **rejected**, and this can only happen once. Anything else would have to be another, separate promise. You can't go back and change the past. To fix the friendship, you can only make new promises-- perhaps even several in a row.
+
+### `.then()`
+
+The most important thing to understand about promises is that they always possess a `.then()` method. This method takes two arguments which are both functions-- one for the fulfilled case and one for the rejected case. Either way, it returns an entirely new, unresolved promise. Because of this, they can be chained one after the other-- much like how I used the word 'then' to chain multiple clauses together in the previous section.
+
+Like I said earlier, [several libraries implemented similar functionality beforehand](https://web.dev/promises/#promises-arrive-in-javascript). Thus, there are many objects that exist with a `.then()` method that are not technically promises. Generally, while these may have many similarities to actual promises, they may not have all of the same properties. So, they are often called [_thenables_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise#thenables) to mark the distinction. Native EcmaScript `Promise` objects were designed to be compatible with most _thenables_.
+
+### How and Why React Uses - Promises
+
+_Chunk_ and _Thenable_-- both of these words are used by the React team to define core aspects of the Server Components API. We just talked all about _Thenables_, and we'll learn more about chunks in the next chapter. 
+
+So, these words are quite literal when we are talking about RSC's. When we talk about _Chunks_, you should think about small, individual units of work. Later, we will talk about chunks both in terms of streaming and in terms of bundling with webpack. For now, note that _RSC Chunks_ have a capital 'C'. To help understand what's happening here, let's take a look at [the code in the `react-server` library](https://github.com/facebook/react/blob/a3172e933c7eb54aa02ec1d303453a96bc76181b/packages/react-server/src/ReactFlightReplyServer.js#L84) where they define the Chunk class. 
+
+Don't worry if you don't fully get this just yet. We actually won't use this function in this chapter (this is used to encode the [_Flight Response_](./4-flight-response)). Feel free to hit "Show Less" if this is too overwhelming for now, and I'll see you on the other side.
+
+<Chunk />
+
+The important thing to understand here is that they sub-class the promise prototype, and then they create their own custom `.then()` method. So, every single _Chunk_ is a _Thenable_. We'll go deeper into the code to see what this means in a few weeks, but this is very important to keep in mind as we go through this. 
+
+Make sure that you check out the demo below if you want to see how something like this can work. I create a custom promise that I call a _Thenable_ using the `EventTarget` interface with less than 200 lines of code. Surprisingly, it still passes the entire A+ test suite.
+
+<IFrame src="https://stackblitz.com/edit/thenables?ctl=1&embed=1&view=preview" />
+
+### `fetch` and `AbortController`
+
+
+[adding the `unhandledrejection` event](https://lists.w3.org/Archives/Public/public-whatwg-archive/2014Sep/0024.html)
+[cancelable promises died inside Google, much to Domenic's chagrin](https://github.com/tc39/proposal-cancelable-promises/issues/70)
+[which held back development of AbortController and the fetch API](https://github.com/whatwg/fetch/issues/447)
+[AbortController was introduced in 2018](https://chromium.googlesource.com/chromium/src.git/+/3ea192285757861d168b6e508bb34bc054194a22)
+[finally, you could abort a fetch](https://developer.chrome.com/blog/abortable-fetch/)
+[Web Incubator Group](https://wicg.io/)
+[TC-39 Observable](https://github.com/tc39/proposal-observable)
+[Observable API](https://github.com/WICG/observable)
+[XHR is extremely capable](https://hpbn.co/xmlhttprequest/)
+<IFrame src="https://stackblitz.com/edit/thenables-fetch?ctl=1&embed=1&view=preview" />
+## How and Why React Uses - fetch
+
+
+<IFrame src="https://stackblitz.com/edit/react-data-demos?ctl=1&embed=1&view=preview" />
+
+### `createFromFetch`
+
+## Task Scheduling
+
+[Surma Talks About it Here](https://www.smashingmagazine.com/2021/06/web-workers-2021/)
+[Jake Archibald's Article](https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/)
+[queueMicrotask](https://github.com/whatwg/html/issues/512)
+[built by the same people who were interested in promises](https://github.com/YuzuJS/setImmediate#macrotasks-and-microtasks)
+<IFrame src="https://stackblitz.com/edit/browser-event-loop?ctl=1&embed=1&view=preview" />
+
+## Conclusion
+
+[Microsoft Edge finally kills Trident](https://schepp.dev/posts/today-the-trident-era-ends/)
+[6to5 and esnext merge](https://babeljs.io/blog/2015/01/12/6to5-esnext) and soon [become Babel](https://babeljs.io/blog/2015/02/15/not-born-to-die)
+
+[people began to widely accept transpilation](https://2ality.com/2015/04/deploying-es6.html)
+
+[core.js](https://github.com/zloirock/core-js/blob/master/docs/2023-02-14-so-whats-next.md?ref=thestack.technology)
+
+[Early manifestations of fetch and streams](https://blog.domenic.me/continual-progress-in-the-w3c-tag/)
+[Worse is Better](https://en.wikipedia.org/wiki/Worse_is_better)
+
+[Alex Russell says](https://infrequently.org/2015/08/doing-science-on-the-web/), "Web developer feedback needs to be the most important voice in the standards process".
+
+["Always Bet on JS"](https://skillsmatter.com/skillscasts/10595-opening-keynote-javascript-the-next-generation)
+[TC39 Process](https://tc39.es/process-document/)
+[One JavaScript](https://exploringjs.com/impatient-js/ch_history.html)
+[TypeScript as a testing ground for the language](https://arxiv.org/pdf/2305.01373.pdf)
+
+[importance of tooling](https://ponyfoo.com/articles/standard)
+
+[sunsetting the JavaScript standard](https://blog.whatwg.org/javascript)
+
+[_WHATWG_ standards development happening on GitHub](https://blog.whatwg.org/github)
+[commits that go all the way back to 2006](https://github.com/whatwg/html/commits/main?after=7405231472f9b049a43ec0a08348611d8a3e42a9+11989&branch=main&qualified_name=refs%2Fheads%2Fmain)
+[mailing list shut down in 2019](https://lists.w3.org/Archives/Public/public-whatwg-archive/2019Dec/0000.html)
+
+[Angular unwrapping promises](https://github.com/angular/angular.js/commit/5dc35b527b3c99f6544b8cb52e93c6510d3ac577)
+["I have appropriate expectations for most programmers of as widely used and heretofore single-threaded a language as JS is. The vast majority of JS programmers should not touch SharedArrayBuffer or Atomics, period, full stop — even if a few are expert enough to do so." - Eich](https://www.codenameone.com/blog/javascript-get-threaded.html)
+[SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer)
+[Atomics](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Atomics)
+
+If you want to read more about the history of JavaScript, I really recommend ["JavaScript: The First 20 Years"](https://www.wirfs-brock.com/allen/jshopl.pdf). It's a paper written for the [History of Programming Languages](https://dl.acm.org/conference/hopl) by Brendan Eich and Allen Wirfs-Brock-- the editor of ES5 and ES6. You can't get much more authoritative than that, and it provides a lot of fascinating context for the language.
+
+There's also a [great series of talks by Douglas Crockford](https://www.youtube.com/watch?v=JxAXlJEmNMg) that looks at things from a slightly more opinionated angle. It's a bit more holistic in scope. And, if you don't have the attention span for either of those, here's [a short article from Sebastian Peyrott at Auth0](https://auth0.com/blog/a-brief-history-of-javascript) with some great videos of early Netscape in action. Additionally, there were so many fantastic links I included in this article that I hope you take the time to check out.
+
+Many people are sick of having to craft their code for working in different runtimes. You can see this in the growing popularity of tools like [Nitro](https://nitro.unjs.io/) and [Hono](https://hono.dev) which pride themselves on allowing you to write your code in one way and have it run anywhere. People don't want to have to worry about changing something as fundamental as how their server sends and receives requests based on where they are hosting their app.
+
+While [_TC39_](https://tc39.es/) has been rapidly improving JavaScript itself, and _WHATWG_ has been fully established as the authority for the browser, server-side code has been a bit of a wild west until recently. Although Node was the only game in town originally, there are now [a wide variety of options](https://en.wikipedia.org/wiki/List_of_server-side_JavaScript_implementations).
+
+Thankfully, a new group named [_WinterCG_] has recently emerged. The Web-interoperable Runtimes Community Group seeks to establish a set of core specifications that each of these runtimes can base themselves around. So, while people had to figure out basic things like streaming through trial and error, this stuff will be carefully formulated in the future. The recent [Web Crypto Streams](https://webcrypto-streams.proposal.wintercg.org/) standard is fully based on the __WHATWG_ Streams_ standard.
+
+After the [anti-trust lawsuit](https://en.wikipedia.org/wiki/United_States_v._Microsoft_Corp.), Microsoft was also [forced](https://www.sec.gov/Archives/edgar/data/789019/000119312508162768/d10k.htm#tx31450_3) to [open-source some of their code](https://www.cnet.com/culture/u-s-judge-praises-microsofts-open-source-steps/) after a [long history of hostility](https://www.cnet.com/tech/computing/microsofts-long-history-of-open-source-acrimony/) towards the very concept.

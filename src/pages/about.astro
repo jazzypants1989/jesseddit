@@ -17,15 +17,24 @@ const image = user.avatar_url
 <Layout title="What even is this?" now="About" others={others}>
   <main class="min-h-screen">
     <h1
-      class="text-4xl pt-4 font-bold text-center text-purple-900 animate-fade-in-down dark:text-blue-200"
+      class="text-4xl pt-4 font-bold text-center text-purple-900 animate-fade-in-right dark:text-blue-200"
     >
       This is a repository of words.
     </h1>
+    <div class="flex flex-col items-center justify-center w-full">
+      <p
+        class="mx-auto my-2 text-center text-xl bg-purple-500 dark:bg-purple-900 animate-fade-in-up rounded-3xl p-4 max-w-3xl text-white shadow-lg drop-shadow-2xl"
+      >
+        Hey there! I'm Jesse Pence. I'm just some guy writing words on the
+        internet. I like doing that. I also like to build websites. So, I built
+        a website where I can write words about building websites. It's all just
+        as thrilling as this paragraph makes it sound, I promise.
+      </p>
 
-    <button
-      aria-label="This button spins the picture in a very annoying way."
-      title="This button spins the picture in a very annoying way."
-      onclick="(
+      <button
+        aria-label="This button spins the picture in a very annoying way."
+        title="This button spins the picture in a very annoying way."
+        onclick="(
         document.getElementById('pengy').style.transform = 'rotate(0deg)',
         document.getElementById('pengy').style.transition = 'transform 1s',
 
@@ -36,19 +45,10 @@ const image = user.avatar_url
         }, 1)
 
       )"
-      class="bg-blue-500 hover:bg-purple-700 hover:scale-110 animate-fade-in-left text-white font-bold py-2 px-4 rounded-full mt-10 mx-auto block transition-all duration-500"
-    >
-      Click me to trigger your inner child
-    </button>
-    <div class="flex flex-col items-center justify-center w-full">
-      <p
-        class="mx-auto my-2 text-center text-xl bg-purple-800 animate-fade-in-up rounded-3xl p-4 max-w-3xl text-white shadow-lg drop-shadow-2xl"
+        class="bg-blue-500 hover:bg-purple-700 hover:scale-110 animate-fade-in-left text-white font-bold py-2 px-4 rounded-full mt-10 mx-auto block transition-all duration-500"
       >
-        Hey there! I'm Jesse Pence. I'm just some guy writing words on the
-        internet. I like doing that. I also like to build websites. So, I built
-        a website where I can write words about building websites. It's all just
-        as thrilling as this paragraph makes it sound, I promise.
-      </p>
+        Click me to trigger your inner child
+      </button>
 
       <img
         class="rounded-3xl mx-auto mt-16 mb-4 animate-fade-in-up h-96 w-96"
@@ -58,14 +58,14 @@ const image = user.avatar_url
       />
 
       <p
-        class="mx-auto my-2 text-center text-xl bg-purple-800 animate-fade-in-up rounded-3xl p-4 max-w-3xl text-white shadow-lg drop-shadow-2xl"
+        class="mx-auto my-2 text-center text-xl bg-purple-500 dark:bg-purple-900 animate-fade-in-up rounded-3xl p-4 max-w-3xl text-white shadow-lg drop-shadow-2xl"
       >
         Each series of articles in the blog area has its own comments section if
         you want to tell me how wrong I am. Or, you can just stay here and spin
         these pictures around. I love you either way.
       </p>
       <small
-        >(For real though, please tell me how wrong I am. I'm trying to learn
+        >(For real though, please correct me when I'm wrong. I'm trying to learn
         here.)</small
       >
       <img
