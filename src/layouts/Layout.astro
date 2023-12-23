@@ -34,21 +34,15 @@ const url = new URL(Astro.url)
   <meta property="og:site_name" content="Jessedit" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content="Jessedit" />
-  <meta
-    property="og:url"
-    content="https://jessedit.tech/blog/into-the-future"
-  />
+  <meta property="og:url" content="https://jessedit.tech/blog/" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@jesse_pence5" />
   <meta name="twitter:creator" content="@jesse_pence5" />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content="Jessedit" />
-  <meta name="twitter:image" content="/pengy.png" />
+  <meta name="twitter:image" content={image ?? "/pengy.png"} />
   <meta name="twitter:image:alt" content="Jovial Penguin, LLC" />
-  <meta
-    name="twitter:url"
-    content="https://jessedit.tech/blog/into-the-future"
-  />
+  <meta name="twitter:url" content="https://jessedit.tech/blog/" />
   <meta name="twitter:label1" content="Est. reading time" />
   <meta name="twitter:data1" content="5-3000 minutes" />
   <title>{title}</title>
