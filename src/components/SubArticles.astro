@@ -1,0 +1,49 @@
+---
+import { getCollection } from "astro:content"
+
+const articles = await getCollection("articles")
+
+const currentPage = Astro.url.pathname
+const currentBlog = currentPage.split("/")[2]
+const currentArticleNumber = currentPage.split("/")[3].split("-")[0]
+
+const subArticles = articles.filter((article) => {
+  const parts = article.id.split("/")
+  if (parts[0] !== currentBlog) {
+    return false
+  }
+  const idAfterFolder = parts[1]
+  const idParts = idAfterFolder.split("-")
+
+  return (
+    idParts[0] === currentArticleNumber.replace("-", "") &&
+    idParts.length > 2 &&
+    !isNaN(parseInt(idParts[1], 10))
+  )
+})
+
+const sortedSubArticles = subArticles.sort((a, b) => {
+  const aIdParts = a.id.split("/")[1].split("-")
+  const bIdParts = b.id.split("/")[1].split("-")
+  const aNum = parseInt(aIdParts[1], 10)
+  const bNum = parseInt(bIdParts[1], 10)
+  return aNum - bNum
+})
+---
+
+<ol class="prose pl-4 ml-4 mt-4 list-decimal">
+  {
+    sortedSubArticles.map((subArticle) => {
+      return (
+        <li>
+          <a
+            class="text-blue-600 dark:text-green-500 text-lg dark:hover:text-green-300"
+            href={`/articles/${subArticle.slug}`}
+          >
+            {subArticle.data.title}
+          </a>
+        </li>
+      )
+    })
+  }
+</ol>

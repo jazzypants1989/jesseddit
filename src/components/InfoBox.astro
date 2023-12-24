@@ -2,10 +2,10 @@
 export interface Props {
   warning?: boolean
   hint?: boolean
-  summary: string
+  title?: string
 }
 
-const { warning, hint } = Astro.props
+const { warning, hint, title } = Astro.props
 
 function classFinder() {
   if (warning) {
@@ -33,7 +33,7 @@ function titleFinder() {
   role="alert"
 >
   <summary class="font-bold cursor-pointer text-lg p-4 drop-shadow-2xl"
-    >{titleFinder()}
+    >{title ?? titleFinder()}
   </summary>
   <span class="block sm:inline">
     <slot />

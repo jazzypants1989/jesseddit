@@ -4,7 +4,6 @@ import { getCollection } from "astro:content"
 const articles = await getCollection("articles")
 
 const currentPage = Astro.url.pathname
-
 const currentBlog = currentPage.split("/")[2]
 
 const thisBlog = articles.filter((article) => {
@@ -12,34 +11,31 @@ const thisBlog = articles.filter((article) => {
 })
 
 const sortedBlog = thisBlog.sort((a, b) => {
-  const aNum = parseInt(a.id.split("/")[1], 10)
-  const bNum = parseInt(b.id.split("/")[1], 10)
-  return aNum - bNum
+  const aIdParts = a.id.split("/")[1].split("-")
+  const bIdParts = b.id.split("/")[1].split("-")
+  const aNum = parseInt(aIdParts[0], 10)
+  const bNum = parseInt(bIdParts[0], 10)
+  if (aNum !== bNum) {
+    return aNum - bNum
+  }
+
+  return a.id.localeCompare(b.id)
 })
 
-function removeTrailingSlash(path: string) {
-  return path.replace(/\/$/, "")
-}
-
-function inPathWithoutHome(path: string, href: string) {
-  return removeTrailingSlash(path).startsWith(href) && href !== "/"
-}
-
-const isActive = (href: string) => {
-  return inPathWithoutHome(currentPage, href) ? "active" : ""
-}
+const blogWithoutSubArticles = sortedBlog.filter((article) => {
+  const idAfterFolder = article.id.split("/")[1]
+  const subParts = idAfterFolder.split("-")
+  return subParts.length === 2 || isNaN(parseInt(subParts[1], 10))
+})
 ---
 
 <ol class="prose pl-4 ml-4 mt-4 list-decimal">
   {
-    sortedBlog.map((article) => {
+    blogWithoutSubArticles.map((article) => {
       return (
         <li>
           <a
-            class={
-              (isActive(`/articles/${article.slug}`) ? "active" : "") +
-              " text-blue-600 dark:text-green-500 text-lg dark:hover:text-green-300"
-            }
+            class="text-blue-600 dark:text-green-500 text-lg dark:hover:text-green-300"
             href={`/articles/${article.slug}`}
           >
             {article.data.title}

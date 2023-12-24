@@ -5,18 +5,13 @@ nextLink: "./2-reviving-thenables"
 ---
 
 import ImageLink from "../../../components/ImageLink.astro"
-import Youtube from "../../../components/Youtube.astro"
+import InfoBox from "../../../components/InfoBox.astro"
 import ACDFramework from '../../../assets/rsc/1/ACDFramework.png';
 import Actions from '../../../assets/rsc/1/Actions.jpg';
 
 ## Introduction
 
 In December 2020, the React team released a [“special Holiday Update”](https://legacy.reactjs.org/blog/2020/12/21/data-fetching-with-react-server-components.html). This included an hour long talk by Dan Abramov and Lauren Tan as well as an accompanying demo where people could try out an exciting new technology called “React Server Components”. It's been a long journey from that point, and the underlying API's have changed a bit since then, but _RSC_'s are finally reaching a point of maturity.
-
-<Youtube
-    videoID="TQQPAU21ZUw"
-    title="Data Fetching with React Server Components"
-/>
 
 ## History of SSR in React
 >So, you could— in theory— render the markup on the server, and then attach all the event handlers and instantiate all the backing views on the client. Two completely separate machines!
@@ -124,6 +119,13 @@ The Hydrogen team at Shopify were the first to adopt React Server Components. Th
 The React team used this experience to guide changes to some key implementation details. For instance, [in the original RFC](https://github.com/reactjs/rfcs/blob/main/text/0188-server-components.md), server and client components were resolved using a special filename syntax of `.server.jsx` and `.client.jsx` respectively. Now, this has been changed to [`use client` directives](https://github.com/reactjs/rfcs/blob/main/text/0227-server-module-conventions.md) at the top of files for client components and [`use server` directives for server actions](https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions) that can be more granular. 
 
 Ironically, [Ryan Florence has recently announced](https://syntax.fm/show/649/supper-club-ryan-florence-of-remix#t=44:18) that a future version of Remix will be based on React Server Components although he has recently expressed doubt about [how soon that will be achieved](https://x.com/ryanflorence/status/1714340925865148902). In fact, an [experimental proposal was unveiled by core team member Jacob Ebey](https://github.com/remix-run/remix/discussions/8048) literally the day before I published this. It seems we're getting closer and closer to a Remix based on React Server Components.
+
+<InfoBox
+title="Update: 11/21/2023"
+hint
+>
+Michael Jackson and Ryan Florence have [officially announced](https://www.youtube.com/watch?v=VQAYY5k44vA) that they will be going forward with the experimental proposal. So, Remix will be adopting React Server Components in the near future.
+</InfoBox>
 
 To be fair, the Shopify team have always said they still believed in the technology. It just doesn't always pay to be the [canaries in the coal mine](https://www.epicweb.dev/why-i-wont-use-nextjs#experimenting-on-my-users). This is especially true when real users are involved.
 
