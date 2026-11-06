@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({
   if (!code) {
     return redirect("/blog")
   }
-  const { GITHUB_ID, GITHUB_SECRET } = import.meta.env
+  const { GITHUB_ID, GITHUB_SECRET } = process.env
   const data = await fetch(
     `https://github.com/login/oauth/access_token?client_id=${GITHUB_ID}&client_secret=${GITHUB_SECRET}&code=${code}`,
     {
